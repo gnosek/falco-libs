@@ -532,6 +532,13 @@ static int32_t load_tracepoint(scap_t* handle, const char *event, struct bpf_ins
 }
 
 #ifndef MINIMAL_BUILD
+
+enum version_check_state {
+	NOT_RAN = 0,
+	PASSED = 1,
+	FAILED = 2,
+};
+
 static int32_t load_bpf_file(scap_t *handle, const char *path)
 {
 	int j;
@@ -548,6 +555,7 @@ static int32_t load_bpf_file(scap_t *handle, const char *path)
 	struct bpf_map_data maps[BPF_MAPS_MAX];
 	struct utsname osname;
 	int32_t res = SCAP_FAILURE;
+	enum version_check_state version_check = NOT_RAN;
 
 	if(uname(&osname))
 	{
@@ -607,12 +615,60 @@ static int32_t load_bpf_file(scap_t *handle, const char *path)
 			}
 		}
 		else if(strcmp(shname, "probe_version") == 0) {
+			version_check = PASSED;
 			if(strcmp(PROBE_VERSION, data->d_buf))
 			{
 				snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "BPF probe version is %s, but running version is %s",
 					 (char *) data->d_buf, PROBE_VERSION);
+				version_check = FAILED;
+			}
+		}
+		else if(strcmp(shname, "probe_api_version") == 0) {
+			uint64_t bpf_api_version;
+			memcpy(&bpf_api_version, data->d_buf, sizeof(bpf_api_version));
+
+			if(PPM_API_VERSION_MAJOR(bpf_api_version) != PPM_API_CURRENT_VERSION_MAJOR)
+			{
+				snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "BPF probe version is %lu.%lu.%lu, but running version is %d.%d.%d",
+					PPM_API_VERSION_MAJOR(bpf_api_version),
+					PPM_API_VERSION_MINOR(bpf_api_version),
+					PPM_API_VERSION_PATCH(bpf_api_version),
+					PPM_API_CURRENT_VERSION_MAJOR,
+					PPM_API_CURRENT_VERSION_MINOR,
+					PPM_API_CURRENT_VERSION_PATCH);
 				goto cleanup;
 			}
+
+			if(PPM_API_VERSION_MINOR(bpf_api_version) < PPM_API_CURRENT_VERSION_MAJOR)
+			{
+				snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "BPF probe version is %lu.%lu.%lu, but running version is %d.%d.%d",
+					PPM_API_VERSION_MAJOR(bpf_api_version),
+					PPM_API_VERSION_MINOR(bpf_api_version),
+					PPM_API_VERSION_PATCH(bpf_api_version),
+					PPM_API_CURRENT_VERSION_MAJOR,
+					PPM_API_CURRENT_VERSION_MINOR,
+					PPM_API_CURRENT_VERSION_PATCH);
+				goto cleanup;
+			}
+
+#ifdef _DEBUG
+			// how do we report a non-fatal issue?
+			if(PPM_API_VERSION_PATCH(bpf_api_version) < PPM_API_CURRENT_VERSION_PATCH)
+			{
+				fprintf(stderr, "BPF probe version is %d.%d.%d, but running version is %d.%d.%d",
+					PPM_API_VERSION_MAJOR(bpf_api_version),
+					PPM_API_VERSION_MINOR(bpf_api_version),
+					PPM_API_VERSION_PATCH(bpf_api_version),
+					PPM_API_CURRENT_VERSION_MAJOR,
+					PPM_API_CURRENT_VERSION_MINOR,
+					PPM_API_CURRENT_VERSION_PATCH);
+			}
+#endif
+		}
+
+		if(version_check == FAILED)
+		{
+			goto cleanup;
 		}
 	}
 

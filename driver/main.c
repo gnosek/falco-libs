@@ -59,6 +59,7 @@ or GPL2.txt for full copies of the license.
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("the Falco authors");
+MODULE_VERSION(PPM_API_CURRENT_VERSION_STRING);
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35))
     #define TRACEPOINT_PROBE_REGISTER(p1, p2) tracepoint_probe_register(p1, p2)
@@ -782,6 +783,9 @@ cleanup_ioctl_procinfo:
 			goto cleanup_ioctl_nolock;
 		}
 		ret = 0;
+		goto cleanup_ioctl_nolock;
+	} else if (cmd == PPM_IOCTL_GET_API_VERSION) {
+		ret = PPM_API_CURRENT_VERSION;
 		goto cleanup_ioctl_nolock;
 	}
 
