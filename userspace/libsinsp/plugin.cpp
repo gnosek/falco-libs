@@ -342,7 +342,11 @@ std::shared_ptr<sinsp_plugin> sinsp_plugin::create_plugin(string &filepath, cons
 #endif
 	if(handle == NULL)
 	{
+#ifdef _WIN32
+		errstr = "error loading plugin " + filepath + ": " + std::to_string(GetLastError());
+#else
 		errstr = "error loading plugin " + filepath + ": " + dlerror();
+#endif
 		return ret;
 	}
 

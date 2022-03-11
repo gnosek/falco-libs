@@ -18,7 +18,12 @@ limitations under the License.
 #include <tuples.h>
 #include <string>
 #include <cstring>
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#else
 #include <arpa/inet.h>
+#endif
 #include "utils.h"
 #include "sinsp_exception.h"
 #include "logger.h"

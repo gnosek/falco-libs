@@ -17,6 +17,10 @@ limitations under the License.
 
 #pragma once
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <list>
@@ -29,6 +33,7 @@ limitations under the License.
 #include <scap.h>
 #include "json/json.h"
 #include "../common/strlcpy.h"
+#include "sinsp_public.h"
 
 class sinsp_evttables;
 typedef union _sinsp_sockinfo sinsp_sockinfo;

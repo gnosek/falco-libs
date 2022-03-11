@@ -48,7 +48,7 @@ typedef struct wh_t wh_t;
 #define gzwrite(F, B, S) fwrite(B, 1, S, F)
 #define gzread(F, B, S) fread(B, 1, S, F)
 #define gztell(F) ftell(F)
-#define gzerror(F, E) ({*E = ferror(F); "error reading file descriptor";})
+//#define gzerror(F, E) ({*E = ferror(F); "error reading file descriptor";})
 #define gzseek fseek
 #endif
 
@@ -503,7 +503,12 @@ static inline const char *scap_reader_error(scap_reader_t *r, int *errnum)
 	switch (r->m_type)
 	{
 		case RT_FILE:
+#ifdef USE_ZLIB
 			return gzerror(r->m_file, errnum);
+#else
+			*errnum = ferror(r->m_file);
+			return "error reading file descriptor";
+#endif
 		default:
 			ASSERT(false);
 			*errnum = -1;

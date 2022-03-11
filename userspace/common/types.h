@@ -16,13 +16,17 @@ limitations under the License.
 */
 
 #ifdef _WIN32
-#include <inttypes_win.h>
+//#include <inttypes_win.h>
+#include <stdint.h>
+#include <stdbool.h>
+#if 0
 #ifndef __cplusplus
 #define	bool int
 #define false 0
 #define true (!false)
 #define inline inline
 #endif /* __cplusplus */
+#endif /* 0 */
 #define snprintf _snprintf
 #else
 #define __STDC_FORMAT_MACROS
