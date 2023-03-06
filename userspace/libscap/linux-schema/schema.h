@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2021 The Falco Authors.
+Copyright (C) 2022 The Falco Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,26 +17,16 @@ limitations under the License.
 
 #pragma once
 
+#include "linux-schema/fdinfo.h"
+#include "linux-schema/ifinfo.h"
+#include "linux-schema/mountinfo.h"
+#include "linux-schema/threadinfo.h"
+#include "linux-schema/userinfo.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct scap scap_t;
-typedef struct scap_threadinfo scap_threadinfo;
-typedef struct scap_fdinfo scap_fdinfo;
-
-typedef void (*proc_entry_callback)(void* context,
-				    int64_t tid,
-				    scap_threadinfo* tinfo,
-				    scap_fdinfo* fdinfo);
-
-struct scap_proclist
-{
-	proc_entry_callback m_proc_callback;
-	void* m_proc_callback_context;
-
-	scap_threadinfo* m_proclist;
-};
 
 #ifdef __cplusplus
 }

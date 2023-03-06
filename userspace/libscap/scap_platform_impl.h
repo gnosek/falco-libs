@@ -33,8 +33,9 @@ extern "C" {
 
 #include "engine_handle.h"
 #include "scap_machine_info.h"
-#include "scap_procs.h"
 #include "scap_suppress.h"
+
+#include "linux-schema/threadinfo.h"
 
 struct scap_addrlist;
 struct scap_open_args;

@@ -25,8 +25,9 @@ limitations under the License.
 #endif
 
 #include "scap_limits.h"
-#include "scap_procs.h"
 #include "../../driver/ppm_events_public.h"
+
+#include "linux-schema/threadinfo.h"
 
 #ifdef __cplusplus
 extern "C"
