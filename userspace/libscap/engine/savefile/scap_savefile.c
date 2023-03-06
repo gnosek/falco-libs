@@ -59,8 +59,9 @@ inline static int read_block_header(struct savefile_engine* handle, struct scap_
 //
 // Load the machine info block
 //
-static int32_t scap_read_machine_info(scap_reader_t* r, scap_machine_info* machine_info, char* error, uint32_t block_length)
+static int32_t scap_read_machine_info(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform* platform, char* error)
 {
+	scap_machine_info* machine_info = &platform->m_machine_info;
 	//
 	// Read the section header block
 	//
@@ -77,7 +78,7 @@ static int32_t scap_read_machine_info(scap_reader_t* r, scap_machine_info* machi
 //
 // Parse a process list block
 //
-static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_proclist *proclist, char *error)
+static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform *platform, char *error)
 {
 	size_t readsize;
 	size_t subreadsize = 0;
@@ -88,6 +89,7 @@ static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint3
 	int32_t uth_status = SCAP_SUCCESS;
 	uint32_t toread;
 	int fseekres;
+	struct scap_proclist *proclist = &platform->m_proclist;
 
 	while(((int32_t)block_length - (int32_t)totreadsize) >= 4)
 	{
@@ -683,7 +685,7 @@ static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint3
 //
 // Parse an interface list block
 //
-static int32_t scap_read_iflist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, scap_addrlist** addrlist_p, char* error)
+static int32_t scap_read_iflist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform* platform, char* error)
 {
 	int32_t res = SCAP_SUCCESS;
 	size_t readsize;
@@ -696,6 +698,7 @@ static int32_t scap_read_iflist(scap_reader_t* r, uint32_t block_length, uint32_
 	uint32_t entrysize;
 	uint32_t ifcnt4 = 0;
 	uint32_t ifcnt6 = 0;
+	struct scap_addrlist **addrlist_p = &platform->m_addrlist;
 
 	//
 	// If the list of interfaces was already allocated for this handle (for example because this is
@@ -1046,7 +1049,7 @@ scap_read_iflist_error:
 //
 // Parse a user list block
 //
-static int32_t scap_read_userlist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, scap_userlist** userlist_p, char* error)
+static int32_t scap_read_userlist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform* platform, char* error)
 {
 	size_t readsize;
 	size_t totreadsize = 0;
@@ -1057,6 +1060,7 @@ static int32_t scap_read_userlist(scap_reader_t* r, uint32_t block_length, uint3
 	uint16_t stlen;
 	uint32_t toread;
 	int fseekres;
+	struct scap_userlist **userlist_p = &platform->m_userlist;
 
 	//
 	// If the list of users was already allocated for this handle (for example because this is
@@ -1515,7 +1519,7 @@ static uint32_t scap_fd_read_from_disk(scap_fdinfo *fdi, size_t *nbytes, uint32_
 //
 // Parse a process list block
 //
-static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_proclist* proclist, char* error)
+static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform* platform, char* error)
 {
 	size_t readsize;
 	size_t totreadsize = 0;
@@ -1527,6 +1531,7 @@ static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_
 	uint64_t tid;
 	int32_t uth_status = SCAP_SUCCESS;
 	uint32_t padding;
+	struct scap_proclist *proclist = &platform->m_proclist;
 
 	//
 	// Read the tid
@@ -1707,9 +1712,10 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 
 			if(scap_read_machine_info(
 				   r,
-				   &platform->m_machine_info,
-				   error,
-				   bh.block_total_length - sizeof(block_header) - 4) != SCAP_SUCCESS)
+				   bh.block_total_length - sizeof(block_header) - 4,
+				   bh.block_type,
+				   platform,
+				   error) != SCAP_SUCCESS)
 			{
 				return SCAP_FAILURE;
 			}
@@ -1727,7 +1733,7 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 		case PL_BLOCK_TYPE_V2_INT:
 		case PL_BLOCK_TYPE_V3_INT:
 
-			if(scap_read_proclist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, &platform->m_proclist, error) != SCAP_SUCCESS)
+			if(scap_read_proclist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, platform, error) != SCAP_SUCCESS)
 			{
 				return SCAP_FAILURE;
 			}
@@ -1736,7 +1742,7 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 		case FDL_BLOCK_TYPE_INT:
 		case FDL_BLOCK_TYPE_V2:
 
-			if(scap_read_fdlist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, &platform->m_proclist, error) != SCAP_SUCCESS)
+			if(scap_read_fdlist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, platform, error) != SCAP_SUCCESS)
 			{
 				return SCAP_FAILURE;
 			}
@@ -1758,7 +1764,7 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 		case IL_BLOCK_TYPE_INT:
 		case IL_BLOCK_TYPE_V2:
 
-			if(scap_read_iflist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, &platform->m_addrlist, error) != SCAP_SUCCESS)
+			if(scap_read_iflist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, platform, error) != SCAP_SUCCESS)
 			{
 				return SCAP_FAILURE;
 			}
@@ -1767,7 +1773,7 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 		case UL_BLOCK_TYPE_INT:
 		case UL_BLOCK_TYPE_V2:
 
-			if(scap_read_userlist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, &platform->m_userlist, error) != SCAP_SUCCESS)
+			if(scap_read_userlist(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, platform, error) != SCAP_SUCCESS)
 			{
 				return SCAP_FAILURE;
 			}
