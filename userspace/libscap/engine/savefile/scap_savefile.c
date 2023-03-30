@@ -2044,6 +2044,8 @@ static int32_t
 scap_savefile_init_platform(struct scap_platform *platform, char *lasterr, struct scap_engine_handle engine,
 			    struct scap_open_args *oargs)
 {
+	platform->m_machine_info.num_cpus = (uint32_t)-1;
+
 	return SCAP_SUCCESS;
 }
 
@@ -2158,7 +2160,7 @@ static int32_t init(struct scap* main_handle, struct scap_open_args* oargs)
 	res = scap_read_init(
 		handle,
 		reader,
-		&main_handle->m_machine_info,
+		&platform->m_machine_info,
 		&platform->m_proclist,
 		&platform->m_addrlist,
 		&platform->m_userlist,
@@ -2226,7 +2228,7 @@ static int32_t scap_savefile_restart_capture(scap_t* handle)
 	if((res = scap_read_init(
 		engine,
 		engine->m_reader,
-		&handle->m_machine_info,
+		&platform->m_machine_info,
 		&platform->m_proclist,
 		&platform->m_addrlist,
 		&platform->m_userlist,
