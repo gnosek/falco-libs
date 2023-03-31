@@ -72,6 +72,13 @@ static int32_t scap_read_machine_info(scap_reader_t* r, uint32_t block_length, u
 		return SCAP_FAILURE;
 	}
 
+	if(!scap_machine_info_os_arch_present(machine_info))
+	{
+		// a reasonable assumption for captures without the platform
+		machine_info->flags |= SCAP_OS_LINUX;
+		machine_info->flags |= SCAP_ARCH_X64;
+	}
+
 	return SCAP_SUCCESS;
 }
 

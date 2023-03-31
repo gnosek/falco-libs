@@ -226,6 +226,18 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	platform->m_machine_info.reserved3 = 0;
 	platform->m_machine_info.reserved4 = 0;
 
+	platform->m_machine_info.flags |= SCAP_OS_LINUX;
+#if defined(__amd64__)
+	platform->m_machine_info.flags |= SCAP_ARCH_X64;
+#elif defined(__aarch64__)
+	platform->m_machine_info.flags |= SCAP_ARCH_AARCH64;
+#elif defined(__i386__)
+	platform->m_machine_info.flags |= SCAP_ARCH_I386;
+#else
+#warning "Unsupported architecture, please define a SCAP_ARCH_* flag for it"
+	ASSERT(false);
+#endif
+
 	linux_platform->m_proc_scan_timeout_ms = oargs->proc_scan_timeout_ms;
 	linux_platform->m_proc_scan_log_interval_ms = oargs->proc_scan_log_interval_ms;
 	linux_platform->m_debug_log_fn = oargs->debug_log_fn;
