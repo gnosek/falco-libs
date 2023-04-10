@@ -15,30 +15,9 @@ limitations under the License.
 
 */
 
-#pragma once
+#include "linux-schema/schema.h"
 
-#include "linux-schema/fdinfo.h"
-#include "linux-schema/ifinfo.h"
-#include "linux-schema/mountinfo.h"
-#include "linux-schema/threadinfo.h"
-#include "linux-schema/userinfo.h"
-
-struct scap_platform_storage_meta;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct scap_linux_storage
-{
-	struct scap_addrlist *m_addrlist;
-	struct scap_userlist *m_userlist;
-	struct scap_suppress m_suppress;
-	struct scap_proclist m_proclist;
+const struct scap_platform_storage_meta scap_linux_storage_meta = {
+	.storage_layout = PLATFORM_STORAGE_LINUX,
+	.storage_size = sizeof(struct scap_linux_storage_schema)
 };
-
-extern const struct scap_platform_storage_meta scap_linux_storage_meta;
-
-#ifdef __cplusplus
-}
-#endif

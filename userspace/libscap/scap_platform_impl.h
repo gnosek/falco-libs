@@ -97,10 +97,6 @@ struct scap_platform_vtable
 struct scap_platform
 {
 	const struct scap_platform_vtable* m_vtable;
-	struct scap_addrlist *m_addrlist;
-	struct scap_userlist *m_userlist;
-	struct scap_suppress m_suppress;
-	struct scap_proclist m_proclist;
 
 	scap_agent_info m_agent_info;
 	scap_machine_info m_machine_info;

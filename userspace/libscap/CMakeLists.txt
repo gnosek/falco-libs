@@ -130,6 +130,7 @@ add_library(scap_event_schema
 		../../driver/flags_table.c
 		../../driver/syscall_table64.c
 		linux/scap_ppm_sc.c
+		linux-schema/schema.c
         )
 
 target_link_libraries(scap scap_event_schema)
