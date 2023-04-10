@@ -55,16 +55,6 @@ if (DEFINED SCAP_BPF_PROGS_TAIL_CALLED_MAX)
 	add_definitions(-DBPF_PROGS_TAIL_CALLED_MAX=${SCAP_BPF_PROGS_TAIL_CALLED_MAX})
 endif()
 
-list(APPEND targetfiles
-	scap.c
-	scap_fds.c
-	scap_savefile.c
-	scap_platform.c
-	scap_platform_api.c
-	scap_procs.c
-	scap_userlist.c
-	scap_suppress.c)
-
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}) # temporary
     include_directories(${PROJECT_BINARY_DIR}/driver/src)
@@ -73,7 +63,14 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(scap
-	${targetfiles})
+	scap.c
+	scap_fds.c
+	scap_savefile.c
+	scap_platform.c
+	scap_platform_api.c
+	scap_procs.c
+	scap_userlist.c
+	scap_suppress.c)
 
 set_scap_target_properties(scap)
 
