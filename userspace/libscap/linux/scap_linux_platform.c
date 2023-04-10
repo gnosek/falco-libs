@@ -281,6 +281,16 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	return SCAP_SUCCESS;
 }
 
+const struct scap_platform_storage_meta* scap_linux_get_storage_meta(struct scap_platform* platform)
+{
+	return NULL;
+}
+
+const struct void* scap_linux_get_storage(struct scap_platform* platform)
+{
+	return NULL;
+}
+
 static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
 	.refresh_addr_list = scap_linux_create_iflist,
@@ -290,6 +300,8 @@ static const struct scap_platform_vtable scap_linux_platform = {
 	.is_thread_alive = scap_linux_is_thread_alive,
 	.get_global_pid = scap_linux_getpid_global,
 	.get_threadlist = scap_linux_get_threadlist,
+	.get_storage_meta = scap_linux_get_storage_meta,
+	.get_storage = scap_linux_get_storage,
 	.close_platform = scap_linux_close_platform,
 	.free_platform = scap_linux_free_platform,
 };

@@ -2062,6 +2062,16 @@ scap_savefile_init_platform(struct scap_platform *platform, char *lasterr, struc
 	return SCAP_SUCCESS;
 }
 
+const struct scap_platform_storage_meta* scap_savefile_get_storage_meta(struct scap_platform* platform)
+{
+	return NULL;
+}
+
+const struct void* scap_savefile_get_storage(struct scap_platform* platform)
+{
+	return NULL;
+}
+
 static int32_t scap_savefile_close_platform(struct scap_platform* platform)
 {
 	return SCAP_SUCCESS;
@@ -2080,6 +2090,8 @@ bool scap_savefile_is_thread_alive(struct scap_platform* platform, int64_t pid, 
 static const struct scap_platform_vtable scap_savefile_platform_vtable = {
 	.init_platform = scap_savefile_init_platform,
 	.is_thread_alive = scap_savefile_is_thread_alive,
+	.get_storage_meta = scap_savefile_get_storage_meta,
+	.get_storage = scap_savefile_get_storage,
 	.close_platform = scap_savefile_close_platform,
 	.free_platform = scap_savefile_free_platform,
 };

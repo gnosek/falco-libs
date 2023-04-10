@@ -44,6 +44,18 @@ struct scap_proclist;
 struct scap_userlist;
 struct ppm_proclist_info;
 
+enum scap_platform_storage_layout
+{
+	PLATFORM_STORAGE_NONE = 0,
+	PLATFORM_STORAGE_LINUX = 1,
+};
+
+struct scap_platform_storage_meta
+{
+	enum scap_platform_storage_layout storage_layout;
+	size_t storage_size;
+}
+
 // a method table for platform-specific operations
 struct scap_platform_vtable
 {
@@ -65,6 +77,9 @@ struct scap_platform_vtable
 	bool (*is_thread_alive)(struct scap_platform*, int64_t pid, int64_t tid, const char* comm);
 	int32_t (*get_global_pid)(struct scap_platform*, int64_t *pid, char *error);
 	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
+
+	const struct scap_platform_storage_meta* (*get_storage_meta)(struct scap_platform* platform);
+	const struct void* (*get_storage)(struct scap_platform* platform);
 
 	// close the platform structure
 	// clean up all data, make it ready for another call to `init_platform`

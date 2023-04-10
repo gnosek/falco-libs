@@ -115,6 +115,16 @@ static int32_t gvisor_get_threadlist(struct scap_platform* platform, struct ppm_
 	return SCAP_SUCCESS;
 }
 
+const struct scap_platform_storage_meta* scap_gvisor_get_storage_meta(struct scap_platform* platform)
+{
+	return NULL;
+}
+
+const struct void* scap_gvisor_get_storage(struct scap_platform* platform)
+{
+	return NULL;
+}
+
 static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.init_platform = scap_gvisor_init_platform,
 	.refresh_addr_list = NULL,
@@ -124,6 +134,8 @@ static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.is_thread_alive = scap_gvisor_is_thread_alive,
 	.get_global_pid = NULL,
 	.get_threadlist = gvisor_get_threadlist,
+	.get_storage_meta = scap_gvisor_get_storage_meta,
+	.get_storage = scap_gvisor_get_storage,
 
 	.close_platform = scap_gvisor_close_platform,
 	.free_platform = scap_gvisor_free_platform,
