@@ -29,9 +29,8 @@ limitations under the License.
 //
 // Allocate and return the list of users on this system
 //
-int32_t scap_linux_create_userlist(struct scap_platform* platform)
+int32_t scap_linux_create_userlist(struct scap_linux_storage* storage, char* error)
 {
-	struct scap_linux_platform* handle = (struct scap_linux_platform*)platform;
 	bool file_lookup = false;
 	FILE *f = NULL;
 	char filename[SCAP_MAX_PATH_SIZE];
@@ -45,31 +44,31 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	// If the list of users was already allocated for this handle (for example because this is
 	// not the first user list block), free it
 	//
-	if(platform->m_userlist != NULL)
+	if(storage->m_userlist != NULL)
 	{
-		scap_free_userlist(platform->m_userlist);
-		platform->m_userlist = NULL;
+		scap_free_userlist(storage->m_userlist);
+		storage->m_userlist = NULL;
 	}
 
 	//
 	// Memory allocations
 	//
-	platform->m_userlist = (scap_userlist*)malloc(sizeof(scap_userlist));
-	if(platform->m_userlist == NULL)
+	storage->m_userlist = (scap_userlist*)malloc(sizeof(scap_userlist));
+	if(storage->m_userlist == NULL)
 	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(1)");
+		snprintf(error,	SCAP_LASTERR_SIZE, "userlist allocation failed(1)");
 		return SCAP_FAILURE;
 	}
-	userlist = platform->m_userlist;
+	userlist = storage->m_userlist;
 
 	userlist->totsavelen = 0;
 	usercnt = 32; // initial user count; will be realloc'd if needed
 	userlist->users = (scap_userinfo*)malloc(usercnt * sizeof(scap_userinfo));
 	if(userlist->users == NULL)
 	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
+		snprintf(error,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
 		free(userlist);
-		platform->m_userlist = NULL;
+		storage->m_userlist = NULL;
 		return SCAP_FAILURE;
 	}
 
@@ -77,10 +76,10 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	userlist->groups = (scap_groupinfo*)malloc(grpcnt * sizeof(scap_groupinfo));
 	if(userlist->groups == NULL)
 	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
+		snprintf(error,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
 		free(userlist->users);
 		free(userlist);
-		platform->m_userlist = NULL;
+		storage->m_userlist = NULL;
 		return SCAP_FAILURE;
 	}
 
@@ -106,7 +105,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			storage->m_userlist = NULL;
 			return SCAP_SUCCESS;
 		}
 	}
@@ -127,11 +126,11 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			}
 			else
 			{
-				snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
+				snprintf(error,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
 				free(userlist->users);
 				free(userlist->groups);
 				free(userlist);
-				platform->m_userlist = NULL;
+				storage->m_userlist = NULL;
 				if(file_lookup)
 				{
 					fclose(f);
@@ -200,11 +199,11 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		scap_userinfo *reduced_userinfos = realloc(userlist->users, useridx * sizeof(scap_userinfo));
 		if(reduced_userinfos == NULL)
 		{
-			snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation while reducing array size");
+			snprintf(error,	SCAP_LASTERR_SIZE, "userlist allocation while reducing array size");
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			storage->m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 		userlist->users = reduced_userinfos;
@@ -218,11 +217,11 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		if(f == NULL)
 		{
 			// if we reached this point we had passwd but we don't have group
-			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "failed to open %s", filename);
+			snprintf(error, SCAP_LASTERR_SIZE, "failed to open %s", filename);
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			storage->m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 	}
@@ -243,11 +242,11 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			}
 			else
 			{
-				snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
+				snprintf(error,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
 				free(userlist->users);
 				free(userlist->groups);
 				free(userlist);
-				platform->m_userlist = NULL;
+				storage->m_userlist = NULL;
 				if(file_lookup)
 				{
 					fclose(f);
@@ -293,11 +292,11 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		scap_groupinfo *reduced_groups = realloc(userlist->groups, grpidx * sizeof(scap_groupinfo));
 		if(reduced_groups == NULL)
 		{
-			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
+			snprintf(error, SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			storage->m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 		userlist->groups = reduced_groups;

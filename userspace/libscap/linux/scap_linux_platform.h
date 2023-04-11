@@ -28,6 +28,7 @@ extern "C" {
 #include "scap_platform_impl.h"
 #include "scap_platform.h"
 #include "engine_handle.h"
+#include "linux-schema/schema.h"
 
 struct scap_mountinfo;
 
@@ -98,6 +99,8 @@ struct scap_linux_platform
 
 	struct scap_engine_handle m_engine;
 	const struct scap_linux_vtable* m_linux_vtable;
+
+	struct scap_linux_storage m_storage;
 };
 
 struct scap_platform* scap_linux_alloc_platform();
