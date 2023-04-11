@@ -23,6 +23,8 @@ limitations under the License.
 #include "linux-schema/threadinfo.h"
 #include "linux-schema/userinfo.h"
 
+#include "scap_suppress.h"
+
 struct scap_platform_storage_meta;
 
 #ifdef __cplusplus

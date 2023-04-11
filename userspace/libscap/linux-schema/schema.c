@@ -17,7 +17,9 @@ limitations under the License.
 
 #include "linux-schema/schema.h"
 
+#include "scap_platform_impl.h"
+
 const struct scap_platform_storage_meta scap_linux_storage_meta = {
 	.storage_layout = PLATFORM_STORAGE_LINUX,
-	.storage_size = sizeof(struct scap_linux_storage_schema)
+	.storage_size = sizeof(struct scap_linux_storage)
 };

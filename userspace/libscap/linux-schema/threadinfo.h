@@ -17,6 +17,7 @@ limitations under the License.
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "scap_const.h"

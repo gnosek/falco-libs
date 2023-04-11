@@ -33,9 +33,8 @@ limitations under the License.
 //
 // Allocate and return the list of interfaces on this system
 //
-int32_t scap_linux_create_iflist(struct scap_platform* platform)
+int32_t scap_linux_create_iflist(struct scap_linux_storage* storage, char* error)
 {
-	struct scap_linux_platform* handle = (struct scap_linux_platform*)platform;
 	struct ifaddrs *interfaceArray = NULL, *tempIfAddr = NULL;
 	void *tempAddrPtr = NULL;
 	int rc = 0;
@@ -47,16 +46,16 @@ int32_t scap_linux_create_iflist(struct scap_platform* platform)
 	// If the list of interfaces was already allocated for this handle (for example because this is
 	// not the first interface list block), free it
 	//
-	if(platform->m_addrlist != NULL)
+	if(storage->m_addrlist != NULL)
 	{
-		scap_free_iflist(platform->m_addrlist);
-		platform->m_addrlist = NULL;
+		scap_free_iflist(storage->m_addrlist);
+		storage->m_addrlist = NULL;
 	}
 
 	rc = getifaddrs(&interfaceArray);  /* retrieve the current interfaces */
 	if(rc != 0)
 	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "getifaddrs failed");
+		snprintf(error,	SCAP_LASTERR_SIZE, "getifaddrs failed");
 		return SCAP_FAILURE;
 	}
 
@@ -84,20 +83,20 @@ int32_t scap_linux_create_iflist(struct scap_platform* platform)
 	//
 	// Allocate the handle and the arrays
 	//
-	platform->m_addrlist = (scap_addrlist*)malloc(sizeof(scap_addrlist));
-	if(!platform->m_addrlist)
+	storage->m_addrlist = (scap_addrlist*)malloc(sizeof(scap_addrlist));
+	if(!storage->m_addrlist)
 	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(1)");
+		snprintf(error,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(1)");
 		return SCAP_FAILURE;
 	}
-	addrlist = platform->m_addrlist;
+	addrlist = storage->m_addrlist;
 
 	if(ifcnt4 != 0)
 	{
 		addrlist->v4list = (scap_ifinfo_ipv4*)malloc(ifcnt4 * sizeof(scap_ifinfo_ipv4));
 		if(!addrlist->v4list)
 		{
-			snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(2)");
+			snprintf(error,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(2)");
 			free(addrlist);
 			return SCAP_FAILURE;
 		}
@@ -112,7 +111,7 @@ int32_t scap_linux_create_iflist(struct scap_platform* platform)
 		addrlist->v6list = (scap_ifinfo_ipv6*)malloc(ifcnt6 * sizeof(scap_ifinfo_ipv6));
 		if(!addrlist->v6list)
 		{
-			snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(3)");
+			snprintf(error,	SCAP_LASTERR_SIZE, "getifaddrs allocation failed(3)");
 			if(addrlist->v4list)
 			{
 				free(addrlist->v4list);

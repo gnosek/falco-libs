@@ -249,7 +249,7 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 		return scap_errprintf(lasterr, errno, "failed to fetch cgroup version information");
 	}
 
-	rc = scap_linux_create_iflist(platform);
+	rc = scap_linux_create_iflist(&linux_platform->m_storage, lasterr);
 	if(rc != SCAP_SUCCESS)
 	{
 		scap_linux_free_platform(platform);
@@ -258,7 +258,7 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 
 	if(oargs->import_users)
 	{
-		rc = scap_linux_create_userlist(platform);
+		rc = scap_linux_create_userlist(&linux_platform->m_storage, lasterr);
 		if(rc != SCAP_SUCCESS)
 		{
 			scap_linux_free_platform(platform);
@@ -286,7 +286,7 @@ const struct scap_platform_storage_meta* scap_linux_get_storage_meta(struct scap
 	return NULL;
 }
 
-const struct void* scap_linux_get_storage(struct scap_platform* platform)
+const void* scap_linux_get_storage(struct scap_platform* platform)
 {
 	return NULL;
 }
