@@ -98,6 +98,7 @@ static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 		return SCAP_FAILURE;
 	}
 
+#if 0
 	return scap_proc_scan_vtable(
 		main_handle->m_lasterr,
 		&main_handle->m_platform->m_proclist,
@@ -105,6 +106,10 @@ static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 		engine->m_data->threads,
 		engine,
 		get_fdinfos);
+#else
+#warning "TODO make a platform for this?"
+	return SCAP_SUCCESS;
+#endif
 }
 
 const struct scap_vtable scap_test_input_engine = {
