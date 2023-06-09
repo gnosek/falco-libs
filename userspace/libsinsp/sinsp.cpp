@@ -43,6 +43,7 @@ limitations under the License.
 #ifndef CYGWING_AGENT
 #ifndef MINIMAL_BUILD
 #include "k8s_api_handler.h"
+#include "scap-int.h"
 #endif // MINIMAL_BUILD
 #ifdef HAS_CAPTURE
 #ifndef MINIMAL_BUILD
@@ -468,8 +469,6 @@ void sinsp::open_common(scap_open_args* oargs)
 	// We need to subscribe to container manager notifiers before
 	// scap starts scanning proc.
 	m_usergroup_manager.subscribe_container_mgr();
-
-	add_suppressed_comms(oargs);
 
 	oargs->debug_log_fn = &sinsp_scap_debug_log_fn;
 	oargs->proc_scan_timeout_ms = m_proc_scan_timeout_ms;
@@ -940,6 +939,12 @@ void sinsp::on_new_entry_from_proc(void* context,
 		}
 	}
 
+	if(m_suppress.check_suppressed_comm(tid, tinfo->comm))
+	{
+		free(tinfo);
+		scap_fd_free_table(&fdinfo);
+	}
+
 	//
 	// Add the thread or FD
 	//
@@ -1260,6 +1265,11 @@ int32_t sinsp::next(OUT sinsp_evt **puevt)
 			// If no last event was saved, invoke
 			// the actual scap_next
 			res = scap_next(m_h, &(evt->m_pevt), &(evt->m_cpuid));
+		}
+
+		if(res == SCAP_SUCCESS)
+		{
+			res = m_suppress.process_event(evt->m_pevt);
 		}
 
 		if(res != SCAP_SUCCESS)
@@ -1605,42 +1615,13 @@ void sinsp::remove_thread(int64_t tid, bool force)
 
 bool sinsp::suppress_events_comm(const std::string &comm)
 {
-	if(m_suppressed_comms.size() >= SCAP_MAX_SUPPRESSED_COMMS)
-	{
-		return false;
-	}
-
-	m_suppressed_comms.insert(comm);
-
-	if(m_h)
-	{
-		if (scap_suppress_events_comm(m_h, comm.c_str()) != SCAP_SUCCESS)
-		{
-			return false;
-		}
-	}
-
+	m_suppress.suppress_comm(comm);
 	return true;
 }
 
 bool sinsp::check_suppressed(int64_t tid)
 {
-	return scap_check_suppressed_tid(m_h, tid);
-}
-
-void sinsp::add_suppressed_comms(scap_open_args* oargs)
-{
-	uint32_t i = 0;
-
-	// Note--using direct pointers to values in
-	// m_suppressed_comms. This is ok given that a scap_open()
-	// will immediately follow after which the args won't be used.
-	for(auto &comm : m_suppressed_comms)
-	{
-		oargs->suppressed_comms[i++] = comm.c_str();
-	}
-
-	oargs->suppressed_comms[i++] = NULL;
+	return m_suppress.is_suppressed_tid(tid);
 }
 
 void sinsp::set_docker_socket_path(std::string socket_path)

@@ -101,6 +101,7 @@ limitations under the License.
 #include "include/sinsp_external_processor.h"
 #include "plugin.h"
 #include "gvisor_config.h"
+#include "sinsp_suppress.h"
 class sinsp_partial_transaction;
 class sinsp_parser;
 class sinsp_analyzer;
@@ -1062,8 +1063,6 @@ private:
 		scap_fseek(m_h, filepos);
 	}
 
-	void add_suppressed_comms(scap_open_args *oargs);
-
 	bool increased_snaplen_port_range_set() const
 	{
 		return m_increased_snaplen_port_range.range_start > 0 &&
@@ -1292,6 +1291,9 @@ public:
 	// Any thread with a comm in this set will not have its events
 	// returned in sinsp::next()
 	std::set<std::string> m_suppressed_comms;
+
+	libsinsp::sinsp_suppress m_suppress;
+
 	//
 	// Internal manager for plugins
 	//

@@ -30,7 +30,6 @@ limitations under the License.
 
 #include "settings.h"
 #include "scap_assert.h"
-#include "scap_suppress.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +42,6 @@ struct scap
 {
 	const struct scap_vtable *m_vtable;
 	struct scap_engine_handle m_engine;
-	struct scap_suppress m_suppress;
 
 	scap_mode_t m_mode;
 	char m_lasterr[SCAP_LASTERR_SIZE];
@@ -110,15 +108,6 @@ int32_t scap_proc_fill_cgroups(char* error, int cgroup_version, struct scap_thre
 int32_t scap_proc_fill_pidns_start_ts(char* error, struct scap_threadinfo* tinfo, const char* procdirname);
 
 bool scap_alloc_proclist_info(struct ppm_proclist_info **proclist_p, uint32_t n_entries, char* error);
-
-// Determine whether or not the provided event should be suppressed,
-// based on its event type and parameters. May update the set of
-// suppressed tids as a side-effect.
-//
-// Returns SCAP_FAILURE if we tried to add the tid to the suppressed
-// tid set, but it could *not* be added, SCAP_SUCCESS otherwise.
-int32_t scap_check_suppressed(struct scap_suppress *suppress, scap_evt *pevent,
-			      bool *suppressed, char *error);
 
 int32_t scap_procfs_get_threadlist(struct scap_engine_handle engine, struct ppm_proclist_info **procinfo_p, char *lasterr);
 int32_t scap_os_getpid_global(struct scap_engine_handle engine, int64_t *pid, char* error);
