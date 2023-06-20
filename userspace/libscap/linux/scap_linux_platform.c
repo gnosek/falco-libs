@@ -396,6 +396,7 @@ const char* scap_get_host_root()
 	return env_str;
 }
 
+// wtf the absolutely wrong place for this
 bool scap_alloc_proclist_info(struct ppm_proclist_info **proclist_p, uint32_t n_entries, char* error)
 {
 	uint32_t memsize;
