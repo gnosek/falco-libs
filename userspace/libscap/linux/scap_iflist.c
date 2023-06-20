@@ -17,18 +17,12 @@ limitations under the License.
 
 #include <stdio.h>
 
-#include "scap.h"
-#include "scap-int.h"
 #include "scap_linux_platform.h"
 #include "strlcpy.h"
 
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
-#include <net/if.h>
 #include <ifaddrs.h>
-#include <errno.h>
 
 //
 // Allocate and return the list of interfaces on this system
