@@ -137,8 +137,6 @@ typedef struct scap_stats
 	uint64_t n_drops_pf; ///< Number of dropped events caused by invalid memory access.
 	uint64_t n_drops_bug; ///< Number of dropped events caused by an invalid condition in the kernel instrumentation.
 	uint64_t n_preemptions; ///< Number of preemptions.
-	uint64_t n_suppressed; ///< Number of events skipped due to the tid being in a set of suppressed tids.
-	uint64_t n_tids_suppressed; ///< Number of threads currently being suppressed.
 }scap_stats;
 
 //
@@ -534,24 +532,6 @@ const char* scap_get_host_root();
   \brief Check if the current engine name matches the provided engine_name
 */
 bool scap_check_current_engine(scap_t *handle, const char* engine_name);
-
-/*!
-  \brief stop returning events for all subsequently spawned
-  processes with the provided comm, as well as their children.
-  This includes fork()/clone()ed processes that might later
-  exec to a different comm.
-
-  returns SCAP_FAILURE if there are already MAX_SUPPRESSED_COMMS comm
-  values, SCAP_SUCCESS otherwise.
-*/
-
-int32_t scap_suppress_events_comm(scap_t* handle, const char *comm);
-
-/*!
-  \brief return whether the provided tid is currently being suppressed.
-*/
-
-bool scap_check_suppressed_tid(scap_t *handle, int64_t tid);
 
 /*!
   \brief Get (at most) n parameters for this event.

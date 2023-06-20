@@ -17,19 +17,16 @@ limitations under the License.
 
 #include "scap_platform_impl.h"
 #include "scap_platform.h"
-#include "scap_suppress.h"
 
 #include "scap.h"
 #include "scap-int.h"
 
 static int32_t scap_generic_init_platform(struct scap_platform* platform, char* lasterr, struct scap_open_args* oargs)
 {
-	return scap_suppress_init(&platform->m_suppress, oargs->suppressed_comms);
 }
 
 static int32_t scap_generic_close_platform(struct scap_platform* platform)
 {
-	scap_suppress_close(&platform->m_suppress);
 	return SCAP_SUCCESS;
 }
 

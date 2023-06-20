@@ -30,7 +30,6 @@ limitations under the License.
 
 #include "settings.h"
 #include "scap_assert.h"
-#include "scap_suppress.h"
 
 #ifdef __linux__
 #include "linux-schema/event_schema.h"
@@ -65,15 +64,6 @@ struct scap
 int32_t scap_proc_fill_cgroups(char* error, int cgroup_version, struct scap_threadinfo* tinfo, const char* procdirname);
 
 int32_t scap_proc_fill_pidns_start_ts(char* error, struct scap_threadinfo* tinfo, const char* procdirname);
-
-// Determine whether or not the provided event should be suppressed,
-// based on its event type and parameters. May update the set of
-// suppressed tids as a side-effect.
-//
-// Returns SCAP_FAILURE if we tried to add the tid to the suppressed
-// tid set, but it could *not* be added, SCAP_SUCCESS otherwise.
-int32_t scap_check_suppressed(struct scap_suppress *suppress, scap_evt *pevent,
-			      bool *suppressed, char *error);
 
 //
 // Retrieve machine info.

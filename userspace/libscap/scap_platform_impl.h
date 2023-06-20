@@ -33,7 +33,6 @@ extern "C" {
 
 #include "engine_handle.h"
 #include "scap_machine_info.h"
-#include "scap_suppress.h"
 
 #include "linux-schema/schema.h"
 
@@ -97,7 +96,6 @@ struct scap_platform_vtable
 struct scap_platform
 {
 	const struct scap_platform_vtable* m_vtable;
-	struct scap_suppress m_suppress;
 
 	scap_machine_info m_machine_info;
 	struct ppm_proclist_info* m_driver_procinfo;
