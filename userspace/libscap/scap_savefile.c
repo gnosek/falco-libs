@@ -1107,14 +1107,17 @@ static int32_t scap_setup_dump(scap_dumper_t* d, struct scap_platform *platform,
 	return SCAP_SUCCESS;
 }
 
-static inline int32_t scap_dump_rescan_proc(scap_t *handle)
+static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
 {
 	int32_t ret = SCAP_SUCCESS;
 #ifdef __linux__
-	proc_entry_callback tcb = handle->m_platform->m_proclist.m_proc_callback;
-	handle->m_platform->m_proclist.m_proc_callback = NULL;
-	ret = scap_refresh_proc_table(handle);
-	handle->m_platform->m_proclist.m_proc_callback = tcb;
+	if(platform && platform->m_vtable && platform->m_vtable->refresh_proc_table)
+	{
+		proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
+		platform->m_proclist.m_proc_callback = NULL;
+		ret = platform->m_vtable->refresh_proc_table(platform, &platform->m_proclist);
+		platform->m_proclist.m_proc_callback = tcb;
+	}
 #endif
 	return ret;
 }
@@ -1201,7 +1204,7 @@ scap_dumper_t *scap_dump_open(scap_t *handle, const char *fname, compression_mod
 	//
 	if(handle->m_mode != SCAP_MODE_CAPTURE && !skip_proc_scan)
 	{
-		if(scap_dump_rescan_proc(handle) != SCAP_SUCCESS)
+		if(scap_dump_rescan_proc(handle->m_platform) != SCAP_SUCCESS)
 		{
 			return NULL;
 		}
@@ -1253,7 +1256,7 @@ scap_dumper_t* scap_dump_open_fd(scap_t *handle, int fd, compression_mode compre
 	//
 	if(handle->m_mode != SCAP_MODE_CAPTURE && !skip_proc_scan)
 	{
-		if(scap_dump_rescan_proc(handle) != SCAP_SUCCESS)
+		if(scap_dump_rescan_proc(handle->m_platform) != SCAP_SUCCESS)
 		{
 			return NULL;
 		}
