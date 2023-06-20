@@ -555,52 +555,6 @@ int32_t scap_disable_dynamic_snaplen(scap_t* handle)
 	return SCAP_FAILURE;
 }
 
-const char* scap_get_host_root()
-{
-	char* p = getenv(SCAP_HOST_ROOT_ENV_VAR_NAME);
-	static char env_str[SCAP_MAX_PATH_SIZE + 1];
-	static bool inited = false;
-	if (! inited) {
-		strlcpy(env_str, p ? p : "", sizeof(env_str));
-		inited = true;
-	}
-
-	return env_str;
-}
-
-bool scap_alloc_proclist_info(struct ppm_proclist_info **proclist_p, uint32_t n_entries, char* error)
-{
-	uint32_t memsize;
-
-	if(n_entries >= SCAP_DRIVER_PROCINFO_MAX_SIZE)
-	{
-		snprintf(error, SCAP_LASTERR_SIZE, "driver process list too big");
-		return false;
-	}
-
-	memsize = sizeof(struct ppm_proclist_info) +
-		sizeof(struct ppm_proc_info) * n_entries;
-
-	struct ppm_proclist_info *procinfo = (struct ppm_proclist_info*) realloc(*proclist_p, memsize);
-	if(procinfo == NULL)
-	{
-		free(*proclist_p);
-		*proclist_p = NULL;
-		snprintf(error, SCAP_LASTERR_SIZE, "driver process list allocation error");
-		return false;
-	}
-
-	if(*proclist_p == NULL)
-	{
-		procinfo->n_entries = 0;
-	}
-
-	procinfo->max_entries = n_entries;
-	*proclist_p = procinfo;
-
-	return true;
-}
-
 uint64_t scap_ftell(scap_t *handle)
 {
 	if(handle->m_vtable->savefile_ops)

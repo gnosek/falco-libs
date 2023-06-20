@@ -33,8 +33,9 @@ limitations under the License.
 #include "strlcpy.h"
 #include "strerror.h"
 #include "../../driver/ppm_tp.h"
+#include "scap_linux.h"
 
-//#define NDEBUG
+// #define NDEBUG
 #include <assert.h>
 
 static const char * const kmod_kernel_counters_stats_names[] = {

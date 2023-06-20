@@ -74,6 +74,10 @@ typedef struct ppm_evt_hdr scap_evt;
 #include "scap_open.h"
 #include "scap_machine_info.h"
 
+#ifdef __linux__
+#include "linux/scap_linux.h"
+#endif
+
 /* Include engine-specific params. */
 #include <engine/bpf/bpf_public.h>
 #include <engine/gvisor/gvisor_public.h>
@@ -106,18 +110,6 @@ typedef struct ppm_evt_hdr scap_evt;
 // This is the dimension we used before introducing the variable buffer size.
 //
 #define DEFAULT_DRIVER_BUFFER_BYTES_DIM 8 * 1024 * 1024
-
-//
-// Value for proc_scan_timeout_ms field in scap_open_args, to specify
-// that scan should run to completion without any timeout imposed
-//
-#define SCAP_PROC_SCAN_TIMEOUT_NONE 0
-
-//
-// Value for proc_scan_log_interval_ms field in scap_open_args, to specify
-// that no progress logging should be performed
-//
-#define SCAP_PROC_SCAN_LOG_NONE 0
 
 /*!
   \brief Statistics about an in progress capture

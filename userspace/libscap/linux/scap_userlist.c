@@ -20,8 +20,6 @@ limitations under the License.
 #endif
 
 #include <stdio.h>
-#include "scap.h"
-#include "scap-int.h"
 #include "scap_linux_platform.h"
 #include "strlcpy.h"
 

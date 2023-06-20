@@ -15,9 +15,16 @@ limitations under the License.
 
 */
 
-#include "scap.h"
-#include "scap-int.h"
 #include <string.h>
+#include "ppm_events_public.h"
+#include "scap_const.h"
+#include "scap_linux.h"
+#include "linux-schema/event_schema.h"
+
+#define IN
+#define OUT
+
+int scap_get_ppm_sc_from_events(IN const uint8_t events_array[PPM_EVENT_MAX], OUT uint8_t ppm_sc_array[PPM_SC_MAX]);
 
 /*
  * When adding a new event, a new line should be added with the list of ppm_sc codes mapping that event.

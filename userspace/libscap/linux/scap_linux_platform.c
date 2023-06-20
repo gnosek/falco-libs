@@ -17,14 +17,18 @@ limitations under the License.
 
 #include "scap_linux_platform.h"
 
-#include "scap.h"
-#include "scap-int.h"
-#include "scap_machine_info.h"
+#include "ppm_events_public.h"
+#include "scap_assert.h"
+#include "scap_linux.h"
 #include "scap_linux_int.h"
+#include "scap_machine_info.h"
+#include "scap_open.h"
+#include "scap_stats_v2.h"
 #include "strerror.h"
 
 #include "compat/misc.h"
 #include "linux-schema/linux_savefile_write.h"
+#include "strlcpy.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -139,7 +143,7 @@ static void scap_linux_retrieve_agent_info(scap_agent_info* agent_info)
 static uint64_t scap_linux_get_host_boot_time_ns(char* last_err)
 {
 	uint64_t btime = 0;
-	char proc_stat[PPM_MAX_PATH_SIZE];
+	char proc_stat[SCAP_MAX_PATH_SIZE];
 	char line[512];
 
 	/* Get boot time from btime value in /proc/stat
@@ -362,4 +366,50 @@ struct scap_platform* scap_linux_alloc_platform()
 	generic->m_vtable = &scap_linux_platform;
 
 	return generic;
+}
+
+const char* scap_get_host_root()
+{
+	char* p = getenv(SCAP_HOST_ROOT_ENV_VAR_NAME);
+	static char env_str[SCAP_MAX_PATH_SIZE + 1];
+	static bool inited = false;
+	if (! inited) {
+		strlcpy(env_str, p ? p : "", sizeof(env_str));
+		inited = true;
+	}
+
+	return env_str;
+}
+
+bool scap_alloc_proclist_info(struct ppm_proclist_info **proclist_p, uint32_t n_entries, char* error)
+{
+	uint32_t memsize;
+
+	if(n_entries >= SCAP_DRIVER_PROCINFO_MAX_SIZE)
+	{
+		snprintf(error, SCAP_LASTERR_SIZE, "driver process list too big");
+		return false;
+	}
+
+	memsize = sizeof(struct ppm_proclist_info) +
+		  sizeof(struct ppm_proc_info) * n_entries;
+
+	struct ppm_proclist_info *procinfo = (struct ppm_proclist_info*) realloc(*proclist_p, memsize);
+	if(procinfo == NULL)
+	{
+		free(*proclist_p);
+		*proclist_p = NULL;
+		snprintf(error, SCAP_LASTERR_SIZE, "driver process list allocation error");
+		return false;
+	}
+
+	if(*proclist_p == NULL)
+	{
+		procinfo->n_entries = 0;
+	}
+
+	procinfo->max_entries = n_entries;
+	*proclist_p = procinfo;
+
+	return true;
 }

@@ -41,6 +41,7 @@ namespace scap_gvisor {
 #include "strerror.h"
 #include "strlcpy.h"
 #include "linux-schema/linux_savefile_write.h"
+#include "scap_linux.h"
 
 #ifdef __cplusplus
 extern "C"{

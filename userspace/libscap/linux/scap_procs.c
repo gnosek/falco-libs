@@ -30,13 +30,15 @@ limitations under the License.
 #include <fcntl.h>
 #include "unixid.h"
 
-#include "scap.h"
-#include "scap-int.h"
+#include "ppm_events_public.h"
+#include "scap_linux.h"
 #include "scap_linux_int.h"
 #include "scap_linux_platform.h"
 #include "strerror.h"
 #include "clock_helpers.h"
 #include "debug_log_helpers.h"
+#include "scap_assert.h"
+#include "capture_macro.h"
 
 int32_t scap_proc_fill_cwd(char* error, char* procdirname, struct scap_threadinfo* tinfo)
 {

@@ -32,6 +32,10 @@ limitations under the License.
 #include "scap_assert.h"
 #include "scap_suppress.h"
 
+#ifdef __linux__
+#include "linux-schema/event_schema.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,10 +66,6 @@ int32_t scap_proc_fill_cgroups(char* error, int cgroup_version, struct scap_thre
 
 int32_t scap_proc_fill_pidns_start_ts(char* error, struct scap_threadinfo* tinfo, const char* procdirname);
 
-bool scap_alloc_proclist_info(struct ppm_proclist_info **proclist_p, uint32_t n_entries, char* error);
-
-void scap_free_device_table(scap_mountinfo* dev_list);
-
 // Determine whether or not the provided event should be suppressed,
 // based on its event type and parameters. May update the set of
 // suppressed tids as a side-effect.
@@ -88,17 +88,6 @@ void scap_retrieve_machine_info(scap_machine_info* machine_info, uint64_t boot_t
 #define MIN(X,Y) ((X) < (Y)? (X):(Y))
 #define MAX(X,Y) ((X) > (Y)? (X):(Y))
 #endif
-
-
-//
-// Driver proc info table sizes
-//
-#define SCAP_DRIVER_PROCINFO_INITIAL_SIZE 7
-#define SCAP_DRIVER_PROCINFO_MAX_SIZE 128000
-
-extern const struct syscall_evt_pair g_syscall_table[];
-extern const struct ppm_event_info g_event_info[];
-extern const struct ppm_event_entry g_ppm_events[];
 
 #ifdef __cplusplus
 }

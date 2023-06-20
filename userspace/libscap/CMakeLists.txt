@@ -126,6 +126,7 @@ add_library(scap_event_schema
 		../../driver/syscall_table64.c
 		linux/scap_ppm_sc.c
         )
+target_include_directories(scap_event_schema PRIVATE ../..)
 
 target_link_libraries(scap scap_event_schema)
 

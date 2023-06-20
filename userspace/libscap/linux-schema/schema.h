@@ -58,6 +58,9 @@ int32_t scap_fd_allocate_fdinfo(scap_fdinfo **fdi, int64_t fd, scap_fd_type type
 // Free a file descriptor
 void scap_fd_free_fdinfo(scap_fdinfo **fdi);
 
+void scap_free_device_table(scap_mountinfo* dev_list);
+
+
 #ifdef __cplusplus
 }
 #endif

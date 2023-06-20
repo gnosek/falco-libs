@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef __CLOCK_HELPERS_H
 #define __CLOCK_HELPERS_H
 
+#include <time.h>
 #define SCAP_GET_CUR_TS_MS_CONTEXT_INIT ((uint64_t)0)
 #define SCAP_GET_CUR_TS_MS_CONTEXT_ERROR_FLAG ((uint64_t)0x8000000000000000)
 #define SCAP_GET_CUR_TS_MS_CONTEXT_PREV_VALUE_MASK ((uint64_t)0x7fffffffffffffff)
