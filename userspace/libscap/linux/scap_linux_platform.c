@@ -284,6 +284,41 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	return SCAP_SUCCESS;
 }
 
+static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
+{
+	int32_t ret = SCAP_SUCCESS;
+	proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
+	platform->m_proclist.m_proc_callback = NULL;
+	ret = scap_linux_refresh_proc_table(platform, &platform->m_proclist);
+	platform->m_proclist.m_proc_callback = tcb;
+	return ret;
+}
+
+static int32_t linux_dump_state(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags)
+{
+	int32_t res;
+	if(flags & DUMP_FLAGS_RESCAN_PROC)
+	{
+		if(scap_dump_rescan_proc(platform) != SCAP_SUCCESS)
+		{
+			return SCAP_FAILURE;
+		}
+	}
+
+	res = scap_savefile_write_linux_platform(platform, d);
+
+	//
+	// If the user doesn't need the thread table, free it
+	//
+	if(platform->m_proclist.m_proc_callback != NULL)
+	{
+		scap_proc_free_table(&platform->m_proclist);
+	}
+
+	return res;
+}
+
+
 static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
 	.refresh_addr_list = scap_linux_create_iflist,
@@ -293,7 +328,7 @@ static const struct scap_platform_vtable scap_linux_platform = {
 	.is_thread_alive = scap_linux_is_thread_alive,
 	.get_global_pid = scap_linux_getpid_global,
 	.get_threadlist = scap_linux_get_threadlist,
-	.dump_state = scap_savefile_write_linux_platform,
+	.dump_state = linux_dump_state,
 	.close_platform = scap_linux_close_platform,
 	.free_platform = scap_linux_free_platform,
 };

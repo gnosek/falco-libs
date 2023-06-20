@@ -118,6 +118,40 @@ static int32_t gvisor_get_threadlist(struct scap_platform* platform, struct ppm_
 	return SCAP_SUCCESS;
 }
 
+static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
+{
+	int32_t ret = SCAP_SUCCESS;
+	proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
+	platform->m_proclist.m_proc_callback = NULL;
+	ret = scap_gvisor_refresh_proc_table(platform, &platform->m_proclist);
+	platform->m_proclist.m_proc_callback = tcb;
+	return ret;
+}
+
+static int32_t gvisor_dump_state(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags)
+{
+	int32_t res;
+	if(flags & DUMP_FLAGS_RESCAN_PROC)
+	{
+		if(scap_dump_rescan_proc(platform) != SCAP_SUCCESS)
+		{
+			return SCAP_FAILURE;
+		}
+	}
+
+	res = scap_savefile_write_linux_platform(platform, d);
+
+	//
+	// If the user doesn't need the thread table, free it
+	//
+	if(platform->m_proclist.m_proc_callback != NULL)
+	{
+		scap_proc_free_table(&platform->m_proclist);
+	}
+
+	return res;
+}
+
 static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.init_platform = scap_gvisor_init_platform,
 	.refresh_addr_list = NULL,
@@ -127,7 +161,7 @@ static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.is_thread_alive = scap_gvisor_is_thread_alive,
 	.get_global_pid = NULL,
 	.get_threadlist = gvisor_get_threadlist,
-	.dump_state = scap_savefile_write_linux_platform,
+	.dump_state = gvisor_dump_state,
 
 	.close_platform = scap_gvisor_close_platform,
 	.free_platform = scap_gvisor_free_platform,

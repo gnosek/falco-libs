@@ -134,7 +134,7 @@ static int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *mach
 //
 // Create the dump file headers and add the tables
 //
-static int32_t scap_setup_dump(scap_dumper_t* d, struct scap_platform *platform, const char *fname)
+static int32_t scap_setup_dump(scap_dumper_t *d, struct scap_platform *platform, const char *fname, bool skip_proc_scan)
 {
 	block_header bh;
 	section_header_block sh;
@@ -161,45 +161,36 @@ static int32_t scap_setup_dump(scap_dumper_t* d, struct scap_platform *platform,
 		return SCAP_FAILURE;
 	}
 
-	if(platform)
+	if(!platform)
 	{
-		//
-		// Write the machine info
-		//
-		if(scap_write_machine_info(d, &platform->m_machine_info) != SCAP_SUCCESS)
-		{
-			return SCAP_FAILURE;
-		}
-
-		if(platform->m_vtable->dump_state)
-		{
-			return platform->m_vtable->dump_state(platform, d);
-		}
+		return SCAP_SUCCESS;
 	}
 
 	//
-	// Done, return the file
+	// Write the machine info
 	//
-	return SCAP_SUCCESS;
-}
-
-static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
-{
-	int32_t ret = SCAP_SUCCESS;
-#ifdef __linux__
-	if(platform && platform->m_vtable && platform->m_vtable->refresh_proc_table)
+	if(scap_write_machine_info(d, &platform->m_machine_info) != SCAP_SUCCESS)
 	{
-		proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
-		platform->m_proclist.m_proc_callback = NULL;
-		ret = platform->m_vtable->refresh_proc_table(platform, &platform->m_proclist);
-		platform->m_proclist.m_proc_callback = tcb;
+		return SCAP_FAILURE;
 	}
-#endif
-	return ret;
+
+	if(!platform->m_vtable->dump_state)
+	{
+		return SCAP_SUCCESS;
+	}
+
+	//
+	// If we're dumping in live mode, refresh the process tables list
+	// so we don't lose information about processes created in the interval
+	// between opening the handle and starting the dump
+	//
+	uint64_t flags = skip_proc_scan ? 0 : DUMP_FLAGS_RESCAN_PROC;
+	return platform->m_vtable->dump_state(platform, d, flags);
 }
 
 // fname is only used for log messages in scap_setup_dump
-static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform* platform, gzFile gzfile, const char *fname, char* lasterr)
+static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform *platform, gzFile gzfile, const char *fname,
+					    char *lasterr, bool skip_proc_scan)
 {
 	scap_dumper_t* res = (scap_dumper_t*)malloc(sizeof(scap_dumper_t));
 	res->m_f = gzfile;
@@ -208,7 +199,7 @@ static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform* platform, gzFi
 	res->m_targetbufcurpos = NULL;
 	res->m_targetbufend = NULL;
 
-	if(scap_setup_dump(res, platform, fname) != SCAP_SUCCESS)
+	if(scap_setup_dump(res, platform, fname, skip_proc_scan) != SCAP_SUCCESS)
 	{
 		strlcpy(lasterr, res->m_lasterr, SCAP_LASTERR_SIZE);
 		free(res);
@@ -226,7 +217,6 @@ scap_dumper_t *scap_dump_open(struct scap_platform* platform, const char *fname,
 	gzFile f = NULL;
 	int fd = -1;
 	const char* mode;
-	scap_dumper_t* res;
 
 	switch(compress)
 	{
@@ -273,29 +263,7 @@ scap_dumper_t *scap_dump_open(struct scap_platform* platform, const char *fname,
 		return NULL;
 	}
 
-	//
-	// If we're dumping in live mode, refresh the process tables list
-	// so we don't lose information about processes created in the interval
-	// between opening the handle and starting the dump
-	//
-	if(!skip_proc_scan)
-	{
-		if(scap_dump_rescan_proc(platform) != SCAP_SUCCESS)
-		{
-			return NULL;
-		}
-	}
-
-	res = scap_dump_open_gzfile(platform, f, fname, lasterr);
-	//
-	// If the user doesn't need the thread table, free it
-	//
-	if(platform->m_proclist.m_proc_callback != NULL)
-	{
-		scap_proc_free_table(&platform->m_proclist);
-	}
-
-	return res;
+	return scap_dump_open_gzfile(platform, f, fname, lasterr, skip_proc_scan);
 }
 
 //
@@ -303,7 +271,6 @@ scap_dumper_t *scap_dump_open(struct scap_platform* platform, const char *fname,
 scap_dumper_t* scap_dump_open_fd(struct scap_platform* platform, int fd, compression_mode compress, bool skip_proc_scan, char* lasterr)
 {
 	gzFile f = NULL;
-	scap_dumper_t* res;
 
 	switch(compress)
 	{
@@ -325,29 +292,7 @@ scap_dumper_t* scap_dump_open_fd(struct scap_platform* platform, int fd, compres
 		return NULL;
 	}
 
-	//
-	// If we're dumping in live mode, refresh the process tables list
-	// so we don't lose information about processes created in the interval
-	// between opening the handle and starting the dump
-	//
-	if(!skip_proc_scan)
-	{
-		if(scap_dump_rescan_proc(platform) != SCAP_SUCCESS)
-		{
-			return NULL;
-		}
-	}
-
-	res = scap_dump_open_gzfile(platform, f, "", lasterr);
-
-	//
-	// If the user doesn't need the thread table, free it
-	//
-	if(platform->m_proclist.m_proc_callback != NULL)
-	{
-		scap_proc_free_table(&platform->m_proclist);
-	}
-	return res;
+	return scap_dump_open_gzfile(platform, f, "", lasterr, skip_proc_scan);
 }
 
 //
@@ -368,7 +313,7 @@ scap_dumper_t *scap_memory_dump_open(struct scap_platform* platform, uint8_t* ta
 	res->m_targetbufcurpos = targetbuf;
 	res->m_targetbufend = targetbuf + targetbufsize;
 
-	if(scap_setup_dump(res, platform, "") != SCAP_SUCCESS)
+	if(scap_setup_dump(res, platform, "", 0) != SCAP_SUCCESS)
 	{
 		strlcpy(lasterr, res->m_lasterr, SCAP_LASTERR_SIZE);
 		free(res);
