@@ -1,1 +1,1 @@
-add_library(scap_linux_schema linux_savefile_write.c)
+add_library(scap_linux_schema linux_savefile_write.c linux_savefile_read.c linux_savefile_read.h)
