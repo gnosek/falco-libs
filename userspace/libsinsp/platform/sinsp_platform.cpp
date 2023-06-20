@@ -47,12 +47,6 @@ extern "C" {
 		}
 	}
 
-	uint32_t cpp_get_device_by_mount_id(struct scap_platform* platform, const char *procdir, unsigned long requested_mount_id)
-	{
-		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
-		return cpp_plat->m_platform->get_device_by_mount_id(procdir, requested_mount_id);
-	}
-
 	struct scap_threadinfo* cpp_get_proc(struct scap_platform* platform, struct scap_proclist* proclist, int64_t tid, bool scan_sockets)
 	{
 		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
@@ -128,7 +122,6 @@ extern "C" {
 	const struct scap_platform_vtable cpp_platform_vtable = {
 		.init_platform = cpp_init_platform,
 		.refresh_addr_list = cpp_refresh_addr_list,
-		.get_device_by_mount_id = cpp_get_device_by_mount_id,
 		.get_proc = cpp_get_proc,
 		.refresh_proc_table = cpp_refresh_proc_table,
 		.is_thread_alive = cpp_is_thread_alive,
