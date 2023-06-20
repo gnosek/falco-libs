@@ -15,9 +15,8 @@ limitations under the License.
 
 */
 
-#include <stdio.h>
-#include "scap.h"
-#include "scap-int.h"
+#include <stdlib.h>
+#include "userinfo.h"
 
 //
 // Free a previously allocated list of users

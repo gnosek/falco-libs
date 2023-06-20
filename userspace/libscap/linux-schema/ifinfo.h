@@ -23,6 +23,7 @@ limitations under the License.
 extern "C" {
 #endif
 
+#include "scap_limits.h"
 #include "uthash.h"
 
 //

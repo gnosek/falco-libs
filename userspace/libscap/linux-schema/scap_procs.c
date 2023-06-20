@@ -18,9 +18,10 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "threadinfo.h"
+#include "schema.h"
 
-#include "scap.h"
-#include "scap-int.h"
+typedef struct scap scap_t;
 
 //
 // Delete a process entry
@@ -59,14 +60,7 @@ void scap_proc_free_table(struct scap_proclist* proclist)
 
 struct scap_threadinfo *scap_proc_alloc(scap_t *handle)
 {
-	struct scap_threadinfo *tinfo = (struct scap_threadinfo*) calloc(1, sizeof(scap_threadinfo));
-	if(tinfo == NULL)
-	{
-		snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "process table allocation error (1)");
-		return NULL;
-	}
-
-	return tinfo;
+	return calloc(1, sizeof(scap_threadinfo));
 }
 
 void scap_proc_free(scap_t* handle, struct scap_threadinfo* proc)
@@ -86,7 +80,6 @@ int32_t scap_fd_add(scap_t *handle, scap_threadinfo* tinfo, uint64_t fd, scap_fd
 	}
 	else
 	{
-		snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "Could not add fd to hash table");
 		return SCAP_FAILURE;
 	}
 }

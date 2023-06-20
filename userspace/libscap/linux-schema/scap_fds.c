@@ -17,11 +17,15 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "scap.h"
-#include "scap-int.h"
 #include "uthash.h"
 #include <inttypes.h>
 #include <string.h>
+
+#include "uthash.h"
+#include "fdinfo.h"
+#include "threadinfo.h"
+#include "mountinfo.h"
+#include "scap_assert.h"
 
 void scap_fd_free_table(scap_fdinfo **fds)
 {
