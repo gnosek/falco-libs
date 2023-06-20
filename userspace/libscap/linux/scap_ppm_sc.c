@@ -24,6 +24,7 @@ limitations under the License.
 #define IN
 #define OUT
 
+const char* scap_get_ppm_sc_name(ppm_sc_code sc);
 int scap_get_ppm_sc_from_events(IN const uint8_t events_array[PPM_EVENT_MAX], OUT uint8_t ppm_sc_array[PPM_SC_MAX]);
 
 /*
