@@ -117,6 +117,7 @@ set(SINSP_SOURCES
 	gvisor_config.cpp
 	events/sinsp_events.cpp
 	events/sinsp_events_ppm_sc.cpp)
+#	platform/sinsp_platform.cpp)
 
 if(NOT WIN32)
 	list(APPEND SINSP_SOURCES procfs_utils.cpp)

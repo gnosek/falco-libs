@@ -32,6 +32,7 @@ limitations under the License.
 #include "sinsp.h"
 #include "sinsp_int.h"
 #include "sinsp_auth.h"
+#include "platform/sinsp_platform.h"
 #include "filter.h"
 #include "filterchecks.h"
 #include "cyclewriter.h"
