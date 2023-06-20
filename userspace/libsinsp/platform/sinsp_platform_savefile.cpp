@@ -36,3 +36,24 @@ int32_t libsinsp::savefile_platform::read_block(struct scap_reader *r, uint32_t 
 		return scapwrapper_platform::read_block(r, block_length, block_type, flags);
 	}
 }
+
+int32_t libsinsp::savefile_platform::dump_state(struct scap_dumper *d, uint64_t flags)
+{
+	int32_t rc = scapwrapper_platform::dump_state(d, flags);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
+
+#ifdef _DEBUG
+	struct scap_addrlist *addrlist = get_linux_storage()->m_addrlist;
+	if(addrlist != nullptr)
+	{
+		throw sinsp_exception("scap addrlist not empty");
+	}
+#endif
+
+	libsinsp::platform_linux::dump_addrlist(*m_network_interfaces).dump(d);
+
+	return SCAP_SUCCESS;
+}
