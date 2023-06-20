@@ -164,58 +164,6 @@ static inline uint32_t open_flags_to_scap(unsigned long flags)
 	return res;
 }
 
-uint32_t scap_linux_get_device_by_mount_id(struct scap_platform *platform, const char *procdir, unsigned long requested_mount_id)
-{
-	char fd_dir_name[SCAP_MAX_PATH_SIZE];
-	char line[SCAP_MAX_PATH_SIZE];
-	FILE *finfo;
-	scap_mountinfo *mountinfo;
-	struct scap_linux_platform *linux_platform = (struct scap_linux_platform *)platform;
-
-	HASH_FIND_INT64(linux_platform->m_dev_list, &requested_mount_id, mountinfo);
-	if(mountinfo != NULL)
-	{
-		return mountinfo->dev;
-	}
-
-	snprintf(fd_dir_name, SCAP_MAX_PATH_SIZE, "%smountinfo", procdir);
-	finfo = fopen(fd_dir_name, "r");
-	if(finfo == NULL)
-	{
-		return 0;
-	}
-
-	while(fgets(line, sizeof(line), finfo) != NULL)
-	{
-		uint32_t mount_id, major, minor;
-		if(sscanf(line, "%u %*u %u:%u", &mount_id, &major, &minor) != 3)
-		{
-			continue;
-		}
-
-		if(mount_id == requested_mount_id)
-		{
-			uint32_t dev = makedev(major, minor);
-			mountinfo = malloc(sizeof(*mountinfo));
-			if(mountinfo)
-			{
-				int32_t uth_status = SCAP_SUCCESS;
-				mountinfo->mount_id = mount_id;
-				mountinfo->dev = dev;
-				HASH_ADD_INT64(linux_platform->m_dev_list, mount_id, mountinfo);
-				if(uth_status != SCAP_SUCCESS)
-				{
-					free(mountinfo);
-				}
-			}
-			fclose(finfo);
-			return dev;
-		}
-	}
-	fclose(finfo);
-	return 0;
-}
-
 void scap_fd_flags_file(scap_fdinfo *fdi, const char *procdir)
 {
 	char fd_dir_name[SCAP_MAX_PATH_SIZE];

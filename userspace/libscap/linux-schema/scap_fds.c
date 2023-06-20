@@ -24,7 +24,6 @@ limitations under the License.
 #include "uthash.h"
 #include "fdinfo.h"
 #include "threadinfo.h"
-#include "mountinfo.h"
 #include "scap_assert.h"
 
 void scap_fd_free_table(scap_fdinfo **fds)
@@ -98,20 +97,6 @@ int32_t scap_add_fd_to_proc_table(struct scap_proclist *proclist, scap_threadinf
 	}
 
 	return SCAP_SUCCESS;
-}
-
-//
-// Free the device table
-//
-void scap_free_device_table(scap_mountinfo* dev_list)
-{
-	scap_mountinfo *dev, *tdev;
-
-	HASH_ITER(hh, dev_list, dev, tdev)
-	{
-		HASH_DEL(dev_list, dev);
-		free(dev);
-	}
 }
 
 int32_t scap_fd_allocate_fdinfo(scap_fdinfo **fdi, int64_t fd, scap_fd_type type)

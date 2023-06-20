@@ -120,6 +120,10 @@ set(SINSP_SOURCES
 	events/sinsp_events_ppm_sc.cpp
 	platform/sinsp_platform.cpp)
 
+if(NOT WIN32 AND NOT APPLE)
+	list(APPEND SINSP_SOURCES platform/sinsp_platform_linux.cpp)
+endif()
+
 if(NOT WIN32)
 	list(APPEND SINSP_SOURCES procfs_utils.cpp)
 endif()

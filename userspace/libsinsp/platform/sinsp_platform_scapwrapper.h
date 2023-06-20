@@ -65,7 +65,7 @@ public:
 
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override
 	{
-		return vt()->get_device_by_mount_id(m_scap_platform, procdir, requested_mount_id);
+		return 0;
 	}
 
 	struct scap_threadinfo* get_proc(struct scap_proclist* proclist, int64_t tid, bool scan_sockets) override

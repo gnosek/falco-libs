@@ -101,6 +101,7 @@ limitations under the License.
 #include "include/sinsp_external_processor.h"
 #include "plugin.h"
 #include "gvisor_config.h"
+#include "platform/sinsp_platform.h"
 #include "sinsp_suppress.h"
 class sinsp_partial_transaction;
 class sinsp_parser;
@@ -1019,7 +1020,7 @@ private:
 #endif
 
 	void set_input_plugin(const std::string& name, const std::string& params);
-	void open_common(scap_open_args* oargs, const struct scap_vtable* engine, struct scap_platform* platform);
+	void open_common(scap_open_args* oargs, const struct scap_vtable* engine, struct scap_platform* platform = nullptr);
 	void init();
 	void deinit_state();
 	void consume_initialstate_events();
@@ -1075,6 +1076,7 @@ private:
 	void get_procs_cpu_from_driver(uint64_t ts);
 
 	scap_t* m_h;
+	std::unique_ptr<libsinsp::platform_struct> m_platform;
 	uint64_t m_nevts;
 	int64_t m_filesize;
 	scap_mode_t m_mode = SCAP_MODE_NONE;
@@ -1361,6 +1363,24 @@ public:
 	friend class sinsp_usergroup_manager;
 
 	template<class TKey,class THash,class TCompare> friend class sinsp_connection_manager;
+
+protected:
+	inline libsinsp::platform* get_platform()
+	{
+		if(m_platform)
+		{
+			return m_platform->m_platform.get();
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	inline struct scap_platform* get_scap_platform()
+	{
+		return reinterpret_cast<scap_platform*>(m_platform.get());
+	}
 };
 
 /*@}*/

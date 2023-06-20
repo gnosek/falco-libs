@@ -466,7 +466,15 @@ void sinsp_fdtable::lookup_device(sinsp_fdinfo_t* fdi, uint64_t fd)
 	{
 		char procdir[SCAP_MAX_PATH_SIZE];
 		snprintf(procdir, sizeof(procdir), "%s/proc/%ld/", scap_get_host_root(), m_tid);
-		fdi->m_dev = scap_get_device_by_mount_id(m_inspector->m_h, procdir, fdi->m_mount_id);
+		auto plat = m_inspector->get_platform();
+		if(plat)
+		{
+			fdi->m_dev = plat->get_device_by_mount_id(procdir, fdi->m_mount_id);
+		}
+		else
+		{
+			fdi->m_dev = 0;
+		}
 		fdi->m_mount_id = 0; // don't try again
 	}
 #endif // _WIN32

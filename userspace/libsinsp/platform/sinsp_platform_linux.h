@@ -17,6 +17,7 @@ limitations under the License.
 
 #pragma once
 
+#include <unordered_map>
 #include "sinsp_platform_scapwrapper.h"
 
 namespace libsinsp
@@ -24,19 +25,18 @@ namespace libsinsp
 class linux_platform : public scapwrapper_platform
 {
 public:
-	explicit linux_platform(const struct scap_linux_vtable* linux_vtable = nullptr):
+	explicit linux_platform() :
 		scapwrapper_platform(scap_linux_alloc_platform()) {
-		auto linux_plat = reinterpret_cast<scap_linux_platform*>(m_scap_platform);
-		linux_plat->m_linux_vtable = linux_vtable;
 	}
 
-	static struct scap_platform* alloc(const struct scap_linux_vtable* linux_vtable = nullptr)
+	inline struct scap_linux_platform* get_scap_platform()
 	{
-		auto* platform = new platform_struct;
-		platform->m_platform = std::make_unique<linux_platform>();
-		platform->m_generic.m_vtable = &cpp_platform_vtable;
-
-		return reinterpret_cast<struct scap_platform*>(platform);
+		return reinterpret_cast<scap_linux_platform*>(m_scap_platform);
 	}
+
+	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override;
+
+protected:
+	std::unordered_map<unsigned long, uint32_t> m_dev_map;
 };
 }

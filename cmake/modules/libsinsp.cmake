@@ -13,6 +13,10 @@ if(DEFINED LIBSINSP_USER_AGENT)
 	add_definitions(-DLIBSINSP_USER_AGENT="${LIBSINSP_USER_AGENT}")
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+	include(FindMakedev)
+endif()
+
 include(ExternalProject)
 include(libscap)
 include(tbb)

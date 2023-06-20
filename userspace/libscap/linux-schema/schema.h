@@ -19,7 +19,6 @@ limitations under the License.
 
 #include "linux-schema/fdinfo.h"
 #include "linux-schema/ifinfo.h"
-#include "linux-schema/mountinfo.h"
 #include "linux-schema/threadinfo.h"
 #include "linux-schema/userinfo.h"
 #include "scap_machine_info.h"
@@ -60,8 +59,6 @@ void scap_free_userlist(scap_userlist* uhandle);
 int32_t scap_fd_allocate_fdinfo(scap_fdinfo **fdi, int64_t fd, scap_fd_type type);
 // Free a file descriptor
 void scap_fd_free_fdinfo(scap_fdinfo **fdi);
-
-void scap_free_device_table(scap_mountinfo* dev_list);
 
 
 #ifdef __cplusplus

@@ -44,13 +44,6 @@ static int32_t scap_linux_close_platform(struct scap_platform* platform)
 {
 	struct scap_linux_platform* linux_platform = (struct scap_linux_platform*)platform;
 
-	// Free the device table
-	if(linux_platform->m_dev_list != NULL)
-	{
-		scap_free_device_table(linux_platform->m_dev_list);
-		linux_platform->m_dev_list = NULL;
-	}
-
 	scap_linux_storage_close(&linux_platform->m_storage);
 
 	return SCAP_SUCCESS;
@@ -356,7 +349,6 @@ static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
 	.get_agent_info = scap_linux_retrieve_agent_info,
 	.refresh_addr_list = scap_linux_create_iflist,
-	.get_device_by_mount_id = scap_linux_get_device_by_mount_id,
 	.get_proc = scap_linux_proc_get,
 	.refresh_proc_table = scap_linux_refresh_proc_table,
 	.is_thread_alive = scap_linux_is_thread_alive,

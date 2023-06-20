@@ -22,6 +22,8 @@ limitations under the License.
 
 #include "scap_platform_impl.h"
 
+extern "C" const struct scap_platform_vtable cpp_platform_vtable;
+
 namespace libsinsp
 {
 	class platform
@@ -57,8 +59,23 @@ namespace libsinsp
 	{
 		struct ::scap_platform m_generic;
 		std::unique_ptr<platform> m_platform;
+
+		platform_struct() :
+			m_generic({}) {}
+
+		static std::unique_ptr<platform_struct> wrap(std::unique_ptr<platform>&& plat)
+		{
+			auto platform = std::make_unique<platform_struct>();
+			platform->m_platform = std::move(plat);
+			platform->m_generic.m_vtable = &cpp_platform_vtable;
+
+			return platform;
+		}
+
+		template<class T> static std::unique_ptr<platform_struct> alloc()
+		{
+			return wrap(std::move(std::make_unique<T>()));
+		}
 	};
 }
-
-extern "C" const struct scap_platform_vtable cpp_platform_vtable;
 

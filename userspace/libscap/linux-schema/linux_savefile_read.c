@@ -9,7 +9,6 @@
 #include "engine/savefile/scap_reader.h"
 #include "engine/savefile/savefile.h"
 
-typedef struct scap_mountinfo scap_mountinfo;
 #include "scap-int.h"
 
 typedef struct scap_reader scap_reader_t;
