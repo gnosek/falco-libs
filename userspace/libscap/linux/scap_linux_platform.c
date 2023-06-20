@@ -257,7 +257,7 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	linux_platform->m_lasterr = lasterr;
 	linux_platform->m_engine = engine;
 
-	rc = scap_linux_fill_machine_info(platform, &platform->m_machine_info);
+	rc = scap_linux_fill_machine_info(platform, &linux_platform->m_storage.m_machine_info);
 	if(rc != SCAP_SUCCESS)
 	{
 		return rc;

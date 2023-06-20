@@ -23,6 +23,7 @@ limitations under the License.
 
 static int32_t scap_generic_init_platform(struct scap_platform* platform, char* lasterr, struct scap_open_args* oargs)
 {
+	return SCAP_SUCCESS;
 }
 
 static int32_t scap_generic_close_platform(struct scap_platform* platform)

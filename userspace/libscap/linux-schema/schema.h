@@ -22,6 +22,7 @@ limitations under the License.
 #include "linux-schema/mountinfo.h"
 #include "linux-schema/threadinfo.h"
 #include "linux-schema/userinfo.h"
+#include "scap_machine_info.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +32,8 @@ struct scap_open_args;
 
 struct scap_linux_storage
 {
+	scap_machine_info m_machine_info;
+
 	struct scap_addrlist *m_addrlist;
 	struct scap_userlist *m_userlist;
 	struct scap_proclist m_proclist;

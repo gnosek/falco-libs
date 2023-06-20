@@ -20,6 +20,7 @@ limitations under the License.
 
 int32_t scap_linux_storage_init(struct scap_linux_storage* storage, char* lasterr, struct scap_open_args* oargs)
 {
+	storage->m_machine_info.num_cpus = -1u;
 	storage->m_proclist.m_proc_callback = oargs->proc_callback;
 	storage->m_proclist.m_proc_callback_context = oargs->proc_callback_context;
 	storage->m_proclist.m_proclist = NULL;

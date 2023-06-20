@@ -15,6 +15,32 @@ typedef struct scap_mountinfo scap_mountinfo;
 typedef struct scap_reader scap_reader_t;
 
 //
+// Load the machine info block
+//
+static int32_t scap_read_machine_info(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_linux_storage *storage, char* error)
+{
+	scap_machine_info* machine_info = &storage->m_machine_info;
+	//
+	// Read the section header block
+	//
+	if(r->read(r, machine_info, sizeof(*machine_info)) !=
+	   sizeof(*machine_info))
+	{
+		snprintf(error, SCAP_LASTERR_SIZE, "error reading from file (1)");
+		return SCAP_FAILURE;
+	}
+
+	if(!scap_machine_info_os_arch_present(machine_info))
+	{
+		// a reasonable assumption for captures without the platform
+		machine_info->flags |= SCAP_OS_LINUX;
+		machine_info->flags |= SCAP_ARCH_X64;
+	}
+
+	return SCAP_SUCCESS;
+}
+
+//
 // Parse a process list block
 //
 static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_linux_storage *storage, char *error)
@@ -1655,6 +1681,10 @@ int32_t scap_read_linux_block(struct scap_linux_storage *storage, struct scap_re
 {
 	switch(block_type)
 	{
+	case MI_BLOCK_TYPE:
+	case MI_BLOCK_TYPE_INT:
+		return scap_read_machine_info(r, block_length, block_type, storage, error);
+
 	case PL_BLOCK_TYPE_V1:
 	case PL_BLOCK_TYPE_V2:
 	case PL_BLOCK_TYPE_V3:

@@ -153,13 +153,17 @@ int32_t scap_getpid_global(scap_t* handle, int64_t* pid)
 
 const scap_machine_info* scap_get_machine_info(scap_t* handle)
 {
-	if(handle && handle->m_platform)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+
+	if(!storage)
 	{
-		scap_machine_info* machine_info = &handle->m_platform->m_machine_info;
-		if(machine_info->num_cpus != (uint32_t)-1)
-		{
-			return machine_info;
-		}
+		return NULL;
+	}
+
+	scap_machine_info* machine_info = &storage->m_machine_info;
+	if(machine_info->num_cpus != (uint32_t)-1)
+	{
+		return machine_info;
 	}
 
 	//

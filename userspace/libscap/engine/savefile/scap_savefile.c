@@ -58,32 +58,6 @@ inline static int read_block_header(struct savefile_engine* handle, struct scap_
 	return res;
 }
 
-//
-// Load the machine info block
-//
-static int32_t scap_read_machine_info(scap_reader_t* r, uint32_t block_length, uint32_t block_type, struct scap_platform* platform, char* error)
-{
-	scap_machine_info* machine_info = &platform->m_machine_info;
-	//
-	// Read the section header block
-	//
-	if(r->read(r, machine_info, sizeof(*machine_info)) !=
-		sizeof(*machine_info))
-	{
-		snprintf(error, SCAP_LASTERR_SIZE, "error reading from file (1)");
-		return SCAP_FAILURE;
-	}
-
-	if(!scap_machine_info_os_arch_present(machine_info))
-	{
-		// a reasonable assumption for captures without the platform
-		machine_info->flags |= SCAP_OS_LINUX;
-		machine_info->flags |= SCAP_ARCH_X64;
-	}
-
-	return SCAP_SUCCESS;
-}
-
 static int32_t scap_read_section_header(scap_reader_t* r, char* error)
 {
 	section_header_block sh;
@@ -175,19 +149,6 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 
 		switch(bh.block_type)
 		{
-		case MI_BLOCK_TYPE:
-		case MI_BLOCK_TYPE_INT:
-			if(scap_read_machine_info(
-				   r,
-				   bh.block_total_length - sizeof(block_header) - 4,
-				   bh.block_type,
-				   platform,
-				   error) != SCAP_SUCCESS)
-			{
-				return SCAP_FAILURE;
-			}
-			break;
-
 		case EV_BLOCK_TYPE:
 		case EV_BLOCK_TYPE_INT:
 		case EV_BLOCK_TYPE_V2:
@@ -485,8 +446,6 @@ scap_savefile_init_platform(struct scap_platform *platform, char *lasterr, struc
 			    struct scap_open_args *oargs)
 {
 	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
-	platform->m_machine_info.num_cpus = (uint32_t)-1;
-
 	int32_t rc = scap_linux_storage_init(&savefile_platform->m_storage, lasterr, oargs);
 	if(rc != SCAP_SUCCESS)
 	{

@@ -105,33 +105,6 @@ uint8_t* scap_get_memorydumper_curpos(scap_dumper_t *d)
 }
 
 //
-// Write the machine info block
-//
-static int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info)
-{
-	block_header bh;
-	uint32_t bt;
-
-	//
-	// Write the section header
-	//
-	bh.block_type = MI_BLOCK_TYPE;
-	bh.block_total_length = scap_normalize_block_len(sizeof(block_header) + sizeof(scap_machine_info) + 4);
-
-	bt = bh.block_total_length;
-
-	if(scap_dump_write(d, &bh, sizeof(bh)) != sizeof(bh) ||
-	        scap_dump_write(d, machine_info, sizeof(*machine_info)) != sizeof(*machine_info) ||
-	        scap_dump_write(d, &bt, sizeof(bt)) != sizeof(bt))
-	{
-		snprintf(d->m_lasterr, SCAP_LASTERR_SIZE, "error writing to file (MI1)");
-		return SCAP_FAILURE;
-	}
-
-	return SCAP_SUCCESS;
-}
-
-//
 // Create the dump file headers and add the tables
 //
 static int32_t scap_setup_dump(scap_dumper_t *d, struct scap_platform *platform, const char *fname, bool skip_proc_scan)
@@ -139,6 +112,7 @@ static int32_t scap_setup_dump(scap_dumper_t *d, struct scap_platform *platform,
 	block_header bh;
 	section_header_block sh;
 	uint32_t bt;
+	scap_machine_info mi;
 
 	//
 	// Write the section header
@@ -164,14 +138,6 @@ static int32_t scap_setup_dump(scap_dumper_t *d, struct scap_platform *platform,
 	if(!platform)
 	{
 		return SCAP_SUCCESS;
-	}
-
-	//
-	// Write the machine info
-	//
-	if(scap_write_machine_info(d, &platform->m_machine_info) != SCAP_SUCCESS)
-	{
-		return SCAP_FAILURE;
 	}
 
 	if(!platform->m_vtable->dump_state)

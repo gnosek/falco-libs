@@ -11,6 +11,33 @@
 #include <stdio.h>
 
 //
+// Write the machine info block
+//
+static int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info)
+{
+	block_header bh;
+	uint32_t bt;
+
+	//
+	// Write the section header
+	//
+	bh.block_type = MI_BLOCK_TYPE;
+	bh.block_total_length = scap_normalize_block_len(sizeof(block_header) + sizeof(scap_machine_info) + 4);
+
+	bt = bh.block_total_length;
+
+	if(scap_dump_write(d, &bh, sizeof(bh)) != sizeof(bh) ||
+	   scap_dump_write(d, machine_info, sizeof(*machine_info)) != sizeof(*machine_info) ||
+	   scap_dump_write(d, &bt, sizeof(bt)) != sizeof(bt))
+	{
+		snprintf(d->m_lasterr, SCAP_LASTERR_SIZE, "error writing to file (MI1)");
+		return SCAP_FAILURE;
+	}
+
+	return SCAP_SUCCESS;
+}
+
+//
 // Write the interface list block
 //
 static int32_t scap_write_iflist(scap_dumper_t* d, scap_addrlist* addrlist)
@@ -877,6 +904,14 @@ static int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclis
 
 int32_t scap_savefile_write_linux_platform(struct scap_linux_storage *storage, struct scap_dumper *d)
 {
+	//
+	// Write the machine info
+	//
+	if(scap_write_machine_info(d, &storage->m_machine_info) != SCAP_SUCCESS)
+	{
+		return SCAP_FAILURE;
+	}
+
 	//
 	// Write the interface list
 	//
