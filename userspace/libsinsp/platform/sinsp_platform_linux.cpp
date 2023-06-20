@@ -39,7 +39,7 @@ int32_t libsinsp::linux_platform::init_platform(struct scap_engine_handle engine
 		return rc;
 	}
 
-	libsinsp::platform_linux::get_interfaces(*m_network_interfaces.get());
+	libsinsp::platform_linux::get_interfaces(*m_network_interfaces);
 
 	return SCAP_SUCCESS;
 }
