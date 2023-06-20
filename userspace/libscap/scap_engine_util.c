@@ -128,3 +128,23 @@ int32_t scap_get_precise_boot_time(char* last_err, uint64_t *boot_time)
 	return scap_errprintf(last_err, 0, "scap_get_precise_boot_time not implemented on this platform");
 #endif
 }
+
+bool scap_get_bpf_stats_enabled()
+{
+#ifdef __linux__
+	FILE* f;
+	if((f = fopen("/proc/sys/kernel/bpf_stats_enabled", "r")))
+	{
+		uint32_t bpf_stats_enabled = 0;
+		if(fscanf(f, "%u", &bpf_stats_enabled) == 1)
+		{
+			fclose(f);
+			return bpf_stats_enabled;
+		}
+
+		fclose(f);
+	}
+#endif
+	return false;
+}
+
