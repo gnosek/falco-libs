@@ -18,6 +18,7 @@ limitations under the License.
 #pragma once
 
 #include "scap_vtable.h"
+#include "scap_config.h"
 
 #ifdef HAS_ENGINE_NODRIVER
 extern const struct scap_vtable scap_nodriver_engine;
