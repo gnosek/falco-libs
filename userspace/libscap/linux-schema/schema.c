@@ -17,8 +17,6 @@ limitations under the License.
 
 #include "schema.h"
 #include "scap_open.h"
-#include "scap.h"
-#include "scap-int.h"
 
 int32_t scap_linux_storage_init(struct scap_linux_storage* storage, char* lasterr, struct scap_open_args* oargs)
 {

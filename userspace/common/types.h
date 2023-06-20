@@ -15,10 +15,6 @@ limitations under the License.
 
 */
 
-#ifdef _MSC_VER
-#define strcasecmp _stricmp
-#endif
-
 #include <inttypes.h>
 #include <stdbool.h>
 
