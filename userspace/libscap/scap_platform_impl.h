@@ -54,10 +54,6 @@ struct scap_platform_vtable
 	// at this point the engine is fully initialized and operational
 	int32_t (*init_platform)(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs);
 
-	// refresh the interface list and place it inside
-	// platform->m_addrlist
-	int32_t (*refresh_addr_list)(struct scap_platform* platform);
-
 	struct scap_threadinfo* (*get_proc)(struct scap_platform*, struct scap_proclist* proclist, int64_t tid, bool scan_sockets);
 
 	int32_t (*refresh_proc_table)(struct scap_platform*, struct scap_proclist* proclist);

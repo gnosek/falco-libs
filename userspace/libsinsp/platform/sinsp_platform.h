@@ -48,8 +48,6 @@ namespace libsinsp
 		virtual int32_t get_agent_info(agent_info &agent_info) = 0;
 		virtual void get_machine_info(scap_machine_info& machine_info) = 0;
 
-		virtual void refresh_addr_list() = 0;
-
 		virtual uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) = 0;
 
 		virtual struct scap_threadinfo* get_proc(struct scap_proclist* proclist, int64_t tid, bool scan_sockets) = 0;

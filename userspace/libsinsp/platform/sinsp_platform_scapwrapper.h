@@ -44,8 +44,6 @@ public:
 		return SCAP_FAILURE;
 	}
 
-	void refresh_addr_list() override;
-
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override
 	{
 		return 0;

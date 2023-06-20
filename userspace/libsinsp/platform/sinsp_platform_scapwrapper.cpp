@@ -48,18 +48,3 @@ int32_t libsinsp::scapwrapper_platform::init_platform(struct scap_engine_handle 
 
 	return rc;
 }
-
-void libsinsp::scapwrapper_platform::refresh_addr_list()
-{
-	char lasterr[SCAP_LASTERR_SIZE];
-
-	int32_t rc = vt()->refresh_addr_list(m_scap_platform);
-	if(rc != SCAP_SUCCESS)
-	{
-		throw sinsp_exception(lasterr);
-	}
-
-	struct scap_addrlist* addrlist = get_linux_storage()->m_addrlist;
-	m_network_interfaces->clear();
-	m_network_interfaces->import_interfaces(addrlist);
-}

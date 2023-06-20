@@ -33,20 +33,6 @@ extern "C" {
 		}
 	}
 
-	int32_t cpp_refresh_addr_list(struct scap_platform* platform)
-	{
-		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
-		try
-		{
-			cpp_plat->m_platform->refresh_addr_list();
-			return SCAP_SUCCESS;
-		}
-		catch(const std::exception& e)
-		{
-			return SCAP_FAILURE;
-		}
-	}
-
 	struct scap_threadinfo* cpp_get_proc(struct scap_platform* platform, struct scap_proclist* proclist, int64_t tid, bool scan_sockets)
 	{
 		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
@@ -121,7 +107,6 @@ extern "C" {
 
 	const struct scap_platform_vtable cpp_platform_vtable = {
 		.init_platform = cpp_init_platform,
-		.refresh_addr_list = cpp_refresh_addr_list,
 		.get_proc = cpp_get_proc,
 		.refresh_proc_table = cpp_refresh_proc_table,
 		.is_thread_alive = cpp_is_thread_alive,
