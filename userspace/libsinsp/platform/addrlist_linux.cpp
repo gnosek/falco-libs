@@ -19,6 +19,8 @@ limitations under the License.
 
 #include "sinsp.h"
 #include "sinsp_dumper_utils.h"
+#include "sinsp_reader_utils.h"
+#include "scap_assert.h"
 
 #include "strlcpy.h"
 
@@ -150,5 +152,117 @@ libsinsp::dumper::outer_block dump_addrlist(sinsp_network_interfaces& interfaces
 	}
 
 	return addrlist_block;
+}
+
+namespace {
+void read_addrlist_entry(reader::inner_block &entry, sinsp_network_interfaces &interfaces)
+{
+	uint16_t ifinfo_type;
+	entry.read(ifinfo_type);
+	switch(ifinfo_type)
+	{
+	case SCAP_II_IPV4:
+	{
+		sinsp_ipv4_ifinfo ifinfo;
+		uint16_t namelen;
+		entry.read(namelen);
+		entry.read(ifinfo.m_addr);
+		entry.read(ifinfo.m_netmask);
+		entry.read(ifinfo.m_bcast);
+		uint64_t linkspeed;
+		entry.read(linkspeed);
+		entry.read(ifinfo.m_name, namelen);
+		interfaces.import_ipv4_interface(ifinfo);
+	}
+	case SCAP_II_IPV4_NOLINKSPEED:
+	{
+		sinsp_ipv4_ifinfo ifinfo;
+		uint16_t namelen;
+		entry.read(namelen);
+		entry.read(ifinfo.m_addr);
+		entry.read(ifinfo.m_netmask);
+		entry.read(ifinfo.m_bcast);
+		entry.read(ifinfo.m_name, namelen);
+		interfaces.import_ipv4_interface(ifinfo);
+	}
+	case SCAP_II_IPV6:
+	{
+		sinsp_ipv6_ifinfo ifinfo;
+		uint16_t namelen;
+		entry.read(namelen);
+		entry.read(ifinfo.m_net);
+		entry.read(ifinfo.m_netmask);
+		entry.read(ifinfo.m_bcast);
+		uint64_t linkspeed;
+		entry.read(linkspeed);
+		entry.read(ifinfo.m_name, namelen);
+		interfaces.import_ipv6_interface(ifinfo);
+	}
+	case SCAP_II_IPV6_NOLINKSPEED:
+	{
+		sinsp_ipv6_ifinfo ifinfo;
+		uint16_t namelen;
+		entry.read(namelen);
+		entry.read(ifinfo.m_net);
+		entry.read(ifinfo.m_netmask);
+		entry.read(ifinfo.m_bcast);
+		entry.read(ifinfo.m_name, namelen);
+		interfaces.import_ipv6_interface(ifinfo);
+	}
+	default:
+		throw sinsp_errprintf(0, "Unsupported interface info type %u", ifinfo_type);
+	}
+}
+
+
+void read_addrlist_v1(reader::outer_block &block, sinsp_network_interfaces &interfaces)
+{
+	std::vector<unsigned char> buf;
+
+	block.consume_append(buf, block.remaining());
+
+	auto cursor = buf.cbegin();
+	auto end = buf.cend();
+
+	while(std::distance(cursor, end) >= sizeof(uint32_t))
+	{
+		reader::inner_block blk(block.block_type(), cursor, end);
+		read_addrlist_entry(blk, interfaces);
+		cursor = blk.cursor();
+	}
+
+	block.finish();
+}
+
+void read_addrlist_v2(reader::outer_block &block, sinsp_network_interfaces &interfaces)
+{
+	while(true)
+	{
+		auto entry = block.next();
+		if(!entry)
+		{
+			return;
+		}
+
+		read_addrlist_entry(*entry, interfaces);
+	}
+}
+
+}
+
+void read_addrlist(reader::outer_block &block, sinsp_network_interfaces &interfaces)
+{
+	switch(block.block_type())
+	{
+	case IL_BLOCK_TYPE:
+	case IL_BLOCK_TYPE_INT:
+		read_addrlist_v1(block, interfaces);
+		return;
+	case IL_BLOCK_TYPE_V2:
+		read_addrlist_v2(block, interfaces);
+		return;
+	default:
+		throw sinsp_errprintf(0, "Tried to read addrlist from block type %u", block.block_type());
+	}
 }
 }

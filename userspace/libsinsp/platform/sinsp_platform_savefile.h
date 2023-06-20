@@ -18,6 +18,7 @@ limitations under the License.
 #pragma once
 
 #include "sinsp_platform_scapwrapper.h"
+#include "engine/savefile/savefile_public.h"
 
 namespace libsinsp
 {
@@ -32,5 +33,7 @@ public:
 	{
 		return reinterpret_cast<scap_savefile_platform*>(m_scap_platform);
 	}
+
+	int32_t read_block(struct scap_reader *r, uint32_t block_length, uint32_t block_type, uint64_t flags) override;
 };
 }

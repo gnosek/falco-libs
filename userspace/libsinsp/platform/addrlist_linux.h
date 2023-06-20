@@ -24,11 +24,18 @@ namespace libsinsp
 namespace dumper {
 class outer_block;
 }
+
+namespace reader {
+class outer_block;
+}
+
 namespace platform_linux
 {
 
 void get_interfaces(sinsp_network_interfaces &interfaces);
+
 libsinsp::dumper::outer_block dump_addrlist(sinsp_network_interfaces& interfaces);
 
+void read_addrlist(libsinsp::reader::outer_block& block, sinsp_network_interfaces& interfaces);
 }
 }
