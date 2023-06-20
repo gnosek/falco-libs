@@ -1653,7 +1653,6 @@ static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_
 int32_t scap_read_linux_block(struct scap_linux_storage *storage, struct scap_reader *r, uint32_t block_length,
 			      uint32_t block_type, uint64_t flags, char *error)
 {
-#warning "TODO flags"
 	switch(block_type)
 	{
 	case PL_BLOCK_TYPE_V1:
@@ -1683,7 +1682,15 @@ int32_t scap_read_linux_block(struct scap_linux_storage *storage, struct scap_re
 	case UL_BLOCK_TYPE:
 	case UL_BLOCK_TYPE_INT:
 	case UL_BLOCK_TYPE_V2:
-		return scap_read_userlist(r, block_length, block_type, storage, error);
+		if(flags & READ_FLAGS_IMPORT_USERS)
+		{
+			return scap_read_userlist(r, block_length, block_type, storage, error);
+		}
+		else
+		{
+			// caller will skip the block
+			return SCAP_NOT_SUPPORTED;
+		}
 
 	default:
 		return SCAP_NOT_SUPPORTED;
