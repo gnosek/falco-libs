@@ -16,82 +16,143 @@ limitations under the License.
 */
 
 #include "sinsp_platform.h"
-
-//struct scap_platform_vtable
-//{
-//	// initialize the platform-specific structure
-//	// at this point the engine is fully initialized and operational
-//	int32_t (*init_platform)(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs);
-//
-//	// refresh the interface list and place it inside
-//	// platform->m_addrlist
-//	int32_t (*refresh_addr_list)(struct scap_platform* platform);
-//
-//	// given a mount id, return the device major:minor
-//	// XXX this is Linux-specific
-//	uint32_t (*get_device_by_mount_id)(struct scap_platform*, const char *procdir, unsigned long requested_mount_id);
-//
-//	struct scap_threadinfo* (*get_proc)(struct scap_platform*, struct scap_proclist* proclist, int64_t tid, bool scan_sockets);
-//
-//	int32_t (*refresh_proc_table)(struct scap_platform*, struct scap_proclist* proclist);
-//	bool (*is_thread_alive)(struct scap_platform*, int64_t pid, int64_t tid, const char* comm);
-//	int32_t (*get_global_pid)(struct scap_platform*, int64_t *pid, char *error);
-//	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
-//
-//	int32_t (*read_block)(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
-//			      uint32_t block_type, uint64_t flags, char *error);
-//
-//	int32_t (*dump_state)(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags);
-//
-//	// do *not* use this in any new code
-//	struct scap_linux_storage* (*get_linux_storage)(struct scap_platform* platform);
-//
-//	// close the platform structure
-//	// clean up all data, make it ready for another call to `init_platform`
-//	int32_t (*close_platform)(struct scap_platform* platform);
-//
-//	// free the structure
-//	// it must have been previously closed (using `close_platform`)
-//	// to ensure there are no memory leaks
-//	void (*free_platform)(struct scap_platform* platform);
-//};
+#include "strlcpy.h"
 
 extern "C" {
 	int32_t cpp_init_platform(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs)
 	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		try
+		{
+			return cpp_plat->m_platform->init_platform(engine, oargs);
+		}
+		catch(const std::exception& e)
+		{
+			strlcpy(lasterr, e.what(), SCAP_LASTERR_SIZE);
+			return SCAP_FAILURE;
+		}
+	}
+
+	int32_t cpp_get_agent_info(struct scap_platform* platform, scap_agent_info* agent_info)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->get_agent_info(agent_info);
+	}
+
+	int32_t cpp_refresh_addr_list(struct scap_platform* platform)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->refresh_addr_list();
+	}
+
+	uint32_t cpp_get_device_by_mount_id(struct scap_platform* platform, const char *procdir, unsigned long requested_mount_id)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->get_device_by_mount_id(procdir, requested_mount_id);
+	}
+
+	struct scap_threadinfo* cpp_get_proc(struct scap_platform* platform, struct scap_proclist* proclist, int64_t tid, bool scan_sockets)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->get_proc(proclist, tid, scan_sockets);
+	}
+
+	int32_t cpp_refresh_proc_table(struct scap_platform* platform, struct scap_proclist* proclist)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->refresh_proc_table(proclist);
 
 	}
 
-	// refresh the interface list and place it inside
-	// platform->m_addrlist
-	int32_t (*refresh_addr_list)(struct scap_platform* platform);
+	bool cpp_is_thread_alive(struct scap_platform* platform, int64_t pid, int64_t tid, const char* comm)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->is_thread_alive(pid, tid, comm);
+	}
 
-	// given a mount id, return the device major:minor
-	// XXX this is Linux-specific
-	uint32_t (*get_device_by_mount_id)(struct scap_platform*, const char *procdir, unsigned long requested_mount_id);
+	int32_t cpp_get_global_pid(struct scap_platform* platform, int64_t *pid, char *error)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		try
+		{
+			return cpp_plat->m_platform->get_global_pid(pid);
+		}
+		catch(const std::exception& e)
+		{
+			strlcpy(error, e.what(), SCAP_LASTERR_SIZE);
+			return SCAP_FAILURE;
+		}
+	}
 
-	struct scap_threadinfo* (*get_proc)(struct scap_platform*, struct scap_proclist* proclist, int64_t tid, bool scan_sockets);
+	int32_t cpp_get_threadlist(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		try
+		{
+			return cpp_plat->m_platform->get_threadlist(procinfo_p);
+		}
+		catch(const std::exception& e)
+		{
+			strlcpy(lasterr, e.what(), SCAP_LASTERR_SIZE);
+			return SCAP_FAILURE;
+		}
+	}
 
-	int32_t (*refresh_proc_table)(struct scap_platform*, struct scap_proclist* proclist);
-	bool (*is_thread_alive)(struct scap_platform*, int64_t pid, int64_t tid, const char* comm);
-	int32_t (*get_global_pid)(struct scap_platform*, int64_t *pid, char *error);
-	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
+	int32_t cpp_read_block(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
+			      uint32_t block_type, uint64_t flags, char *error)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		try
+		{
+			return cpp_plat->m_platform->read_block(r, block_length, block_type, flags);
+		}
+		catch(const std::exception& e)
+		{
+			strlcpy(error, e.what(), SCAP_LASTERR_SIZE);
+			return SCAP_FAILURE;
+		}
+	}
 
-	int32_t (*read_block)(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
-			      uint32_t block_type, uint64_t flags, char *error);
+	int32_t cpp_dump_state(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->dump_state(d, flags);
+	}
 
-	int32_t (*dump_state)(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags);
+	struct scap_linux_storage* cpp_get_linux_storage(struct scap_platform* platform)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->get_linux_storage();
+	}
 
-	// do *not* use this in any new code
-	struct scap_linux_storage* (*get_linux_storage)(struct scap_platform* platform);
+	int32_t cpp_close_platform(struct scap_platform* platform)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		return cpp_plat->m_platform->close_platform();
+	}
 
-	// close the platform structure
-	// clean up all data, make it ready for another call to `init_platform`
-	int32_t (*close_platform)(struct scap_platform* platform);
+	void cpp_free_platform(struct scap_platform* platform)
+	{
+		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
+		delete cpp_plat;
+	}
 
-	// free the structure
-	// it must have been previously closed (using `close_platform`)
-	// to ensure there are no memory leaks
-	void (*free_platform)(struct scap_platform* platform);
+	const struct scap_platform_vtable cpp_platform_vtable = {
+		.init_platform = cpp_init_platform,
+		.get_agent_info = cpp_get_agent_info,
+		.refresh_addr_list = cpp_refresh_addr_list,
+		.get_device_by_mount_id = cpp_get_device_by_mount_id,
+		.get_proc = cpp_get_proc,
+		.refresh_proc_table = cpp_refresh_proc_table,
+		.is_thread_alive = cpp_is_thread_alive,
+		.get_global_pid = cpp_get_global_pid,
+		.get_threadlist = cpp_get_threadlist,
+		.read_block = cpp_read_block,
+		.dump_state = cpp_dump_state,
+		.get_linux_storage = cpp_get_linux_storage,
+		.close_platform = cpp_close_platform,
+		.free_platform = cpp_free_platform,
+	};
 
 }
+

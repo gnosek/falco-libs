@@ -18,43 +18,9 @@ limitations under the License.
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
-// 	// initialize the platform-specific structure
-//	// at this point the engine is fully initialized and operational
-//	int32_t (*init_platform)(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs);
-//
-//	// refresh the interface list and place it inside
-//	// platform->m_addrlist
-//	int32_t (*refresh_addr_list)(struct scap_platform* platform);
-//
-//	// given a mount id, return the device major:minor
-//	// XXX this is Linux-specific
-//	uint32_t (*get_device_by_mount_id)(struct scap_platform*, const char *procdir, unsigned long requested_mount_id);
-//
-//	struct scap_threadinfo* (*get_proc)(struct scap_platform*, struct scap_proclist* proclist, int64_t tid, bool scan_sockets);
-//
-//	int32_t (*refresh_proc_table)(struct scap_platform*, struct scap_proclist* proclist);
-//	bool (*is_thread_alive)(struct scap_platform*, int64_t pid, int64_t tid, const char* comm);
-//	int32_t (*get_global_pid)(struct scap_platform*, int64_t *pid, char *error);
-//	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
-//
-//	int32_t (*read_block)(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
-//			      uint32_t block_type, uint64_t flags, char *error);
-//
-//	int32_t (*dump_state)(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags);
-//
-//	// do *not* use this in any new code
-//	struct scap_linux_storage* (*get_linux_storage)(struct scap_platform* platform);
-//
-//	// close the platform structure
-//	// clean up all data, make it ready for another call to `init_platform`
-//	int32_t (*close_platform)(struct scap_platform* platform);
-//
-//	// free the structure
-//	// it must have been previously closed (using `close_platform`)
-//	// to ensure there are no memory leaks
-//	void (*free_platform)(struct scap_platform* platform);
-
+#include "scap_platform_impl.h"
 
 namespace libsinsp
 {
@@ -63,6 +29,7 @@ namespace libsinsp
 	public:
 		virtual int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) = 0;
 
+		virtual int32_t get_agent_info(scap_agent_info* agent_info) = 0;
 		virtual int32_t refresh_addr_list() = 0;
 
 		virtual uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) = 0;
@@ -83,5 +50,13 @@ namespace libsinsp
 
 		virtual int32_t close_platform() = 0;
 	};
+
+	struct platform_struct
+	{
+		struct ::scap_platform m_generic;
+		std::unique_ptr<platform> m_platform;
+	};
+
+	extern const struct scap_platform_vtable cpp_platform_vtable;
 }
 
