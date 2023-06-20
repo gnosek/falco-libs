@@ -46,8 +46,6 @@ namespace libsinsp
 		virtual int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) = 0;
 
 		virtual int32_t get_agent_info(agent_info &agent_info) = 0;
-		virtual void get_machine_info(scap_machine_info& machine_info) = 0;
-
 		virtual uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) = 0;
 
 		virtual struct scap_threadinfo* get_proc(struct scap_proclist* proclist, int64_t tid, bool scan_sockets) = 0;
@@ -69,6 +67,13 @@ namespace libsinsp
 		// ---
 
 		virtual sinsp_network_interfaces& network_interfaces() = 0;
+
+		inline const scap_machine_info* get_machine_info() const {
+			return  &m_machine_info;
+		};
+
+	protected:
+		scap_machine_info m_machine_info {.num_cpus = (uint32_t)-1};
 	};
 
 	struct platform_struct

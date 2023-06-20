@@ -37,8 +37,5 @@ public:
 	int32_t dump_state(struct scap_dumper *d, uint64_t flags) override;
 
 	int32_t read_block(struct scap_reader *r, uint32_t block_length, uint32_t block_type, uint64_t flags) override;
-
-protected:
-	scap_machine_info m_machine_info;
 };
 }

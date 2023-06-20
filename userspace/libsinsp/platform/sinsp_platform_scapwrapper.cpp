@@ -46,5 +46,7 @@ int32_t libsinsp::scapwrapper_platform::init_platform(struct scap_engine_handle 
 	struct scap_addrlist* addrlist = get_linux_storage()->m_addrlist;
 	m_network_interfaces->import_interfaces(addrlist);
 
+	m_machine_info = get_linux_storage()->m_machine_info;
+
 	return rc;
 }

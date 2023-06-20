@@ -313,20 +313,6 @@ void sinsp::consume_initialstate_events()
 void sinsp::init()
 {
 	//
-	// Retrieve machine information
-	//
-	get_platform()->get_machine_info(m_machine_info);
-	if((int)m_machine_info.num_cpus > 0)
-	{
-		m_num_cpus = m_machine_info.num_cpus;
-	}
-	else
-	{
-		ASSERT(false);
-		m_num_cpus = 0;
-	}
-
-	//
 	// Retrieve agent information
 	//
 	get_platform()->get_agent_info(m_agent_info);
@@ -1881,7 +1867,7 @@ bool sinsp::run_filters_on_evt(sinsp_evt *evt)
 
 const scap_machine_info* sinsp::get_machine_info()
 {
-	return &m_machine_info;
+	return m_platform->m_platform->get_machine_info();
 }
 
 const libsinsp::platform::agent_info* sinsp::get_agent_info()

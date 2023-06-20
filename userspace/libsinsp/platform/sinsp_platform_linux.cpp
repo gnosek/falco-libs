@@ -102,6 +102,8 @@ int32_t libsinsp::linux_platform::init_platform(struct scap_engine_handle engine
 		return rc;
 	}
 
+	fill_machine_info();
+
 	libsinsp::platform_linux::get_interfaces(*m_network_interfaces);
 
 	return SCAP_SUCCESS;
@@ -197,36 +199,33 @@ int32_t libsinsp::linux_platform::get_agent_info(agent_info &agent_info)
 	return SCAP_SUCCESS;
 }
 
-void libsinsp::linux_platform::get_machine_info(scap_machine_info& machine_info)
+void libsinsp::linux_platform::fill_machine_info()
 {
 	// this isn't actually even used by scap_linux_get_host_boot_time_ns
 	char lasterr[SCAP_LASTERR_SIZE];
 
-	machine_info.num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-	machine_info.memory_size_bytes = (uint64_t)sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
-	scap_gethostname(machine_info.hostname, sizeof(machine_info.hostname));
-	machine_info.boot_ts_epoch = get_host_boot_time_ns(lasterr);
-	if(machine_info.boot_ts_epoch == 0)
+	m_machine_info.num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+	m_machine_info.memory_size_bytes = (uint64_t)sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
+	scap_gethostname(m_machine_info.hostname, sizeof(m_machine_info.hostname));
+	m_machine_info.boot_ts_epoch = get_host_boot_time_ns(lasterr);
+	if(m_machine_info.boot_ts_epoch == 0)
 	{
 		throw sinsp_exception("Failed to get current boot time");
 	}
-	machine_info.reserved3 = 0;
-	machine_info.reserved4 = 0;
+	m_machine_info.reserved3 = 0;
+	m_machine_info.reserved4 = 0;
 
-	machine_info.flags |= SCAP_OS_LINUX;
+	m_machine_info.flags |= SCAP_OS_LINUX;
 #if defined(__amd64__)
-	machine_info.flags |= SCAP_ARCH_X64;
+	m_machine_info.flags |= SCAP_ARCH_X64;
 #elif defined(__aarch64__)
-	machine_info.flags |= SCAP_ARCH_AARCH64;
+	m_machine_info.flags |= SCAP_ARCH_AARCH64;
 #elif defined(__i386__)
-	machine_info.flags |= SCAP_ARCH_I386;
+	m_machine_info.flags |= SCAP_ARCH_I386;
 #else
 #warning "Unsupported architecture, please define a SCAP_ARCH_* flag for it"
 	throw sinsp_exception("Unsupported architecture, please define a SCAP_ARCH_* flag for it");
 #endif
-
-	// save a copy for scap files
-	m_machine_info = machine_info;
 }
 
 int64_t libsinsp::linux_platform::get_global_pid()
