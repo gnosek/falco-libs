@@ -33,36 +33,18 @@ protected:
 	}
 
 public:
-	explicit scapwrapper_platform(scap_platform* scap_platform) : m_scap_platform(scap_platform) {}
-	~scapwrapper_platform() override {
-		if(m_scap_platform)
-		{
-			scap_platform_close(m_scap_platform);
-			scap_platform_free(m_scap_platform);
-		}
-	}
+	explicit scapwrapper_platform(scap_platform* scap_platform);
 
-	int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) override
-	{
-		char lasterr[SCAP_LASTERR_SIZE];
+	~scapwrapper_platform() override;
 
-		int32_t rc = vt()->init_platform(m_scap_platform, lasterr, engine, oargs);
-		if(rc != SCAP_SUCCESS)
-		{
-			throw sinsp_exception(lasterr);
-		}
-		return rc;
-	}
+	int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) override;
 
 	int32_t get_agent_info(agent_info &agent_info) override
 	{
 		return SCAP_FAILURE;
 	}
 
-	int32_t refresh_addr_list() override
-	{
-		return vt()->refresh_addr_list(m_scap_platform);
-	}
+	void refresh_addr_list() override;
 
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override
 	{
@@ -128,7 +110,13 @@ public:
 		return vt()->close_platform(m_scap_platform);
 	}
 
+	sinsp_network_interfaces& network_interfaces() override
+	{
+		return *m_network_interfaces;
+	}
+
 protected:
 	scap_platform* m_scap_platform;
+	std::unique_ptr<sinsp_network_interfaces> m_network_interfaces;
 };
 }

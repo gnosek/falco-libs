@@ -119,7 +119,8 @@ set(SINSP_SOURCES
 	sinsp_suppress.cpp
 	events/sinsp_events.cpp
 	events/sinsp_events_ppm_sc.cpp
-	platform/sinsp_platform.cpp)
+	platform/sinsp_platform.cpp
+	platform/sinsp_platform_scapwrapper.cpp)
 
 if(NOT WIN32 AND NOT APPLE)
 	list(APPEND SINSP_SOURCES platform/sinsp_platform_linux.cpp)

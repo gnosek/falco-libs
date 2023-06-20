@@ -44,6 +44,7 @@ limitations under the License.
 #include "strlcpy.h"
 
 #include "platform/sinsp_platform_linux.h"
+#include "platform/sinsp_platform_savefile.h"
 
 #ifndef CYGWING_AGENT
 #ifndef MINIMAL_BUILD
@@ -94,7 +95,6 @@ sinsp::sinsp(bool static_container, const std::string &static_id, const std::str
 	m_is_dumping = false;
 	m_metaevt = NULL;
 	m_meinfo.m_piscapevt = NULL;
-	m_network_interfaces = NULL;
 	m_parser = new sinsp_parser(this);
 	m_thread_manager = new sinsp_thread_manager(this);
 	m_max_fdtable_size = MAX_FD_TABLE_SIZE;
@@ -386,8 +386,6 @@ void sinsp::init()
 		import_thread_table();
 	}
 
-	import_ifaddr_list();
-
 	import_user_list();
 
 	//
@@ -576,10 +574,10 @@ void sinsp::open_kmod(unsigned long driver_buffer_bytes_dim, const libsinsp::eve
 	params.buffer_bytes_dim = driver_buffer_bytes_dim;
 	oargs.engine_params = &params;
 
-	auto plat = std::make_unique<libsinsp::linux_platform>();
+	auto plat = std::make_shared<libsinsp::linux_platform>();
 	plat->get_scap_platform()->m_linux_vtable = &scap_kmod_linux_vtable;
 
-	m_platform = libsinsp::platform_struct::wrap(std::move(plat));
+	m_platform = libsinsp::platform_struct::wrap(plat);
 	open_common(&oargs, &scap_kmod_engine);
 }
 
@@ -615,7 +613,7 @@ void sinsp::open_udig()
 void sinsp::open_nodriver(bool full_proc_scan)
 {
 	scap_open_args oargs = factory_open_args(NODRIVER_ENGINE, SCAP_MODE_NODRIVER);
-	auto plat = std::make_unique<libsinsp::linux_platform>();
+	auto plat = std::make_shared<libsinsp::linux_platform>();
 	if(plat && !full_proc_scan)
 	{
 		plat->get_scap_platform()->m_fd_lookup_limit = SCAP_NODRIVER_MAX_FD_LOOKUP;
@@ -662,7 +660,8 @@ void sinsp::open_savefile(const std::string& filename, int fd)
 	params.start_offset = 0;
 	params.fbuffer_size = 0;
 	oargs.engine_params = &params;
-	open_common(&oargs, &scap_savefile_engine, scap_savefile_alloc_platform());
+	m_platform = libsinsp::platform_struct::alloc<libsinsp::savefile_platform>();
+	open_common(&oargs, &scap_savefile_engine);
 }
 
 void sinsp::open_plugin(const std::string& plugin_name, const std::string& plugin_open_params)
@@ -890,12 +889,6 @@ void sinsp::close()
 //
 void sinsp::deinit_state()
 {
-	if(NULL != m_network_interfaces)
-	{
-		delete m_network_interfaces;
-		m_network_interfaces = NULL;
-	}
-
 	m_thread_manager->clear();
 }
 
@@ -1056,21 +1049,9 @@ void sinsp::import_thread_table()
 	}
 }
 
-void sinsp::import_ifaddr_list()
-{
-	m_network_interfaces = new sinsp_network_interfaces(this);
-	m_network_interfaces->import_interfaces(scap_get_ifaddr_list(m_h));
-}
-
 sinsp_network_interfaces* sinsp::get_ifaddr_list()
 {
-	return m_network_interfaces;
-}
-
-void sinsp::import_ipv4_interface(const sinsp_ipv4_ifinfo& ifinfo)
-{
-	ASSERT(m_network_interfaces);
-	m_network_interfaces->import_ipv4_interface(ifinfo);
+	return &m_platform->m_platform->network_interfaces();
 }
 
 void sinsp::import_user_list()
@@ -1090,19 +1071,6 @@ void sinsp::import_user_list()
 			m_usergroup_manager.add_group("", -1, ul->groups[j].gid, ul->groups[j].name);
 		}
 	}
-}
-
-void sinsp::refresh_ifaddr_list()
-{
-#if defined(HAS_CAPTURE) && !defined(_WIN32)
-	if(is_live() || is_syscall_plugin())
-	{
-		ASSERT(m_network_interfaces);
-		scap_refresh_iflist(m_h);
-		m_network_interfaces->clear();
-		m_network_interfaces->import_interfaces(scap_get_ifaddr_list(m_h));
-	}
-#endif
 }
 
 bool should_drop(sinsp_evt *evt, bool* stopped, bool* switched);

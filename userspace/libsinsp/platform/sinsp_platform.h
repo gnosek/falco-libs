@@ -22,6 +22,8 @@ limitations under the License.
 
 #include "scap_platform_impl.h"
 
+class sinsp_network_interfaces;
+
 extern "C" const struct scap_platform_vtable cpp_platform_vtable;
 
 namespace libsinsp
@@ -44,7 +46,7 @@ namespace libsinsp
 		virtual int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) = 0;
 
 		virtual int32_t get_agent_info(agent_info &agent_info) = 0;
-		virtual int32_t refresh_addr_list() = 0;
+		virtual void refresh_addr_list() = 0;
 
 		virtual uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) = 0;
 
@@ -63,17 +65,21 @@ namespace libsinsp
 		virtual struct scap_linux_storage* get_linux_storage() = 0;
 
 		virtual int32_t close_platform() = 0;
+
+		// ---
+
+		virtual sinsp_network_interfaces& network_interfaces() = 0;
 	};
 
 	struct platform_struct
 	{
 		struct ::scap_platform m_generic;
-		std::unique_ptr<platform> m_platform;
+		std::shared_ptr<platform> m_platform;
 
 		platform_struct() :
 			m_generic({}) {}
 
-		static std::unique_ptr<platform_struct> wrap(std::unique_ptr<platform>&& plat)
+		static std::unique_ptr<platform_struct> wrap(std::shared_ptr<platform>&& plat)
 		{
 			auto platform = std::make_unique<platform_struct>();
 			platform->m_platform = std::move(plat);

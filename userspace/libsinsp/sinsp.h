@@ -923,7 +923,6 @@ public:
 	/*=============================== Engine related ===============================*/
 
 	bool setup_cycle_writer(std::string base_file_name, int rollover_mb, int duration_seconds, int file_limit, unsigned long event_limit, bool compress);
-	void import_ipv4_interface(const sinsp_ipv4_ifinfo& ifinfo);
 	void add_meta_event(sinsp_evt *metaevt);
 	void add_meta_event_callback(meta_event_callback cback, void* data);
 	void remove_meta_event_callback();
@@ -932,7 +931,6 @@ public:
 	{
 		return scap_ftell(m_h);
 	}
-	void refresh_ifaddr_list();
 	void refresh_proc_list() {
 		scap_refresh_proc_table(m_h);
 	}
@@ -1026,7 +1024,6 @@ private:
 	void consume_initialstate_events();
 	bool is_initialstate_event(scap_evt* pevent);
 	void import_thread_table();
-	void import_ifaddr_list();
 	void import_user_list();
 	void add_protodecoders();
 	void remove_thread(int64_t tid, bool force);
@@ -1076,7 +1073,7 @@ private:
 	void get_procs_cpu_from_driver(uint64_t ts);
 
 	scap_t* m_h;
-	std::unique_ptr<libsinsp::platform_struct> m_platform;
+	std::shared_ptr<libsinsp::platform_struct> m_platform;
 	uint64_t m_nevts;
 	int64_t m_filesize;
 	scap_mode_t m_mode = SCAP_MODE_NONE;
@@ -1112,7 +1109,7 @@ private:
 	bool m_large_envs_enabled;
 	scap_test_input_data *m_test_input_data = nullptr;
 
-	sinsp_network_interfaces* m_network_interfaces;
+//	sinsp_network_interfaces* m_network_interfaces;
 
 	std::string m_host_root;
 
@@ -1363,6 +1360,15 @@ public:
 	friend class sinsp_usergroup_manager;
 
 	template<class TKey,class THash,class TCompare> friend class sinsp_connection_manager;
+
+public:
+	void update_fd_ip_addrs(sinsp_fdinfo_t* fdi)
+	{
+		if(m_platform)
+		{
+			m_platform->m_platform->network_interfaces().update_fd(fdi);
+		}
+	}
 
 protected:
 	inline libsinsp::platform* get_platform()

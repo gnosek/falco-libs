@@ -36,7 +36,15 @@ extern "C" {
 	int32_t cpp_refresh_addr_list(struct scap_platform* platform)
 	{
 		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
-		return cpp_plat->m_platform->refresh_addr_list();
+		try
+		{
+			cpp_plat->m_platform->refresh_addr_list();
+			return SCAP_SUCCESS;
+		}
+		catch(const std::exception& e)
+		{
+			return SCAP_FAILURE;
+		}
 	}
 
 	uint32_t cpp_get_device_by_mount_id(struct scap_platform* platform, const char *procdir, unsigned long requested_mount_id)

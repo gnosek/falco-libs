@@ -43,25 +43,6 @@ static struct scap_linux_storage* scap_get_linux_storage(scap_t* handle)
 	return handle->m_platform->m_vtable->get_linux_storage(handle->m_platform);
 }
 
-scap_addrlist* scap_get_ifaddr_list(scap_t* handle)
-{
-	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
-	if (storage)
-	{
-		return storage->m_addrlist;
-	}
-
-	return NULL;
-}
-
-void scap_refresh_iflist(scap_t* handle)
-{
-	if (handle && handle->m_platform && handle->m_platform->m_vtable->refresh_addr_list)
-	{
-		handle->m_platform->m_vtable->refresh_addr_list(handle->m_platform);
-	}
-}
-
 scap_userlist* scap_get_user_list(scap_t* handle)
 {
 	struct scap_linux_storage* storage = scap_get_linux_storage(handle);

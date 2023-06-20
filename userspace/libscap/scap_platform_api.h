@@ -34,19 +34,6 @@ struct _scap_machine_info;
 struct scap_threadinfo;
 
 /*!
-  \brief Return the list of the the user interfaces of the machine from which the
-  events are being captured.
-
-  \param handle Handle to the capture instance.
-
-  \return The pointer to a \ref scap_addrlist structure containing the interface list,
-  or NULL if the function fails.
-*/
-struct scap_addrlist* scap_get_ifaddr_list(struct scap* handle);
-
-void scap_refresh_iflist(struct scap* handle);
-
-/*!
   \brief Return the machine user and group lists
 
   \param handle Handle to the capture instance.
