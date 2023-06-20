@@ -17,11 +17,13 @@ limitations under the License.
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "scap_suppress.h"
 
 #include "scap_const.h"
 #include "scap_limits.h"
+#include "scap.h"
 
 int32_t scap_suppress_events_comm_impl(struct scap_suppress *suppress, const char *comm)
 {
@@ -180,3 +182,98 @@ int32_t scap_update_suppressed(struct scap_suppress *suppress,
 	return SCAP_SUCCESS;
 }
 
+
+int32_t scap_check_suppressed(struct scap_suppress* suppress, scap_evt *pevent, bool *suppressed, char *error)
+{
+	uint16_t *lens;
+	char *valptr;
+	uint32_t j;
+	int32_t res = SCAP_SUCCESS;
+	const char *comm = NULL;
+	uint64_t *ptid = NULL;
+	scap_tid *stid;
+
+	*suppressed = false;
+
+	// For events that can create a new tid (fork, vfork, clone),
+	// we need to check the comm, which might also update the set
+	// of suppressed tids.
+
+	switch(pevent->type)
+	{
+	case PPME_SYSCALL_CLONE_20_X:
+	case PPME_SYSCALL_FORK_20_X:
+	case PPME_SYSCALL_VFORK_20_X:
+	case PPME_SYSCALL_EXECVE_19_X:
+	case PPME_SYSCALL_EXECVEAT_X:
+	case PPME_SYSCALL_CLONE3_X:
+
+		lens = (uint16_t *)((char *)pevent + sizeof(struct ppm_evt_hdr));
+		valptr = (char *)lens + pevent->nparams * sizeof(uint16_t);
+
+		if(pevent->nparams < 14)
+		{
+			snprintf(error, SCAP_LASTERR_SIZE, "Could not find process comm in event argument list");
+			return SCAP_FAILURE;
+		}
+
+		// For all of these events, the comm is argument 14,
+		// so we need to walk the list of params that far to
+		// find the comm.
+		for(j = 0; j < 13; j++)
+		{
+			if(j == 5)
+			{
+				ptid = (uint64_t *) valptr;
+			}
+
+			valptr += lens[j];
+		}
+
+		if(ptid == NULL)
+		{
+			snprintf(error, SCAP_LASTERR_SIZE, "Could not find ptid in event argument list");
+			return SCAP_FAILURE;
+		}
+
+		comm = valptr;
+
+		if((res = scap_update_suppressed(suppress,
+						 comm,
+						 pevent->tid, *ptid,
+						 suppressed)) != SCAP_SUCCESS)
+		{
+			// scap_update_suppressed already set handle->m_lasterr on error.
+			return res;
+		}
+
+		break;
+
+	default:
+
+		HASH_FIND_INT64(suppress->m_suppressed_tids, &(pevent->tid), stid);
+
+		// When threads exit they are always removed and no longer suppressed.
+		if(pevent->type == PPME_PROCEXIT_1_E)
+		{
+			if(stid != NULL)
+			{
+				HASH_DEL(suppress->m_suppressed_tids, stid);
+				free(stid);
+				*suppressed = true;
+			}
+			else
+			{
+				*suppressed = false;
+			}
+		}
+		else
+		{
+			*suppressed = (stid != NULL);
+		}
+
+		break;
+	}
+
+	return SCAP_SUCCESS;
+}
