@@ -218,6 +218,38 @@ static void scap_gethostname(char* buf, size_t size)
 	}
 }
 
+static int32_t scap_linux_fill_machine_info(struct scap_platform* platform, scap_machine_info* machine_info)
+{
+	// this isn't actually even used by scap_linux_get_host_boot_time_ns
+	char lasterr[SCAP_LASTERR_SIZE];
+
+	machine_info->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+	machine_info->memory_size_bytes = (uint64_t)sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
+	scap_gethostname(machine_info->hostname, sizeof(machine_info->hostname));
+	machine_info->boot_ts_epoch = scap_linux_get_host_boot_time_ns(lasterr);
+	if(machine_info->boot_ts_epoch == 0)
+	{
+		return SCAP_FAILURE;
+	}
+	scap_get_bpf_stats_enabled(machine_info);
+	machine_info->reserved3 = 0;
+	machine_info->reserved4 = 0;
+
+	machine_info->flags |= SCAP_OS_LINUX;
+#if defined(__amd64__)
+	machine_info->flags |= SCAP_ARCH_X64;
+#elif defined(__aarch64__)
+	machine_info->flags |= SCAP_ARCH_AARCH64;
+#elif defined(__i386__)
+	machine_info->flags |= SCAP_ARCH_I386;
+#else
+#warning "Unsupported architecture, please define a SCAP_ARCH_* flag for it"
+	ASSERT(false);
+#endif
+
+	return SCAP_SUCCESS;
+}
+
 int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs)
 {
 	int rc;
@@ -225,29 +257,11 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	linux_platform->m_lasterr = lasterr;
 	linux_platform->m_engine = engine;
 
-	platform->m_machine_info.num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-	platform->m_machine_info.memory_size_bytes = (uint64_t)sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
-	scap_gethostname(platform->m_machine_info.hostname, sizeof(platform->m_machine_info.hostname));
-	platform->m_machine_info.boot_ts_epoch = scap_linux_get_host_boot_time_ns(lasterr);
-	if(platform->m_machine_info.boot_ts_epoch == 0)
+	rc = scap_linux_fill_machine_info(platform, &platform->m_machine_info);
+	if(rc != SCAP_SUCCESS)
 	{
-		return SCAP_FAILURE;
+		return rc;
 	}
-	scap_get_bpf_stats_enabled(&platform->m_machine_info);
-	platform->m_machine_info.reserved3 = 0;
-	platform->m_machine_info.reserved4 = 0;
-
-	platform->m_machine_info.flags |= SCAP_OS_LINUX;
-#if defined(__amd64__)
-	platform->m_machine_info.flags |= SCAP_ARCH_X64;
-#elif defined(__aarch64__)
-	platform->m_machine_info.flags |= SCAP_ARCH_AARCH64;
-#elif defined(__i386__)
-	platform->m_machine_info.flags |= SCAP_ARCH_I386;
-#else
-#warning "Unsupported architecture, please define a SCAP_ARCH_* flag for it"
-	ASSERT(false);
-#endif
 
 	rc = scap_linux_storage_init(&linux_platform->m_storage, lasterr, oargs);
 	if(rc != SCAP_SUCCESS)
