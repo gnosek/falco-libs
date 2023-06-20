@@ -628,12 +628,12 @@ static int32_t init(struct scap* main_handle, struct scap_open_args* oargs)
 
 	handle->m_use_last_block_header = false;
 
-	uint64_t flags = oargs->import_users ? READ_FLAGS_IMPORT_USERS : 0;
+	handle->m_read_flags = oargs->import_users ? READ_FLAGS_IMPORT_USERS : 0;
 	res = scap_read_init(
 		handle,
 		reader,
 		platform,
-		flags,
+		handle->m_read_flags,
 		main_handle->m_lasterr
 	);
 
@@ -687,7 +687,7 @@ static int32_t scap_savefile_restart_capture(scap_t* handle)
 	scap_platform_close(platform);
 
 	if((res = scap_read_init(engine, engine->m_reader, platform,
-				 READ_FLAGS_IMPORT_USERS, // TODO
+				 engine->m_read_flags,
 				 handle->m_lasterr)) != SCAP_SUCCESS)
 	{
 		char error[SCAP_LASTERR_SIZE];

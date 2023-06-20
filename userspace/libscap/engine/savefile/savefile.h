@@ -109,5 +109,7 @@ struct savefile_engine
 	char* m_reader_evt_buf;
 	size_t m_reader_evt_buf_size;
 	uint32_t m_last_evt_dump_flags;
+
+	uint64_t m_read_flags;
 };
 
