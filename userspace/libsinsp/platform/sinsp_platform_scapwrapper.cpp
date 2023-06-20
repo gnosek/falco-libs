@@ -20,7 +20,7 @@ limitations under the License.
 #include "sinsp.h"
 
 libsinsp::scapwrapper_platform::scapwrapper_platform(scap_platform *scap_platform):
-	m_scap_platform(scap_platform), m_network_interfaces(std::make_unique<sinsp_network_interfaces>())
+	m_scap_platform(scap_platform)
 {
 }
 
@@ -44,7 +44,7 @@ int32_t libsinsp::scapwrapper_platform::init_platform(struct scap_engine_handle 
 	}
 
 	struct scap_addrlist* addrlist = get_linux_storage()->m_addrlist;
-	m_network_interfaces->import_interfaces(addrlist);
+	m_network_interfaces.import_interfaces(addrlist);
 
 	m_machine_info = get_linux_storage()->m_machine_info;
 

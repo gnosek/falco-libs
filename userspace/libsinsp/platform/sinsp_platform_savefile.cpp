@@ -39,7 +39,7 @@ int32_t libsinsp::savefile_platform::read_block(struct scap_reader *r, uint32_t 
 	case IL_BLOCK_TYPE_V2:
 	{
 		libsinsp::reader::outer_block block(r, block_type, block_length);
-		libsinsp::platform_linux::read_addrlist(block, *m_network_interfaces);
+		libsinsp::platform_linux::read_addrlist(block, m_network_interfaces);
 	}
 	default:
 		return scapwrapper_platform::read_block(r, block_length, block_type, flags);
@@ -64,7 +64,7 @@ int32_t libsinsp::savefile_platform::dump_state(struct scap_dumper *d, uint64_t 
 	}
 #endif
 
-	libsinsp::platform_linux::dump_addrlist(*m_network_interfaces).dump(d);
+	libsinsp::platform_linux::dump_addrlist(m_network_interfaces).dump(d);
 
 	return SCAP_SUCCESS;
 }

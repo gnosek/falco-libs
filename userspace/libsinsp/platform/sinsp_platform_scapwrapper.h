@@ -108,13 +108,7 @@ public:
 		return vt()->close_platform(m_scap_platform);
 	}
 
-	sinsp_network_interfaces& network_interfaces() override
-	{
-		return *m_network_interfaces;
-	}
-
 protected:
 	scap_platform* m_scap_platform;
-	std::unique_ptr<sinsp_network_interfaces> m_network_interfaces;
 };
 }

@@ -21,8 +21,13 @@ limitations under the License.
 #include <memory>
 
 #include "scap_platform_impl.h"
-
-class sinsp_network_interfaces;
+#include "savefile/scap_savefile_api.h"
+#define SINSP_PUBLIC
+#include "settings.h"
+#include "event.h"
+#include "tuples.h"
+#include "threadinfo.h"
+#include "ifinfo.h"
 
 extern "C" const struct scap_platform_vtable cpp_platform_vtable;
 
@@ -66,7 +71,10 @@ namespace libsinsp
 
 		// ---
 
-		virtual sinsp_network_interfaces& network_interfaces() = 0;
+		inline sinsp_network_interfaces& network_interfaces()
+		{
+			return m_network_interfaces;
+		}
 
 		inline const scap_machine_info* get_machine_info() const {
 			return  &m_machine_info;
@@ -74,6 +82,7 @@ namespace libsinsp
 
 	protected:
 		scap_machine_info m_machine_info {.num_cpus = (uint32_t)-1};
+		sinsp_network_interfaces m_network_interfaces;
 	};
 
 	struct platform_struct
