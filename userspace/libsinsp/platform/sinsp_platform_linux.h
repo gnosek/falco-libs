@@ -40,9 +40,9 @@ public:
 	int64_t get_global_pid() override;
 
 	int32_t dump_state(struct scap_dumper *d, uint64_t flags) override;
+protected:
 	void fill_machine_info();
 
-protected:
 	std::unordered_map<unsigned long, uint32_t> m_dev_map;
 };
 }

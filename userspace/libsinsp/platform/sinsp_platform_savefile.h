@@ -18,6 +18,7 @@ limitations under the License.
 #pragma once
 
 #include "sinsp_platform_scapwrapper.h"
+#include "userlist_linux.h"
 #include "engine/savefile/savefile_public.h"
 
 namespace libsinsp
@@ -37,5 +38,8 @@ public:
 	int32_t dump_state(struct scap_dumper *d, uint64_t flags) override;
 
 	int32_t read_block(struct scap_reader *r, uint32_t block_length, uint32_t block_type, uint64_t flags) override;
+
+protected:
+	libsinsp::platform_linux::userlist_storage m_users;
 };
 }

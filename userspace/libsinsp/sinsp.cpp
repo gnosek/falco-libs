@@ -371,6 +371,8 @@ void sinsp::init()
 		import_thread_table();
 	}
 
+	m_platform->m_platform->get_users(m_usergroup_manager);
+
 	//
 	// Scan the list to create the proper parent/child dependencies
 	//

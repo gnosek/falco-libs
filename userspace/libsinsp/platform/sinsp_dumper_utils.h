@@ -37,6 +37,12 @@ public:
 		return sizeof(val);
 	}
 
+	size_t append(const char* str, size_t len)
+	{
+		m_buf.insert(m_buf.end(), str, str + len);
+		return len;
+	}
+
 	size_t append(const std::string& str)
 	{
 		m_buf.insert(m_buf.end(), str.begin(), str.end());

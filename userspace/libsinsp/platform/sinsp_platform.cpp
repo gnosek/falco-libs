@@ -17,6 +17,7 @@ limitations under the License.
 
 #include "sinsp_platform.h"
 #include "strlcpy.h"
+#include "sinsp.h"
 
 extern "C" {
 	int32_t cpp_init_platform(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs)
@@ -120,3 +121,15 @@ extern "C" {
 
 }
 
+void libsinsp::platform::get_users(sinsp_usergroup_manager& usergroup_manager)
+{
+	for(const auto& [_uid, userinfo] : m_users.m_users)
+	{
+		usergroup_manager.add_user("", -1, userinfo.uid, userinfo.gid, userinfo.name, userinfo.homedir, userinfo.shell);
+	}
+
+	for(const auto& [_gid, groupinfo] : m_users.m_groups)
+	{
+		usergroup_manager.add_group("", -1, groupinfo.gid, groupinfo.name);
+	}
+}

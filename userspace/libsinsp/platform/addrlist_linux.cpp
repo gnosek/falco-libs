@@ -173,6 +173,7 @@ void read_addrlist_entry(reader::inner_block &entry, sinsp_network_interfaces &i
 		entry.read(linkspeed);
 		entry.read(ifinfo.m_name, namelen);
 		interfaces.import_ipv4_interface(ifinfo);
+		return;
 	}
 	case SCAP_II_IPV4_NOLINKSPEED:
 	{
@@ -184,6 +185,7 @@ void read_addrlist_entry(reader::inner_block &entry, sinsp_network_interfaces &i
 		entry.read(ifinfo.m_bcast);
 		entry.read(ifinfo.m_name, namelen);
 		interfaces.import_ipv4_interface(ifinfo);
+		return;
 	}
 	case SCAP_II_IPV6:
 	{
@@ -197,6 +199,7 @@ void read_addrlist_entry(reader::inner_block &entry, sinsp_network_interfaces &i
 		entry.read(linkspeed);
 		entry.read(ifinfo.m_name, namelen);
 		interfaces.import_ipv6_interface(ifinfo);
+		return;
 	}
 	case SCAP_II_IPV6_NOLINKSPEED:
 	{
@@ -208,6 +211,7 @@ void read_addrlist_entry(reader::inner_block &entry, sinsp_network_interfaces &i
 		entry.read(ifinfo.m_bcast);
 		entry.read(ifinfo.m_name, namelen);
 		interfaces.import_ipv6_interface(ifinfo);
+		return;
 	}
 	default:
 		throw sinsp_errprintf(0, "Unsupported interface info type %u", ifinfo_type);

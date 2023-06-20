@@ -108,10 +108,10 @@ int32_t libsinsp::linux_platform::init_platform(struct scap_engine_handle engine
 
 	libsinsp::platform_linux::get_interfaces(m_network_interfaces);
 
-//	if(oargs->import_users)
-//	{
-//		libsinsp::platform_linux::get_users(m_usergroup_manager);
-//	}
+	if(oargs->import_users)
+	{
+		libsinsp::platform_linux::get_users(m_users);
+	}
 
 	return SCAP_SUCCESS;
 }
@@ -298,6 +298,7 @@ int32_t libsinsp::linux_platform::dump_state(struct scap_dumper *d, uint64_t fla
 #endif
 
 	libsinsp::platform_linux::dump_addrlist(m_network_interfaces).dump(d);
+	libsinsp::platform_linux::dump_userlist(m_users).dump(d);
 
 	return SCAP_SUCCESS;
 }

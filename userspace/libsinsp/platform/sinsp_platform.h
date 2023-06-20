@@ -28,6 +28,9 @@ limitations under the License.
 #include "tuples.h"
 #include "threadinfo.h"
 #include "ifinfo.h"
+#include "userlist_linux.h"
+
+class sinsp_usergroup_manager;
 
 extern "C" const struct scap_platform_vtable cpp_platform_vtable;
 
@@ -80,9 +83,12 @@ namespace libsinsp
 			return  &m_machine_info;
 		};
 
+		void get_users(sinsp_usergroup_manager &usergroup_manager);
+
 	protected:
 		scap_machine_info m_machine_info {.num_cpus = (uint32_t)-1};
 		sinsp_network_interfaces m_network_interfaces;
+		libsinsp::platform_linux::userlist_storage m_users;
 	};
 
 	struct platform_struct

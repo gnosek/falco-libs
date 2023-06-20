@@ -21,6 +21,7 @@ limitations under the License.
 #include "sinsp_reader_utils.h"
 #include "sinsp_dumper_utils.h"
 #include "machineinfo.h"
+#include "user.h"
 
 int32_t libsinsp::savefile_platform::read_block(struct scap_reader *r, uint32_t block_length, uint32_t block_type,
 						uint64_t flags)
@@ -32,6 +33,16 @@ int32_t libsinsp::savefile_platform::read_block(struct scap_reader *r, uint32_t 
 	{
 		libsinsp::reader::outer_block block(r, block_type, block_length);
 		libsinsp::platform_linux::read_machine_info(block, m_machine_info);
+		return SCAP_SUCCESS;
+	}
+
+	case UL_BLOCK_TYPE:
+	case UL_BLOCK_TYPE_INT:
+	case UL_BLOCK_TYPE_V2:
+	{
+		libsinsp::reader::outer_block block(r, block_type, block_length);
+		libsinsp::platform_linux::read_userlist(block, m_users);
+		return SCAP_SUCCESS;
 	}
 
 	case IL_BLOCK_TYPE:
@@ -39,7 +50,15 @@ int32_t libsinsp::savefile_platform::read_block(struct scap_reader *r, uint32_t 
 	case IL_BLOCK_TYPE_V2:
 	{
 		libsinsp::reader::outer_block block(r, block_type, block_length);
-		libsinsp::platform_linux::read_addrlist(block, m_network_interfaces);
+		if(flags & READ_FLAGS_IMPORT_USERS)
+		{
+			libsinsp::platform_linux::read_addrlist(block, m_network_interfaces);
+		}
+		else
+		{
+			block.finish();
+		}
+		return SCAP_SUCCESS;
 	}
 	default:
 		return scapwrapper_platform::read_block(r, block_length, block_type, flags);
@@ -65,6 +84,7 @@ int32_t libsinsp::savefile_platform::dump_state(struct scap_dumper *d, uint64_t 
 #endif
 
 	libsinsp::platform_linux::dump_addrlist(m_network_interfaces).dump(d);
+	libsinsp::platform_linux::dump_userlist(m_users).dump(d);
 
 	return SCAP_SUCCESS;
 }

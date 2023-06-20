@@ -52,7 +52,10 @@ std::unique_ptr<inner_block> libsinsp::reader::outer_block::next()
 void outer_block::finish()
 {
 	uint32_t trailer;
-	raw_read(&trailer, m_remaining); // padding
+	while(m_remaining > 0)
+	{
+		raw_read(&trailer, m_remaining); // padding and unread data
+	}
 	read(trailer);
 
 	if(trailer != m_bh.block_total_length)

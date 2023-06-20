@@ -17,8 +17,6 @@ limitations under the License.
 
 #pragma once
 
-class sinsp_usergroup_manager;
-
 namespace libsinsp
 	{
 		namespace dumper {
@@ -31,11 +29,16 @@ namespace libsinsp
 
 	namespace platform_linux
 	{
+		struct userlist_storage
+		{
+			std::unordered_map<uint32_t, scap_userinfo> m_users;
+			std::unordered_map<uint32_t, scap_groupinfo> m_groups;
+		};
 
-		void get_users(sinsp_usergroup_manager &users);
+		void get_users(userlist_storage &users);
 
-		libsinsp::dumper::outer_block dump_userlist(sinsp_usergroup_manager &users);
+		libsinsp::dumper::outer_block dump_userlist(const userlist_storage &users);
 
-		void read_userlist(libsinsp::reader::outer_block& block, sinsp_usergroup_manager &users);
+		void read_userlist(libsinsp::reader::outer_block& block, userlist_storage &users);
 	}
 	}
