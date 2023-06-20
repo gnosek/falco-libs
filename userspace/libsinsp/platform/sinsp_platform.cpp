@@ -64,20 +64,6 @@ extern "C" {
 		return cpp_plat->m_platform->is_thread_alive(pid, tid, comm);
 	}
 
-	int32_t cpp_get_global_pid(struct scap_platform* platform, int64_t *pid, char *error)
-	{
-		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
-		try
-		{
-			return cpp_plat->m_platform->get_global_pid(pid);
-		}
-		catch(const std::exception& e)
-		{
-			strlcpy(error, e.what(), SCAP_LASTERR_SIZE);
-			return SCAP_FAILURE;
-		}
-	}
-
 	int32_t cpp_get_threadlist(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr)
 	{
 		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
@@ -138,7 +124,6 @@ extern "C" {
 		.get_proc = cpp_get_proc,
 		.refresh_proc_table = cpp_refresh_proc_table,
 		.is_thread_alive = cpp_is_thread_alive,
-		.get_global_pid = cpp_get_global_pid,
 		.get_threadlist = cpp_get_threadlist,
 		.read_block = cpp_read_block,
 		.dump_state = cpp_dump_state,

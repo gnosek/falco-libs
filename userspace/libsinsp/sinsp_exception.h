@@ -33,3 +33,22 @@ public:
 		std::runtime_error(error_str)
 	{ }
 };
+
+sinsp_exception sinsp_errprintf_unchecked(int errnum, const char* fmt, ...);
+
+#ifdef __GNUC__
+sinsp_exception sinsp_errprintf_unchecked(int errnum, const char* fmt, ...) __attribute__ ((format (printf, 2, 3)));
+#define sinsp_errprintf sinsp_errprintf_unchecked
+#else
+
+#include <stdio.h>
+
+#define sinsp_errprintf(ERRNUM, ...) ((void)sizeof(printf(__VA_ARGS__)), sinsp_errprintf_unchecked(ERRNUM, __VA_ARGS__))
+int32_t sinsp_errprintf_unchecked(int errnum, const char* fmt, ...);
+#endif
+
+#ifdef _DEBUG
+#define DEBUG_THROW(exc) throw exc
+#else
+#define DEBUG_THROW(exc)
+#endif

@@ -52,7 +52,7 @@ namespace libsinsp
 
 		virtual int32_t refresh_proc_table(struct scap_proclist* proclist) = 0;
 		virtual bool is_thread_alive(int64_t pid, int64_t tid, const char* comm) = 0;
-		virtual int32_t get_global_pid(int64_t *pid) = 0;
+		virtual int64_t get_global_pid() = 0;
 		virtual int32_t get_threadlist(struct ppm_proclist_info **procinfo_p) = 0;
 
 		virtual int32_t read_block(struct scap_reader* r, uint32_t block_length, uint32_t block_type,

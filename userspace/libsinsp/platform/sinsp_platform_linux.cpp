@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 #include "sinsp_platform_linux.h"
+#include "linux/scap_linux.h"
 #include <sys/stat.h>
 #include <sys/utsname.h>
 
@@ -96,7 +97,7 @@ int32_t libsinsp::linux_platform::get_agent_info(agent_info &agent_info)
 		if ((hz = sysconf(_SC_CLK_TCK)) < 0)
 		{
 			hz = 100;
-			ASSERT(false);
+			DEBUG_THROW(sinsp_errprintf(errno, "sysconf(_SC_CLK_TCK) failed"));
 		}
 #endif
 		if(fscanf(f, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*u %llu", &stat_start_time))
@@ -116,4 +117,47 @@ int32_t libsinsp::linux_platform::get_agent_info(agent_info &agent_info)
 	snprintf(agent_info.uname_r, sizeof(agent_info.uname_r), "%s", uts.release);
 
 	return SCAP_SUCCESS;
+}
+int64_t libsinsp::linux_platform::get_global_pid()
+{
+	char lasterr[SCAP_LASTERR_SIZE];
+	int64_t pid;
+
+	auto platform = get_scap_platform();
+	auto linux_vtable = platform->m_linux_vtable;
+	auto engine_handle = platform->m_engine;
+	if(linux_vtable && linux_vtable->getpid_global)
+	{
+		if(linux_vtable->getpid_global(engine_handle, &pid, lasterr) != SCAP_SUCCESS)
+		{
+			throw sinsp_exception(lasterr);
+		}
+		else
+		{
+			return pid;
+		}
+	}
+
+	char filename[SCAP_MAX_PATH_SIZE];
+	char line[512];
+
+	snprintf(filename, sizeof(filename), "%s/proc/self/status", scap_get_host_root());
+
+	FILE* f = fopen(filename, "r");
+	if(f == NULL)
+	{
+		throw sinsp_errprintf(errno, "can not open status file %s", filename);
+	}
+
+	while(fgets(line, sizeof(line), f) != NULL)
+	{
+		if(sscanf(line, "Tgid: %" PRId64, &pid) == 1)
+		{
+			fclose(f);
+			return pid;
+		}
+	}
+
+	fclose(f);
+	throw sinsp_errprintf(0, "could not find tgid in status file %s", filename);
 }

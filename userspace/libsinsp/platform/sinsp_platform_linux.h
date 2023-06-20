@@ -36,6 +36,7 @@ public:
 
 	int32_t get_agent_info(agent_info &agent_info) override;
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override;
+	int64_t get_global_pid() override;
 
 protected:
 	std::unordered_map<unsigned long, uint32_t> m_dev_map;

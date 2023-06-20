@@ -129,18 +129,6 @@ bool scap_is_thread_alive(scap_t* handle, int64_t pid, int64_t tid, const char* 
 	return true;
 }
 
-int32_t scap_getpid_global(scap_t* handle, int64_t* pid)
-{
-	if (handle && handle->m_platform && handle->m_platform->m_vtable->get_global_pid)
-	{
-		return handle->m_platform->m_vtable->get_global_pid(handle->m_platform, pid, handle->m_lasterr);
-	}
-
-	ASSERT(false);
-	snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "Cannot get pid (capture not enabled)");
-	return SCAP_FAILURE;
-}
-
 const scap_machine_info* scap_get_machine_info(scap_t* handle)
 {
 	struct scap_linux_storage* storage = scap_get_linux_storage(handle);

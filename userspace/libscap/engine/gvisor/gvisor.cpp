@@ -175,7 +175,6 @@ static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.get_proc = NULL,
 	.refresh_proc_table = scap_gvisor_refresh_proc_table,
 	.is_thread_alive = scap_gvisor_is_thread_alive,
-	.get_global_pid = NULL,
 	.get_threadlist = gvisor_get_threadlist,
 	.dump_state = gvisor_dump_state,
 	.get_linux_storage = scap_gvisor_get_storage,

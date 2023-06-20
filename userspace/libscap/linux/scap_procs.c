@@ -1266,40 +1266,6 @@ static int32_t _scap_proc_scan_proc_dir_impl(struct scap_linux_platform* linux_p
 	return res;
 }
 
-int32_t scap_linux_getpid_global(struct scap_platform* platform, int64_t *pid, char* error)
-{
-	struct scap_linux_platform* linux_platform = (struct scap_linux_platform*)platform;
-
-	if(linux_platform->m_linux_vtable && linux_platform->m_linux_vtable->getpid_global)
-	{
-		return linux_platform->m_linux_vtable->getpid_global(linux_platform->m_engine, pid, error);
-	}
-
-	char filename[SCAP_MAX_PATH_SIZE];
-	char line[512];
-
-	snprintf(filename, sizeof(filename), "%s/proc/self/status", scap_get_host_root());
-
-	FILE* f = fopen(filename, "r");
-	if(f == NULL)
-	{
-		ASSERT(false);
-		return scap_errprintf(error, errno, "can not open status file %s", filename);
-	}
-
-	while(fgets(line, sizeof(line), f) != NULL)
-	{
-		if(sscanf(line, "Tgid: %" PRId64, pid) == 1)
-		{
-			fclose(f);
-			return SCAP_SUCCESS;
-		}
-	}
-
-	fclose(f);
-	return scap_errprintf(error, 0, "could not find tgid in status file %s", filename);
-}
-
 struct scap_threadinfo* scap_linux_proc_get(struct scap_platform* platform, struct scap_proclist* proclist, int64_t tid, bool scan_sockets)
 {
 	struct scap_linux_platform* linux_platform = (struct scap_linux_platform*)platform;

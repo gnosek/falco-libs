@@ -20,6 +20,7 @@ limitations under the License.
 #include "platform/sinsp_platform.h"
 #include "linux/scap_linux_platform.h"
 #include "sinsp_exception.h"
+#include <unistd.h>
 
 namespace libsinsp
 {
@@ -83,16 +84,9 @@ public:
 		return vt()->is_thread_alive(m_scap_platform, pid, tid, comm);
 	}
 
-	int32_t get_global_pid(int64_t *pid) override
+	int64_t get_global_pid() override
 	{
-		char lasterr[SCAP_LASTERR_SIZE];
-
-		int32_t rc = vt()->get_global_pid(m_scap_platform, pid, lasterr);
-		if(rc != SCAP_SUCCESS)
-		{
-			throw sinsp_exception(lasterr);
-		}
-		return rc;
+		return getpid();
 	}
 
 	int32_t get_threadlist(struct ppm_proclist_info **procinfo_p) override
