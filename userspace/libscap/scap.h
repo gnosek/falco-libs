@@ -148,9 +148,6 @@ typedef struct scap_stats
 	uint64_t n_tids_suppressed; ///< Number of threads currently being suppressed.
 }scap_stats;
 
-#define USERBLOCK_TYPE_USER 0
-#define USERBLOCK_TYPE_GROUP 1
-
 //
 // Misc definitions
 //

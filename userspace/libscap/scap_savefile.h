@@ -154,8 +154,52 @@ typedef struct _section_header_block
 
 #define EVF_BLOCK_TYPE_V2_LARGE		0x222
 
+
+#define USERBLOCK_TYPE_USER 0
+#define USERBLOCK_TYPE_GROUP 1
+
+
 #if defined __sun
 #pragma pack()
 #else
 #pragma pack(pop)
 #endif
+
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/uio.h>
+#else
+struct iovec {
+	void  *iov_base;    /* Starting address */
+	size_t iov_len;     /* Number of bytes to transfer */
+};
+#endif
+
+
+struct scap_dumper;
+int scap_dump_write(struct scap_dumper *d, void* buf, unsigned len);
+int scap_dump_writev(struct scap_dumper *d, const struct iovec *iov, int iovcnt);
+
+#ifndef _WIN32
+static inline uint32_t scap_normalize_block_len(uint32_t blocklen)
+#else
+static uint32_t scap_normalize_block_len(uint32_t blocklen)
+#endif
+{
+	return ((blocklen + 3) >> 2) << 2;
+}
+
+static inline int32_t scap_write_padding(struct scap_dumper *d, uint32_t blocklen)
+{
+	int32_t val = 0;
+	uint32_t bytestowrite = scap_normalize_block_len(blocklen) - blocklen;
+
+	if(scap_dump_write(d, &val, bytestowrite) == bytestowrite)
+	{
+		return SCAP_SUCCESS;
+	}
+	else
+	{
+		return SCAP_FAILURE;
+	}
+}

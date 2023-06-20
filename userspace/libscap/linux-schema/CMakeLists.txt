@@ -1,0 +1,1 @@
+add_library(scap_linux_schema linux_savefile_write.c)

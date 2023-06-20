@@ -143,6 +143,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set_scap_target_properties(scap_event_schema)
 endif()
 
+add_subdirectory(linux-schema)
+target_link_libraries(scap scap_linux_schema)
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	add_library(scap_engine_util
 		scap_engine_util.c
