@@ -39,6 +39,25 @@ struct scap_linux_storage
 int32_t scap_linux_storage_init(struct scap_linux_storage* storage, char* lasterr, struct scap_open_args* oargs);
 int32_t scap_linux_storage_close(struct scap_linux_storage* storage);
 
+// Free the process table
+void scap_proc_free_table(struct scap_proclist* proclist);
+// Return the process info entry given a tid
+// Free an fd table and set it to NULL when done
+void scap_fd_free_table(scap_fdinfo** fds);
+// Free a process' fd table
+void scap_fd_free_proc_fd_table(scap_threadinfo* pi);
+// Add the file descriptor info pointed by fdi to the fd table for process pi.
+// Note: silently skips if fdi->type is SCAP_FD_UNKNOWN.
+int32_t scap_add_fd_to_proc_table(struct scap_proclist* proclist, scap_threadinfo* pi, scap_fdinfo* fdi, char *error);
+// Free a previously allocated list of interfaces
+void scap_free_iflist(scap_addrlist* ifhandle);
+// Free a previously allocated list of users
+void scap_free_userlist(scap_userlist* uhandle);
+// Allocate a file descriptor
+int32_t scap_fd_allocate_fdinfo(scap_fdinfo **fdi, int64_t fd, scap_fd_type type);
+// Free a file descriptor
+void scap_fd_free_fdinfo(scap_fdinfo **fdi);
+
 #ifdef __cplusplus
 }
 #endif
