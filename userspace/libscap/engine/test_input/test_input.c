@@ -101,7 +101,7 @@ static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 
 	return scap_proc_scan_vtable(
 		main_handle->m_lasterr,
-		&main_handle->m_platform->m_proclist,
+		&main_handle->m_platform->m_storage.m_proclist,
 		engine->m_data->thread_count,
 		engine->m_data->threads,
 		engine,

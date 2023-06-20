@@ -35,15 +35,13 @@ extern "C" {
 #include "scap_machine_info.h"
 #include "scap_suppress.h"
 
-#include "linux-schema/threadinfo.h"
+#include "linux-schema/schema.h"
 
-struct scap_addrlist;
 struct scap_dumper;
 struct scap_open_args;
 struct scap_platform;
 struct scap_proclist;
 struct scap_reader;
-struct scap_userlist;
 struct ppm_proclist_info;
 
 #define DUMP_FLAGS_RESCAN_PROC (1<<0)
@@ -91,10 +89,8 @@ struct scap_platform_vtable
 struct scap_platform
 {
 	const struct scap_platform_vtable* m_vtable;
-	struct scap_addrlist *m_addrlist;
-	struct scap_userlist *m_userlist;
+	struct scap_linux_storage m_storage;
 	struct scap_suppress m_suppress;
-	struct scap_proclist m_proclist;
 
 	scap_agent_info m_agent_info;
 	scap_machine_info m_machine_info;

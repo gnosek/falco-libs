@@ -49,22 +49,22 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	// If the list of users was already allocated for this handle (for example because this is
 	// not the first user list block), free it
 	//
-	if(platform->m_userlist != NULL)
+	if(platform->m_storage.m_userlist != NULL)
 	{
-		scap_free_userlist(platform->m_userlist);
-		platform->m_userlist = NULL;
+		scap_free_userlist(platform->m_storage.m_userlist);
+		platform->m_storage.m_userlist = NULL;
 	}
 
 	//
 	// Memory allocations
 	//
-	platform->m_userlist = (scap_userlist*)malloc(sizeof(scap_userlist));
-	if(platform->m_userlist == NULL)
+	platform->m_storage.m_userlist = (scap_userlist*)malloc(sizeof(scap_userlist));
+	if(platform->m_storage.m_userlist == NULL)
 	{
 		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(1)");
 		return SCAP_FAILURE;
 	}
-	userlist = platform->m_userlist;
+	userlist = platform->m_storage.m_userlist;
 
 	userlist->totsavelen = 0;
 	usercnt = 32; // initial user count; will be realloc'd if needed
@@ -73,7 +73,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	{
 		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
 		free(userlist);
-		platform->m_userlist = NULL;
+		platform->m_storage.m_userlist = NULL;
 		return SCAP_FAILURE;
 	}
 
@@ -84,7 +84,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
 		free(userlist->users);
 		free(userlist);
-		platform->m_userlist = NULL;
+		platform->m_storage.m_userlist = NULL;
 		return SCAP_FAILURE;
 	}
 
@@ -110,7 +110,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			platform->m_storage.m_userlist = NULL;
 			return SCAP_SUCCESS;
 		}
 	}
@@ -135,7 +135,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 				free(userlist->users);
 				free(userlist->groups);
 				free(userlist);
-				platform->m_userlist = NULL;
+				platform->m_storage.m_userlist = NULL;
 				if(file_lookup)
 				{
 					fclose(f);
@@ -208,7 +208,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			platform->m_storage.m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 		userlist->users = reduced_userinfos;
@@ -226,7 +226,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			platform->m_storage.m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 	}
@@ -251,7 +251,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 				free(userlist->users);
 				free(userlist->groups);
 				free(userlist);
-				platform->m_userlist = NULL;
+				platform->m_storage.m_userlist = NULL;
 				if(file_lookup)
 				{
 					fclose(f);
@@ -301,7 +301,7 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 			free(userlist->users);
 			free(userlist->groups);
 			free(userlist);
-			platform->m_userlist = NULL;
+			platform->m_storage.m_userlist = NULL;
 			return SCAP_FAILURE;
 		}
 		userlist->groups = reduced_groups;

@@ -28,7 +28,7 @@ static int32_t scap_read_proclist(scap_reader_t* r, uint32_t block_length, uint3
 	int32_t uth_status = SCAP_SUCCESS;
 	uint32_t toread;
 	int fseekres;
-	struct scap_proclist *proclist = &platform->m_proclist;
+	struct scap_proclist *proclist = &platform->m_storage.m_proclist;
 
 	while(((int32_t)block_length - (int32_t)totreadsize) >= 4)
 	{
@@ -726,7 +726,7 @@ static int32_t scap_read_iflist(scap_reader_t* r, uint32_t block_length, uint32_
 	uint32_t entrysize;
 	uint32_t ifcnt4 = 0;
 	uint32_t ifcnt6 = 0;
-	struct scap_addrlist **addrlist_p = &platform->m_addrlist;
+	struct scap_addrlist **addrlist_p = &platform->m_storage.m_addrlist;
 
 	//
 	// If the list of interfaces was already allocated for this handle (for example because this is
@@ -1088,7 +1088,7 @@ static int32_t scap_read_userlist(scap_reader_t* r, uint32_t block_length, uint3
 	uint16_t stlen;
 	uint32_t toread;
 	int fseekres;
-	struct scap_userlist **userlist_p = &platform->m_userlist;
+	struct scap_userlist **userlist_p = &platform->m_storage.m_userlist;
 
 	//
 	// If the list of users was already allocated for this handle (for example because this is
@@ -1559,7 +1559,7 @@ static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_
 	uint64_t tid;
 	int32_t uth_status = SCAP_SUCCESS;
 	uint32_t padding;
-	struct scap_proclist *proclist = &platform->m_proclist;
+	struct scap_proclist *proclist = &platform->m_storage.m_proclist;
 
 	//
 	// Read the tid

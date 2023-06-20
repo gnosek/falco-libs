@@ -271,7 +271,7 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 
 	linux_platform->m_lasterr[0] = '\0';
 	char proc_scan_err[SCAP_LASTERR_SIZE];
-	rc = scap_linux_refresh_proc_table(platform, &platform->m_proclist);
+	rc = scap_linux_refresh_proc_table(platform, &platform->m_storage.m_proclist);
 	if(rc != SCAP_SUCCESS)
 	{
 		snprintf(linux_platform->m_lasterr, SCAP_LASTERR_SIZE, "scap_open_live_int() error creating the process list: %s. Make sure you have root credentials.", proc_scan_err);
@@ -287,10 +287,10 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
 {
 	int32_t ret = SCAP_SUCCESS;
-	proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
-	platform->m_proclist.m_proc_callback = NULL;
-	ret = scap_linux_refresh_proc_table(platform, &platform->m_proclist);
-	platform->m_proclist.m_proc_callback = tcb;
+	proc_entry_callback tcb = platform->m_storage.m_proclist.m_proc_callback;
+	platform->m_storage.m_proclist.m_proc_callback = NULL;
+	ret = scap_linux_refresh_proc_table(platform, &platform->m_storage.m_proclist);
+	platform->m_storage.m_proclist.m_proc_callback = tcb;
 	return ret;
 }
 
@@ -305,14 +305,14 @@ static int32_t linux_dump_state(struct scap_platform *platform, struct scap_dump
 		}
 	}
 
-	res = scap_savefile_write_linux_platform(platform, d);
+	res = scap_savefile_write_linux_platform(&platform->m_storage, d);
 
 	//
 	// If the user doesn't need the thread table, free it
 	//
-	if(platform->m_proclist.m_proc_callback != NULL)
+	if(platform->m_storage.m_proclist.m_proc_callback != NULL)
 	{
-		scap_proc_free_table(&platform->m_proclist);
+		scap_proc_free_table(&platform->m_storage.m_proclist);
 	}
 
 	return res;

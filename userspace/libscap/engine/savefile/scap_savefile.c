@@ -499,16 +499,21 @@ static void scap_savefile_free_platform(struct scap_platform* platform)
 	free(platform);
 }
 
-bool scap_savefile_is_thread_alive(struct scap_platform* platform, int64_t pid, int64_t tid, const char* comm)
+static bool scap_savefile_is_thread_alive(struct scap_platform* platform, int64_t pid, int64_t tid, const char* comm)
 {
 	return false;
+}
+
+static int32_t scap_savefile_dump_state(struct scap_platform* platform, struct scap_dumper* d, uint64_t flags)
+{
+	return scap_savefile_write_linux_platform(&platform->m_storage, d);
 }
 
 static const struct scap_platform_vtable scap_savefile_platform_vtable = {
 	.init_platform = scap_savefile_init_platform,
 	.is_thread_alive = scap_savefile_is_thread_alive,
 	.read_block = scap_read_linux_block,
-	.dump_state = scap_savefile_write_linux_platform,
+	.dump_state = scap_savefile_dump_state,
 	.close_platform = scap_savefile_close_platform,
 	.free_platform = scap_savefile_free_platform,
 };
@@ -623,10 +628,10 @@ static int32_t init(struct scap* main_handle, struct scap_open_args* oargs)
 
 	if(!oargs->import_users)
 	{
-		if(platform->m_userlist != NULL)
+		if(platform->m_storage.m_userlist != NULL)
 		{
-			scap_free_userlist(platform->m_userlist);
-			platform->m_userlist = NULL;
+			scap_free_userlist(platform->m_storage.m_userlist);
+			platform->m_storage.m_userlist = NULL;
 		}
 	}
 

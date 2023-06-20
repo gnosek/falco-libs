@@ -875,12 +875,12 @@ static int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclis
 	return SCAP_SUCCESS;
 }
 
-int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struct scap_dumper *d)
+int32_t scap_savefile_write_linux_platform(struct scap_linux_storage *storage, struct scap_dumper *d)
 {
 	//
 	// Write the interface list
 	//
-	if(scap_write_iflist(d, platform->m_addrlist) != SCAP_SUCCESS)
+	if(scap_write_iflist(d, storage->m_addrlist) != SCAP_SUCCESS)
 	{
 		return SCAP_FAILURE;
 	}
@@ -888,7 +888,7 @@ int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struc
 	//
 	// Write the user list
 	//
-	if(scap_write_userlist(d, platform->m_userlist) != SCAP_SUCCESS)
+	if(scap_write_userlist(d, storage->m_userlist) != SCAP_SUCCESS)
 	{
 		return SCAP_FAILURE;
 	}
@@ -896,7 +896,7 @@ int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struc
 	//
 	// Write the process list
 	//
-	if(scap_write_proclist(d, &platform->m_proclist) != SCAP_SUCCESS)
+	if(scap_write_proclist(d, &storage->m_proclist) != SCAP_SUCCESS)
 	{
 		return SCAP_FAILURE;
 	}
@@ -904,7 +904,7 @@ int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struc
 	//
 	// Write the fd lists
 	//
-	if(scap_write_fdlist(d, &platform->m_proclist) != SCAP_SUCCESS)
+	if(scap_write_fdlist(d, &storage->m_proclist) != SCAP_SUCCESS)
 	{
 		return SCAP_FAILURE;
 	}

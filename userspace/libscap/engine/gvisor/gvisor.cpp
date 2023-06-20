@@ -121,10 +121,10 @@ static int32_t gvisor_get_threadlist(struct scap_platform* platform, struct ppm_
 static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
 {
 	int32_t ret = SCAP_SUCCESS;
-	proc_entry_callback tcb = platform->m_proclist.m_proc_callback;
-	platform->m_proclist.m_proc_callback = NULL;
-	ret = scap_gvisor_refresh_proc_table(platform, &platform->m_proclist);
-	platform->m_proclist.m_proc_callback = tcb;
+	proc_entry_callback tcb = platform->m_storage.m_proclist.m_proc_callback;
+	platform->m_storage.m_proclist.m_proc_callback = NULL;
+	ret = scap_gvisor_refresh_proc_table(platform, &platform->m_storage.m_proclist);
+	platform->m_storage.m_proclist.m_proc_callback = tcb;
 	return ret;
 }
 
@@ -139,14 +139,14 @@ static int32_t gvisor_dump_state(struct scap_platform *platform, struct scap_dum
 		}
 	}
 
-	res = scap_savefile_write_linux_platform(platform, d);
+	res = scap_savefile_write_linux_platform(&platform->m_storage, d);
 
 	//
 	// If the user doesn't need the thread table, free it
 	//
-	if(platform->m_proclist.m_proc_callback != NULL)
+	if(platform->m_storage.m_proclist.m_proc_callback != NULL)
 	{
-		scap_proc_free_table(&platform->m_proclist);
+		scap_proc_free_table(&platform->m_storage.m_proclist);
 	}
 
 	return res;
