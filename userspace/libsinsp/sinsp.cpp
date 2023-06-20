@@ -27,6 +27,8 @@ limitations under the License.
 #endif // _WIN32
 
 #include "scap_open_exception.h"
+#include "scap_engines.h"
+#include "scap_platforms.h"
 #include "sinsp.h"
 #include "sinsp_int.h"
 #include "sinsp_auth.h"
@@ -449,8 +451,12 @@ void sinsp::set_import_users(bool import_users)
 
 /*=============================== OPEN METHODS ===============================*/
 
-void sinsp::open_common(scap_open_args* oargs)
+void sinsp::open_common(scap_open_args* oargs, const struct scap_vtable* engine, struct scap_platform* platform)
 {
+	if(!platform)
+	{
+		throw scap_open_exception("Failed to allocate platform", SCAP_FAILURE);
+	}
 	g_logger.log("Trying to open the right engine!");
 
 	/* Reset the thread manager */
@@ -481,7 +487,7 @@ void sinsp::open_common(scap_open_args* oargs)
 		throw scap_open_exception("failed to allocate scap handle", SCAP_FAILURE);
 	}
 
-	int32_t scap_rc = scap_init(m_h, oargs);
+	int32_t scap_rc = scap_init_int(m_h, oargs, engine, platform);
 	if(scap_rc != SCAP_SUCCESS)
 	{
 		std::string error = scap_getlasterr(m_h);
@@ -569,7 +575,13 @@ void sinsp::open_kmod(unsigned long driver_buffer_bytes_dim, const libsinsp::eve
 	struct scap_kmod_engine_params params;
 	params.buffer_bytes_dim = driver_buffer_bytes_dim;
 	oargs.engine_params = &params;
-	open_common(&oargs);
+
+	struct scap_platform* plat = scap_linux_alloc_platform();
+	if(plat)
+	{
+		((struct scap_linux_platform*)plat)->m_linux_vtable = &scap_kmod_linux_vtable;
+	}
+	open_common(&oargs, &scap_kmod_engine, plat);
 }
 
 void sinsp::open_bpf(const std::string& bpf_path, unsigned long driver_buffer_bytes_dim, const libsinsp::events::set<ppm_sc_code> &ppm_sc_of_interest)
@@ -590,23 +602,25 @@ void sinsp::open_bpf(const std::string& bpf_path, unsigned long driver_buffer_by
 	params.buffer_bytes_dim = driver_buffer_bytes_dim;
 	params.bpf_probe = bpf_path.data();
 	oargs.engine_params = &params;
-	open_common(&oargs);
+	open_common(&oargs, &scap_bpf_engine, scap_linux_alloc_platform());
 }
 
 void sinsp::open_udig()
 {
 	scap_open_args oargs = factory_open_args(UDIG_ENGINE, SCAP_MODE_LIVE);
-	open_common(&oargs);
+	open_common(&oargs, &scap_udig_engine, scap_linux_alloc_platform());
 }
 
 void sinsp::open_nodriver(bool full_proc_scan)
 {
 	scap_open_args oargs = factory_open_args(NODRIVER_ENGINE, SCAP_MODE_NODRIVER);
-	struct scap_nodriver_engine_params params;
-	params.full_proc_scan = full_proc_scan;
-
-	oargs.engine_params = &params;
-	open_common(&oargs);
+	struct scap_platform* plat = scap_linux_alloc_platform();
+	if(plat && !full_proc_scan)
+	{
+		((struct scap_linux_platform*)plat)->m_fd_lookup_limit = SCAP_NODRIVER_MAX_FD_LOOKUP;
+		((struct scap_linux_platform*)plat)->m_minimal_scan = true;
+	}
+	open_common(&oargs, &scap_nodriver_engine, plat);
 }
 
 void sinsp::open_savefile(const std::string& filename, int fd)
@@ -645,7 +659,7 @@ void sinsp::open_savefile(const std::string& filename, int fd)
 	params.start_offset = 0;
 	params.fbuffer_size = 0;
 	oargs.engine_params = &params;
-	open_common(&oargs);
+	open_common(&oargs, &scap_savefile_engine, scap_savefile_alloc_platform());
 }
 
 void sinsp::open_plugin(const std::string& plugin_name, const std::string& plugin_open_params)
@@ -656,7 +670,7 @@ void sinsp::open_plugin(const std::string& plugin_name, const std::string& plugi
 	params.input_plugin = &m_input_plugin->as_scap_source();
 	params.input_plugin_params = (char*)m_input_plugin_open_params.c_str();
 	oargs.engine_params = &params;
-	open_common(&oargs);
+	open_common(&oargs, &scap_source_plugin_engine, scap_generic_alloc_platform());
 }
 
 void sinsp::open_gvisor(const std::string& config_path, const std::string& root_path, bool no_events)
@@ -672,7 +686,7 @@ void sinsp::open_gvisor(const std::string& config_path, const std::string& root_
 	params.gvisor_config_path = config_path.c_str();
 	params.no_events = no_events;
 	oargs.engine_params = &params;
-	open_common(&oargs);
+	open_common(&oargs, &scap_gvisor_engine, scap_gvisor_alloc_platform());
 
 	set_get_procs_cpu_from_driver(false);
 }
@@ -691,16 +705,21 @@ void sinsp::open_modern_bpf(unsigned long driver_buffer_bytes_dim, uint16_t cpus
 	params.allocate_online_only = online_only;
 	params.verbose = g_logger.has_output() && g_logger.is_enabled(sinsp_logger::severity::SEV_DEBUG);
 	oargs.engine_params = &params;
-	open_common(&oargs);
+	open_common(&oargs, &scap_modern_bpf_engine, scap_linux_alloc_platform());
 }
 
 void sinsp::open_test_input(scap_test_input_data* data)
 {
-	scap_open_args oargs = factory_open_args(TEST_INPUT_ENGINE, SCAP_MODE_TEST);
+	scap_mode_t test_input_mode = SCAP_MODE_TEST;
+
+	scap_open_args oargs = factory_open_args(TEST_INPUT_ENGINE, test_input_mode);
 	struct scap_test_input_engine_params params;
 	params.test_input_data = data;
 	oargs.engine_params = &params;
-	open_common(&oargs);
+
+	struct scap_platform* plat = (test_input_mode == SCAP_MODE_TEST) ? scap_test_input_alloc_platform() : scap_linux_alloc_platform();
+
+	open_common(&oargs, &scap_test_input_engine, plat);
 
 	set_get_procs_cpu_from_driver(false);
 }

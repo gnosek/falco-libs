@@ -1018,7 +1018,7 @@ private:
 #endif
 
 	void set_input_plugin(const std::string& name, const std::string& params);
-	void open_common(scap_open_args* oargs);
+	void open_common(scap_open_args* oargs, const struct scap_vtable* engine, struct scap_platform* platform);
 	void init();
 	void deinit_state();
 	void consume_initialstate_events();

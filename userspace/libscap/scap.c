@@ -31,10 +31,7 @@ limitations under the License.
 
 #define SCAP_HANDLE_T void
 #include "scap_engines.h"
-
-#ifdef __linux__
-#include "scap_linux_platform.h"
-#endif
+#include "scap_platforms.h"
 
 const char* scap_getlasterr(scap_t* handle)
 {
@@ -84,7 +81,7 @@ int32_t scap_init_int(scap_t* handle, scap_open_args* oargs, const struct scap_v
 
 scap_t* scap_alloc(void)
 {
-	return malloc(sizeof(scap_t));
+	return calloc(1, sizeof(scap_t));
 }
 
 int32_t scap_init(scap_t* handle, scap_open_args* oargs)

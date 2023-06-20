@@ -17,6 +17,8 @@ limitations under the License.
 
 #pragma once
 
+#define SCAP_HANDLE_T void
+
 #include "scap_vtable.h"
 #include "scap_config.h"
 
