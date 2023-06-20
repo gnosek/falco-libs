@@ -82,6 +82,7 @@ struct scap_linux_vtable {
 struct scap_linux_platform
 {
 	struct scap_platform m_generic;
+	struct scap_linux_storage m_storage;
 
 	char* m_lasterr;
 	int m_cgroup_version;

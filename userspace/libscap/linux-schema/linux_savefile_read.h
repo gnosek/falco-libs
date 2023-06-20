@@ -24,10 +24,10 @@ extern "C" {
 #endif
 
 struct scap_reader;
-struct scap_platform;
+struct scap_linux_storage;
 
-int32_t scap_read_linux_block(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
-			      uint32_t block_type, char *error);
+int32_t scap_read_linux_block(struct scap_linux_storage *storage, struct scap_reader *r, uint32_t block_length,
+			      uint32_t block_type, uint64_t flags, char *error);
 
 #ifdef __cplusplus
 }

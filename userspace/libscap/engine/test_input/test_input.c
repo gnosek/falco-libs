@@ -99,13 +99,15 @@ static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 		return SCAP_FAILURE;
 	}
 
-	return scap_proc_scan_vtable(
-		main_handle->m_lasterr,
-		&main_handle->m_platform->m_storage.m_proclist,
-		engine->m_data->thread_count,
-		engine->m_data->threads,
-		engine,
-		get_fdinfos);
+#warning "TODO make a platform for this"
+	return SCAP_SUCCESS;
+//	return scap_proc_scan_vtable(
+//		main_handle->m_lasterr,
+//		&main_handle->m_platform->m_storage.m_proclist,
+//		engine->m_data->thread_count,
+//		engine->m_data->threads,
+//		engine,
+//		get_fdinfos);
 }
 
 const struct scap_vtable scap_test_input_engine = {

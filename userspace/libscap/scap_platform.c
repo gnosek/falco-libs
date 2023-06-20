@@ -24,35 +24,12 @@ limitations under the License.
 
 static int32_t scap_generic_init_platform(struct scap_platform* platform, char* lasterr, struct scap_open_args* oargs)
 {
-	platform->m_storage.m_proclist.m_proc_callback = oargs->proc_callback;
-	platform->m_storage.m_proclist.m_proc_callback_context = oargs->proc_callback_context;
-	platform->m_storage.m_proclist.m_proclist = NULL;
-
 	return scap_suppress_init(&platform->m_suppress, oargs->suppressed_comms);
 }
 
 static int32_t scap_generic_close_platform(struct scap_platform* platform)
 {
 	scap_suppress_close(&platform->m_suppress);
-
-	if (platform->m_storage.m_addrlist)
-	{
-		scap_free_iflist(platform->m_storage.m_addrlist);
-		platform->m_storage.m_addrlist = NULL;
-	}
-
-	if (platform->m_storage.m_userlist)
-	{
-		scap_free_userlist(platform->m_storage.m_userlist);
-		platform->m_storage.m_userlist = NULL;
-	}
-
-	if(platform->m_storage.m_proclist.m_proclist != NULL)
-	{
-		scap_proc_free_table(&platform->m_storage.m_proclist);
-		platform->m_storage.m_proclist.m_proclist = NULL;
-	}
-
 	return SCAP_SUCCESS;
 }
 

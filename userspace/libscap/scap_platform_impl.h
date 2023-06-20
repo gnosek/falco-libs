@@ -46,6 +46,8 @@ struct ppm_proclist_info;
 
 #define DUMP_FLAGS_RESCAN_PROC (1<<0)
 
+#define READ_FLAGS_IMPORT_USERS (1<<0)
+
 // a method table for platform-specific operations
 struct scap_platform_vtable
 {
@@ -69,9 +71,12 @@ struct scap_platform_vtable
 	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
 
 	int32_t (*read_block)(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
-			      uint32_t block_type, char *error);
+			      uint32_t block_type, uint64_t flags, char *error);
 
 	int32_t (*dump_state)(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags);
+
+	// do *not* use this in any new code
+	struct scap_linux_storage* (*get_linux_storage)(struct scap_platform* platform);
 
 	// close the platform structure
 	// clean up all data, make it ready for another call to `init_platform`
@@ -89,7 +94,6 @@ struct scap_platform_vtable
 struct scap_platform
 {
 	const struct scap_platform_vtable* m_vtable;
-	struct scap_linux_storage m_storage;
 	struct scap_suppress m_suppress;
 
 	scap_agent_info m_agent_info;

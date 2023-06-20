@@ -64,17 +64,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(scap
 	scap.c
-	scap_fds.c
 	scap_platform.c
 	scap_platform_api.c
-	scap_procs.c
-	scap_userlist.c
 	scap_suppress.c)
 
 set_scap_target_properties(scap)
 
 add_library(scap_platform_util
-	scap_iflist.c
 	scap_proc_util.c)
 set_scap_target_properties(scap_platform_util)
 

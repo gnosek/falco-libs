@@ -27,6 +27,7 @@ namespace scap_gvisor
 struct scap_gvisor_platform
 {
 	struct scap_platform m_generic;
+	struct scap_linux_storage m_storage;
 	char* m_lasterr;
 	std::unique_ptr<scap_gvisor::platform> m_platform;
 };

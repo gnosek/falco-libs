@@ -118,7 +118,7 @@ static int32_t scap_read_section_header(scap_reader_t* r, char* error)
 //
 // Parse the headers of a trace file and load the tables
 //
-static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, struct scap_platform* platform, char* error)
+static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, struct scap_platform* platform, uint64_t flags, char* error)
 {
 	block_header bh;
 	uint32_t bt;
@@ -204,7 +204,7 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 
 		default:
 			rc = platform->m_vtable->read_block(
-				platform, r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, error);
+				platform, r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, flags, error);
 
 			if(rc == SCAP_NOT_SUPPORTED)
 			{
@@ -484,13 +484,22 @@ static int32_t
 scap_savefile_init_platform(struct scap_platform *platform, char *lasterr, struct scap_engine_handle engine,
 			    struct scap_open_args *oargs)
 {
+	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
 	platform->m_machine_info.num_cpus = (uint32_t)-1;
+
+	int32_t rc = scap_linux_storage_init(&savefile_platform->m_storage, lasterr, oargs);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
 
 	return SCAP_SUCCESS;
 }
 
 static int32_t scap_savefile_close_platform(struct scap_platform* platform)
 {
+	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
+	scap_linux_storage_close(&savefile_platform->m_storage);
 	return SCAP_SUCCESS;
 }
 
@@ -504,16 +513,31 @@ static bool scap_savefile_is_thread_alive(struct scap_platform* platform, int64_
 	return false;
 }
 
+static int32_t scap_savefile_read_block(struct scap_platform* platform, struct scap_reader* r, uint32_t block_length,
+					uint32_t block_type, uint64_t flags, char* error)
+{
+	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
+	return scap_read_linux_block(&savefile_platform->m_storage, r, block_length, block_type, flags, error);
+}
+
 static int32_t scap_savefile_dump_state(struct scap_platform* platform, struct scap_dumper* d, uint64_t flags)
 {
-	return scap_savefile_write_linux_platform(&platform->m_storage, d);
+	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
+	return scap_savefile_write_linux_platform(&savefile_platform->m_storage, d);
+}
+
+static struct scap_linux_storage* scap_savefile_get_storage(struct scap_platform* platform)
+{
+	struct scap_savefile_platform* savefile_platform = (struct scap_savefile_platform*)platform;
+	return &savefile_platform->m_storage;
 }
 
 static const struct scap_platform_vtable scap_savefile_platform_vtable = {
 	.init_platform = scap_savefile_init_platform,
 	.is_thread_alive = scap_savefile_is_thread_alive,
-	.read_block = scap_read_linux_block,
+	.read_block = scap_savefile_read_block,
 	.dump_state = scap_savefile_dump_state,
+	.get_linux_storage = scap_savefile_get_storage,
 	.close_platform = scap_savefile_close_platform,
 	.free_platform = scap_savefile_free_platform,
 };
@@ -604,10 +628,12 @@ static int32_t init(struct scap* main_handle, struct scap_open_args* oargs)
 
 	handle->m_use_last_block_header = false;
 
+	uint64_t flags = oargs->import_users ? READ_FLAGS_IMPORT_USERS : 0;
 	res = scap_read_init(
 		handle,
 		reader,
 		platform,
+		flags,
 		main_handle->m_lasterr
 	);
 
@@ -625,15 +651,6 @@ static int32_t init(struct scap* main_handle, struct scap_open_args* oargs)
 	}
 	handle->m_reader_evt_buf_size = READER_BUF_SIZE;
 	handle->m_reader = reader;
-
-	if(!oargs->import_users)
-	{
-		if(platform->m_storage.m_userlist != NULL)
-		{
-			scap_free_userlist(platform->m_storage.m_userlist);
-			platform->m_storage.m_userlist = NULL;
-		}
-	}
 
 	return SCAP_SUCCESS;
 }
@@ -669,11 +686,9 @@ static int32_t scap_savefile_restart_capture(scap_t* handle)
 
 	scap_platform_close(platform);
 
-	if((res = scap_read_init(
-		engine,
-		engine->m_reader,
-		platform,
-		handle->m_lasterr)) != SCAP_SUCCESS)
+	if((res = scap_read_init(engine, engine->m_reader, platform,
+				 READ_FLAGS_IMPORT_USERS, // TODO
+				 handle->m_lasterr)) != SCAP_SUCCESS)
 	{
 		char error[SCAP_LASTERR_SIZE];
 		snprintf(error, SCAP_LASTERR_SIZE, "could not restart capture: %s", scap_getlasterr(handle));

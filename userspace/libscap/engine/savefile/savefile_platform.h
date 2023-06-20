@@ -22,4 +22,5 @@ limitations under the License.
 struct scap_savefile_platform
 {
 	struct scap_platform m_generic;
+	struct scap_linux_storage m_storage;
 };

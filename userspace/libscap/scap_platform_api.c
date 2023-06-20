@@ -23,11 +23,32 @@ limitations under the License.
 #include "scap.h"
 #include "scap-int.h"
 
+static struct scap_linux_storage* scap_get_linux_storage(scap_t* handle)
+{
+	if(!handle)
+	{
+		return NULL;
+	}
+
+	if(!handle->m_platform)
+	{
+		return NULL;
+	}
+
+	if(!handle->m_platform->m_vtable->get_linux_storage)
+	{
+		return NULL;
+	}
+
+	return handle->m_platform->m_vtable->get_linux_storage(handle->m_platform);
+}
+
 scap_addrlist* scap_get_ifaddr_list(scap_t* handle)
 {
-	if (handle && handle->m_platform)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+	if (storage)
 	{
-		return handle->m_platform->m_storage.m_addrlist;
+		return storage->m_addrlist;
 	}
 
 	return NULL;
@@ -43,9 +64,10 @@ void scap_refresh_iflist(scap_t* handle)
 
 scap_userlist* scap_get_user_list(scap_t* handle)
 {
-	if (handle && handle->m_platform)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+	if (storage)
 	{
-		return handle->m_platform->m_storage.m_userlist;
+		return storage->m_userlist;
 	}
 
 	return NULL;
@@ -63,9 +85,16 @@ uint32_t scap_get_device_by_mount_id(scap_t *handle, const char *procdir, unsign
 
 struct scap_threadinfo* scap_proc_get(scap_t* handle, int64_t tid, bool scan_sockets)
 {
-	if (handle && handle->m_platform && handle->m_platform->m_vtable->get_proc)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+
+	if(!storage)
 	{
-		return handle->m_platform->m_vtable->get_proc(handle->m_platform, &handle->m_platform->m_storage.m_proclist, tid, scan_sockets);
+		return NULL;
+	}
+
+	if (handle->m_platform->m_vtable->get_proc)
+	{
+		return handle->m_platform->m_vtable->get_proc(handle->m_platform, &storage->m_proclist, tid, scan_sockets);
 	}
 
 	return NULL;
@@ -73,9 +102,16 @@ struct scap_threadinfo* scap_proc_get(scap_t* handle, int64_t tid, bool scan_soc
 
 int32_t scap_refresh_proc_table(scap_t* handle)
 {
-	if (handle && handle->m_platform && handle->m_platform->m_vtable->refresh_proc_table)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+
+	if(!storage)
 	{
-		return handle->m_platform->m_vtable->refresh_proc_table(handle->m_platform, &handle->m_platform->m_storage.m_proclist);
+		return SCAP_FAILURE;
+	}
+
+	if (handle->m_platform->m_vtable->refresh_proc_table)
+	{
+		return handle->m_platform->m_vtable->refresh_proc_table(handle->m_platform, &storage->m_proclist);
 	}
 
 	return SCAP_FAILURE;
@@ -83,9 +119,10 @@ int32_t scap_refresh_proc_table(scap_t* handle)
 
 scap_threadinfo* scap_get_proc_table(scap_t* handle)
 {
-	if (handle && handle->m_platform)
+	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
+	if (storage)
 	{
-		return handle->m_platform->m_storage.m_proclist.m_proclist;
+		return storage->m_proclist.m_proclist;
 	}
 
 	return NULL;

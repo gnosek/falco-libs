@@ -27,12 +27,17 @@ limitations under the License.
 extern "C" {
 #endif
 
+struct scap_open_args;
+
 struct scap_linux_storage
 {
 	struct scap_addrlist *m_addrlist;
 	struct scap_userlist *m_userlist;
 	struct scap_proclist m_proclist;
 };
+
+int32_t scap_linux_storage_init(struct scap_linux_storage* storage, char* lasterr, struct scap_open_args* oargs);
+int32_t scap_linux_storage_close(struct scap_linux_storage* storage);
 
 #ifdef __cplusplus
 }

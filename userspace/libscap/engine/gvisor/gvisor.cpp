@@ -54,6 +54,12 @@ static int32_t scap_gvisor_init_platform(struct scap_platform* platform, char* l
 	gvisor_platform->m_lasterr = lasterr;
 	gvisor_platform->m_platform = std::make_unique<scap_gvisor::platform>(gvisor_platform->m_lasterr,
 									      params->gvisor_root_path);
+
+	int32_t rc = scap_linux_storage_init(&gvisor_platform->m_storage, lasterr, oargs);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
 	return SCAP_SUCCESS;
 }
 
@@ -88,6 +94,8 @@ static int32_t scap_gvisor_refresh_proc_table(struct scap_platform* platform, st
 
 static int32_t scap_gvisor_close_platform(struct scap_platform* platform)
 {
+	auto gvisor_platform = reinterpret_cast<struct scap_gvisor_platform*>(platform);
+	scap_linux_storage_close(&gvisor_platform->m_storage);
 	return SCAP_SUCCESS;
 }
 
@@ -120,16 +128,18 @@ static int32_t gvisor_get_threadlist(struct scap_platform* platform, struct ppm_
 
 static inline int32_t scap_dump_rescan_proc(struct scap_platform* platform)
 {
+	auto* gvisor_platform = (struct scap_gvisor_platform*)platform;
 	int32_t ret = SCAP_SUCCESS;
-	proc_entry_callback tcb = platform->m_storage.m_proclist.m_proc_callback;
-	platform->m_storage.m_proclist.m_proc_callback = NULL;
-	ret = scap_gvisor_refresh_proc_table(platform, &platform->m_storage.m_proclist);
-	platform->m_storage.m_proclist.m_proc_callback = tcb;
+	proc_entry_callback tcb = gvisor_platform->m_storage.m_proclist.m_proc_callback;
+	gvisor_platform->m_storage.m_proclist.m_proc_callback = NULL;
+	ret = scap_gvisor_refresh_proc_table(platform, &gvisor_platform->m_storage.m_proclist);
+	gvisor_platform->m_storage.m_proclist.m_proc_callback = tcb;
 	return ret;
 }
 
 static int32_t gvisor_dump_state(struct scap_platform *platform, struct scap_dumper *d, uint64_t flags)
 {
+	auto* gvisor_platform = (struct scap_gvisor_platform*)platform;
 	int32_t res;
 	if(flags & DUMP_FLAGS_RESCAN_PROC)
 	{
@@ -139,17 +149,23 @@ static int32_t gvisor_dump_state(struct scap_platform *platform, struct scap_dum
 		}
 	}
 
-	res = scap_savefile_write_linux_platform(&platform->m_storage, d);
+	res = scap_savefile_write_linux_platform(&gvisor_platform->m_storage, d);
 
 	//
 	// If the user doesn't need the thread table, free it
 	//
-	if(platform->m_storage.m_proclist.m_proc_callback != NULL)
+	if(gvisor_platform->m_storage.m_proclist.m_proc_callback != NULL)
 	{
-		scap_proc_free_table(&platform->m_storage.m_proclist);
+		scap_proc_free_table(&gvisor_platform->m_storage.m_proclist);
 	}
 
 	return res;
+}
+
+static struct scap_linux_storage* scap_gvisor_get_storage(struct scap_platform* platform)
+{
+	struct scap_gvisor_platform* gvisor_platform = (struct scap_gvisor_platform*)platform;
+	return &gvisor_platform->m_storage;
 }
 
 static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
@@ -162,6 +178,7 @@ static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.get_global_pid = NULL,
 	.get_threadlist = gvisor_get_threadlist,
 	.dump_state = gvisor_dump_state,
+	.get_linux_storage = scap_gvisor_get_storage,
 
 	.close_platform = scap_gvisor_close_platform,
 	.free_platform = scap_gvisor_free_platform,
