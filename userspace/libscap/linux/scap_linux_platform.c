@@ -84,107 +84,12 @@ static int scap_get_cgroup_version()
 	return cgroup_version;
 }
 
-static uint64_t scap_linux_get_host_boot_time_ns(char* last_err)
-{
-	uint64_t btime = 0;
-	char proc_stat[SCAP_MAX_PATH_SIZE];
-	char line[512];
-
-	/* Get boot time from btime value in /proc/stat
-	 * ref: https://github.com/falcosecurity/libs/issues/932
-	 * /proc/uptime and btime in /proc/stat are fed by the same kernel sources.
-	 *
-	 * Multiple ways to get boot time:
-	 *	btime in /proc/stat
-	 *	calculation via clock_gettime(CLOCK_REALTIME - CLOCK_BOOTTIME)
-	 *	calculation via time(NULL) - sysinfo().uptime
-	 *
-	 * Maintainers preferred btime in /proc/stat because:
-	 *	value does not depend on calculation using current timestamp
-	 *	btime is "static" and doesn't change once set
-	 *	btime is available in kernels from 2008
-	 *	CLOCK_BOOTTIME is available in kernels from 2011 (2.6.38
-	 *
-	 * By scraping btime from /proc/stat,
-	 * it is both the heaviest and most likely to succeed
-	 */
-	snprintf(proc_stat, sizeof(proc_stat), "%s/proc/stat", scap_get_host_root());
-	FILE* f = fopen(proc_stat, "r");
-	if (f == NULL)
-	{
-		ASSERT(false);
-		return 0;
-	}
-
-	while(fgets(line, sizeof(line), f) != NULL)
-	{
-		if(sscanf(line, "btime %" PRIu64, &btime) == 1)
-		{
-			fclose(f);
-			return btime * (uint64_t) SECOND_TO_NS;
-		}
-	}
-	fclose(f);
-	ASSERT(false);
-	return 0;
-}
-
-static void scap_gethostname(char* buf, size_t size)
-{
-	char *env_hostname = getenv(SCAP_HOSTNAME_ENV_VAR);
-	if(env_hostname != NULL)
-	{
-		snprintf(buf, size, "%s", env_hostname);
-	}
-	else
-	{
-		gethostname(buf, size);
-	}
-}
-
-static int32_t scap_linux_fill_machine_info(struct scap_platform* platform, scap_machine_info* machine_info)
-{
-	// this isn't actually even used by scap_linux_get_host_boot_time_ns
-	char lasterr[SCAP_LASTERR_SIZE];
-
-	machine_info->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-	machine_info->memory_size_bytes = (uint64_t)sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
-	scap_gethostname(machine_info->hostname, sizeof(machine_info->hostname));
-	machine_info->boot_ts_epoch = scap_linux_get_host_boot_time_ns(lasterr);
-	if(machine_info->boot_ts_epoch == 0)
-	{
-		return SCAP_FAILURE;
-	}
-	machine_info->reserved3 = 0;
-	machine_info->reserved4 = 0;
-
-	machine_info->flags |= SCAP_OS_LINUX;
-#if defined(__amd64__)
-	machine_info->flags |= SCAP_ARCH_X64;
-#elif defined(__aarch64__)
-	machine_info->flags |= SCAP_ARCH_AARCH64;
-#elif defined(__i386__)
-	machine_info->flags |= SCAP_ARCH_I386;
-#else
-#warning "Unsupported architecture, please define a SCAP_ARCH_* flag for it"
-	ASSERT(false);
-#endif
-
-	return SCAP_SUCCESS;
-}
-
 int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs)
 {
 	int rc;
 	struct scap_linux_platform* linux_platform = (struct scap_linux_platform*)platform;
 	linux_platform->m_lasterr = lasterr;
 	linux_platform->m_engine = engine;
-
-	rc = scap_linux_fill_machine_info(platform, &linux_platform->m_storage.m_machine_info);
-	if(rc != SCAP_SUCCESS)
-	{
-		return rc;
-	}
 
 	rc = scap_linux_storage_init(&linux_platform->m_storage, lasterr, oargs);
 	if(rc != SCAP_SUCCESS)

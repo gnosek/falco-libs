@@ -54,6 +54,15 @@ class outer_block
 public:
 	explicit outer_block(uint32_t block_type) : m_block_type(block_type) {}
 
+	template<typename T> size_t append(T val)
+	{
+		const char* begin = (const char*)&val;
+		const char* end = begin + sizeof(val);
+
+		m_buf.insert(m_buf.end(), begin, end);
+		return sizeof(val);
+	}
+
 	void append(const inner_block& block);
 
 	void dump(struct scap_dumper* d);

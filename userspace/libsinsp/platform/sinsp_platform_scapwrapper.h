@@ -115,6 +115,11 @@ public:
 		return *m_network_interfaces;
 	}
 
+	void get_machine_info(scap_machine_info& machine_info) override
+	{
+		machine_info = get_linux_storage()->m_machine_info;
+	}
+
 protected:
 	scap_platform* m_scap_platform;
 	std::unique_ptr<sinsp_network_interfaces> m_network_interfaces;

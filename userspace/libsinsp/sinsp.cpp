@@ -104,7 +104,6 @@ sinsp::sinsp(bool static_container, const std::string &static_id, const std::str
 	m_write_cycling = false;
 	m_filter = NULL;
 	m_fds_to_remove = new std::vector<int64_t>;
-	m_machine_info = NULL;
 	m_agent_info.start_ts_epoch = 0;
 #ifdef SIMULATE_DROP_MODE
 	m_isdropping = false;
@@ -316,10 +315,10 @@ void sinsp::init()
 	//
 	// Retrieve machine information
 	//
-	m_machine_info = scap_get_machine_info(m_h);
-	if(m_machine_info != NULL)
+	get_platform()->get_machine_info(m_machine_info);
+	if((int)m_machine_info.num_cpus > 0)
 	{
-		m_num_cpus = m_machine_info->num_cpus;
+		m_num_cpus = m_machine_info.num_cpus;
 	}
 	else
 	{
@@ -947,22 +946,6 @@ void sinsp::on_new_entry_from_proc(void* context,
 								   scap_fdinfo* fdinfo)
 {
 	ASSERT(tinfo != NULL);
-
-	//
-	// Retrieve machine information if we don't have it yet
-	//
-	{
-		m_machine_info = scap_get_machine_info(m_h);
-		if(m_machine_info != NULL)
-		{
-			m_num_cpus = m_machine_info->num_cpus;
-		}
-		else
-		{
-			ASSERT(false);
-			m_num_cpus = 0;
-		}
-	}
 
 	if(m_suppress.check_suppressed_comm(tid, tinfo->comm))
 	{
@@ -1898,7 +1881,7 @@ bool sinsp::run_filters_on_evt(sinsp_evt *evt)
 
 const scap_machine_info* sinsp::get_machine_info()
 {
-	return m_machine_info;
+	return &m_machine_info;
 }
 
 const libsinsp::platform::agent_info* sinsp::get_agent_info()

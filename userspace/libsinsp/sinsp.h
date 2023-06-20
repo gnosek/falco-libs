@@ -1100,7 +1100,7 @@ private:
 	// the statistics analysis engine
 	std::unique_ptr<sinsp_dumper> m_dumper;
 	bool m_is_dumping;
-	const scap_machine_info* m_machine_info;
+	scap_machine_info m_machine_info {};
 	libsinsp::platform::agent_info m_agent_info;
 	scap_stats_v2 m_sinsp_stats_v2[SINSP_MAX_RESOURCE_UTILIZATION];
 	uint32_t m_num_cpus;

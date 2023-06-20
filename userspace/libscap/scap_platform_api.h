@@ -81,16 +81,6 @@ struct scap_threadinfo* scap_get_proc_table(struct scap* handle);
 bool scap_is_thread_alive(struct scap* handle, int64_t pid, int64_t tid, const char* comm);
 
 /*!
-  \brief Get generic machine information
-
-  \return The pointer to a \ref scap_machine_info structure containing the information.
-
-  \note for live captures, the information is collected from the operating system. For
-  offline captures, it comes from the capture file.
-*/
-const struct _scap_machine_info* scap_get_machine_info(struct scap* handle);
-
-/*!
   \brief Get the process list.
 */
 int32_t scap_get_threadlist(struct scap* handle, struct ppm_proclist_info** proclist_p);
