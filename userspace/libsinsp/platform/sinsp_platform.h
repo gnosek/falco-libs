@@ -29,11 +29,21 @@ namespace libsinsp
 	class platform
 	{
 	public:
+		/*!
+		  \brief Agent information, not intended for scap file use
+		*/
+		struct agent_info
+		{
+			uint64_t start_ts_epoch; ///< Agent start timestamp, stat /proc/self/cmdline approach, unit: epoch in nanoseconds
+			double start_time; ///< /proc/self/stat start_time divided by HZ, unit: seconds
+			char uname_r[128]; ///< Kernel release `uname -r`
+		};
+
 		virtual ~platform() = default;
 
 		virtual int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) = 0;
 
-		virtual int32_t get_agent_info(scap_agent_info* agent_info) = 0;
+		virtual int32_t get_agent_info(agent_info &agent_info) = 0;
 		virtual int32_t refresh_addr_list() = 0;
 
 		virtual uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) = 0;

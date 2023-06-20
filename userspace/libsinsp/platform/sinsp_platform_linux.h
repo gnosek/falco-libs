@@ -34,6 +34,7 @@ public:
 		return reinterpret_cast<scap_linux_platform*>(m_scap_platform);
 	}
 
+	int32_t get_agent_info(agent_info &agent_info) override;
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override;
 
 protected:

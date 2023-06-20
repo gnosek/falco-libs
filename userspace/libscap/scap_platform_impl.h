@@ -54,9 +54,6 @@ struct scap_platform_vtable
 	// at this point the engine is fully initialized and operational
 	int32_t (*init_platform)(struct scap_platform* platform, char* lasterr, struct scap_engine_handle engine, struct scap_open_args* oargs);
 
-	// get the agent info
-	int32_t (*get_agent_info)(struct scap_platform* platform, scap_agent_info* agent_info);
-
 	// refresh the interface list and place it inside
 	// platform->m_addrlist
 	int32_t (*refresh_addr_list)(struct scap_platform* platform);

@@ -330,10 +330,7 @@ void sinsp::init()
 	//
 	// Retrieve agent information
 	//
-	if(scap_get_agent_info(m_h, &m_agent_info) != SCAP_SUCCESS)
-	{
-		ASSERT(false);
-	}
+	get_platform()->get_agent_info(m_agent_info);
 
 	//
 	// Attach the protocol decoders
@@ -1938,7 +1935,7 @@ const scap_machine_info* sinsp::get_machine_info()
 	return m_machine_info;
 }
 
-const scap_agent_info* sinsp::get_agent_info()
+const libsinsp::platform::agent_info* sinsp::get_agent_info()
 {
 	if(m_agent_info.start_ts_epoch == 0)
 	{

@@ -53,9 +53,9 @@ public:
 		return rc;
 	}
 
-	int32_t get_agent_info(scap_agent_info* agent_info) override
+	int32_t get_agent_info(agent_info &agent_info) override
 	{
-		return vt()->get_agent_info(m_scap_platform, agent_info);
+		return SCAP_FAILURE;
 	}
 
 	int32_t refresh_addr_list() override

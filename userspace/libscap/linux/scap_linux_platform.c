@@ -84,57 +84,6 @@ static int scap_get_cgroup_version()
 	return cgroup_version;
 }
 
-static int32_t scap_linux_retrieve_agent_info(struct scap_platform* platform, scap_agent_info* agent_info)
-{
-	agent_info->start_ts_epoch = 0;
-	agent_info->start_time = 0;
-
-	/* Info 1:
-	 *
-	 * Get epoch timestamp based on procfs stat, only used for (constant) agent start time reporting.
-	 */
-	struct stat st = {0};
-	if(stat("/proc/self/cmdline", &st) == 0)
-	{
-		agent_info->start_ts_epoch = st.st_ctim.tv_sec * (uint64_t) SECOND_TO_NS + st.st_ctim.tv_nsec;
-	}
-
-	/* Info 2:
-	 *
-	 * Get /proc/self/stat start_time (22nd item) to calculate subsequent snapshots of the elapsed time
-	 * of the agent for CPU usage calculations, e.g. sysinfo uptime - /proc/self/stat start_time.
-	 */
-	FILE* f;
-	if((f = fopen("/proc/self/stat", "r")))
-	{
-		unsigned long long stat_start_time = 0; // unit: USER_HZ / jiffies / clock ticks
-		long hz = 100;
-#ifdef _SC_CLK_TCK
-		if ((hz = sysconf(_SC_CLK_TCK)) < 0)
-		{
-			hz = 100;
-			ASSERT(false);
-		}
-#endif
-		if(fscanf(f, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*u %llu", &stat_start_time))
-		{
-			agent_info->start_time = (double)stat_start_time / hz; // unit: seconds as type (double)
-		}
-		fclose(f);
-	}
-
-	/* Info 3:
-	 *
-	 * Kernel release `uname -r` of the machine the agent is running on.
-	 */
-
-	struct utsname uts;
-	uname(&uts);
-	snprintf(agent_info->uname_r, sizeof(agent_info->uname_r), "%s", uts.release);
-
-	return SCAP_SUCCESS;
-}
-
 static uint64_t scap_linux_get_host_boot_time_ns(char* last_err)
 {
 	uint64_t btime = 0;
@@ -347,7 +296,6 @@ struct scap_linux_storage* scap_linux_get_storage(struct scap_platform* platform
 
 static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
-	.get_agent_info = scap_linux_retrieve_agent_info,
 	.refresh_addr_list = scap_linux_create_iflist,
 	.get_proc = scap_linux_proc_get,
 	.refresh_proc_table = scap_linux_refresh_proc_table,

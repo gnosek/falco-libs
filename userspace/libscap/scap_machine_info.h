@@ -83,16 +83,6 @@ typedef struct _scap_machine_info
 #pragma pack(pop)
 #endif
 
-/*!
-  \brief Agent information, not intended for scap file use
-*/
-typedef struct _scap_agent_info
-{
-	uint64_t start_ts_epoch; ///< Agent start timestamp, stat /proc/self/cmdline approach, unit: epoch in nanoseconds
-	double start_time; ///< /proc/self/stat start_time divided by HZ, unit: seconds
-	char uname_r[128]; ///< Kernel release `uname -r`
-} scap_agent_info;
-
 static inline bool scap_machine_info_os_arch_present(scap_machine_info* machine_info)
 {
 	return machine_info->flags & (SCAP_ARCH_MASK | SCAP_OS_MASK);

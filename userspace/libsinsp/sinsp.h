@@ -492,7 +492,7 @@ public:
 
 	  \note not for use in scap files.
 	*/
-	const scap_agent_info* get_agent_info();
+	const libsinsp::platform::agent_info* get_agent_info();
 
 	/*!
 	  \brief Return sinsp stats v2 static size buffer w/ scap_stats_v2 schema.
@@ -1104,7 +1104,7 @@ private:
 	std::unique_ptr<sinsp_dumper> m_dumper;
 	bool m_is_dumping;
 	const scap_machine_info* m_machine_info;
-	scap_agent_info m_agent_info;
+	libsinsp::platform::agent_info m_agent_info;
 	scap_stats_v2 m_sinsp_stats_v2[SINSP_MAX_RESOURCE_UTILIZATION];
 	uint32_t m_num_cpus;
 	bool m_is_tracers_capture_enabled;

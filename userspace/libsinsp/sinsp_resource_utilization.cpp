@@ -166,7 +166,7 @@ uint64_t get_container_memory_usage()
 	return memory_used;
 }
 
-const scap_stats_v2* libsinsp::resource_utilization::get_resource_utilization(const scap_agent_info* agent_info, scap_stats_v2* stats, uint32_t* nstats, int32_t* rc)
+const scap_stats_v2* libsinsp::resource_utilization::get_resource_utilization(const libsinsp::platform::agent_info* agent_info, scap_stats_v2* stats, uint32_t* nstats, int32_t* rc)
 {
 	if (!stats)
 	{

@@ -32,7 +32,6 @@ struct scap;
 struct scap_addrlist;
 struct _scap_machine_info;
 struct scap_threadinfo;
-typedef struct _scap_agent_info scap_agent_info;
 
 /*!
   \brief Return the list of the the user interfaces of the machine from which the
@@ -106,15 +105,6 @@ int32_t scap_getpid_global(struct scap* handle, int64_t* pid);
   offline captures, it comes from the capture file.
 */
 const struct _scap_machine_info* scap_get_machine_info(struct scap* handle);
-
-/*!
-  \brief Get generic agent information
-
-  \return The pointer to a \ref scap_agent_info structure containing the information.
-
-  \note for live captures only.
-*/
-int32_t scap_get_agent_info(struct scap* handle, scap_agent_info* agent_info);
 
 /*!
   \brief Get the process list.

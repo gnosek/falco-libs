@@ -33,12 +33,6 @@ extern "C" {
 		}
 	}
 
-	int32_t cpp_get_agent_info(struct scap_platform* platform, scap_agent_info* agent_info)
-	{
-		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
-		return cpp_plat->m_platform->get_agent_info(agent_info);
-	}
-
 	int32_t cpp_refresh_addr_list(struct scap_platform* platform)
 	{
 		auto cpp_plat = reinterpret_cast<libsinsp::platform_struct*>(platform);
@@ -139,7 +133,6 @@ extern "C" {
 
 	const struct scap_platform_vtable cpp_platform_vtable = {
 		.init_platform = cpp_init_platform,
-		.get_agent_info = cpp_get_agent_info,
 		.refresh_addr_list = cpp_refresh_addr_list,
 		.get_device_by_mount_id = cpp_get_device_by_mount_id,
 		.get_proc = cpp_get_proc,

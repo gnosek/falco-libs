@@ -162,19 +162,6 @@ const scap_machine_info* scap_get_machine_info(scap_t* handle)
 	return NULL;
 }
 
-//
-// Get the agent information
-//
-int32_t scap_get_agent_info(scap_t* handle, scap_agent_info* agent_info)
-{
-	if(handle && handle->m_platform && handle->m_platform->m_vtable->get_agent_info)
-	{
-		return handle->m_platform->m_vtable->get_agent_info(handle->m_platform, agent_info);
-	}
-
-	return SCAP_FAILURE;
-}
-
 int32_t scap_get_threadlist(scap_t* handle, struct ppm_proclist_info** proclist)
 {
 	if (handle && handle->m_platform && handle->m_platform->m_vtable->get_threadlist)
