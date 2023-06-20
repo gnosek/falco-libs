@@ -408,12 +408,10 @@ void sinsp_network_interfaces::import_ipv6_interface(const sinsp_ipv6_ifinfo& if
 	m_ipv6_interfaces.push_back(ifinfo);
 }
 
-std::vector<sinsp_ipv4_ifinfo>* sinsp_network_interfaces::get_ipv4_list()
-{
-	return &m_ipv4_interfaces;
+const std::vector<sinsp_ipv4_ifinfo>& sinsp_network_interfaces::get_ipv4_list() const {
+	return m_ipv4_interfaces;
 }
 
-std::vector<sinsp_ipv6_ifinfo>* sinsp_network_interfaces::get_ipv6_list()
-{
-	return &m_ipv6_interfaces;
+const std::vector<sinsp_ipv6_ifinfo>& sinsp_network_interfaces::get_ipv6_list() const {
+	return m_ipv6_interfaces;
 }

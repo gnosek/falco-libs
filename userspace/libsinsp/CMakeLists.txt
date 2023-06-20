@@ -65,6 +65,8 @@ endif()
 
 include(tbb)
 
+add_subdirectory(platform)
+
 set(SINSP_SOURCES
 	filter/ast.cpp
 	filter/escaping.cpp
@@ -118,13 +120,7 @@ set(SINSP_SOURCES
 	sinsp_exception.cpp
 	sinsp_suppress.cpp
 	events/sinsp_events.cpp
-	events/sinsp_events_ppm_sc.cpp
-	platform/sinsp_platform.cpp
-	platform/sinsp_platform_scapwrapper.cpp)
-
-if(NOT WIN32 AND NOT APPLE)
-	list(APPEND SINSP_SOURCES platform/sinsp_platform_linux.cpp)
-endif()
+	events/sinsp_events_ppm_sc.cpp)
 
 if(NOT WIN32)
 	list(APPEND SINSP_SOURCES procfs_utils.cpp)
@@ -197,6 +193,7 @@ if(NOT MINIMAL_BUILD)
 endif()
 
 add_library(sinsp ${SINSP_SOURCES})
+target_link_libraries(sinsp sinsp_platform)
 
 set_sinsp_target_properties(sinsp)
 

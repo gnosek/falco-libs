@@ -37,7 +37,6 @@ struct scap_linux_platform;
 struct scap_proclist;
 typedef struct scap_threadinfo scap_threadinfo;
 
-int32_t scap_linux_create_iflist(struct scap_platform* platform);
 int32_t scap_linux_create_userlist(struct scap_platform* platform);
 
 struct scap_threadinfo* scap_linux_proc_get(struct scap_platform* platform, struct scap_proclist* proclist, int64_t tid, bool scan_sockets);

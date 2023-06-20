@@ -222,13 +222,6 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 		return scap_errprintf(lasterr, errno, "failed to fetch cgroup version information");
 	}
 
-	rc = scap_linux_create_iflist(platform);
-	if(rc != SCAP_SUCCESS)
-	{
-		scap_linux_free_platform(platform);
-		return rc;
-	}
-
 	if(oargs->import_users)
 	{
 		rc = scap_linux_create_userlist(platform);
@@ -296,7 +289,6 @@ struct scap_linux_storage* scap_linux_get_storage(struct scap_platform* platform
 
 static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
-	.refresh_addr_list = scap_linux_create_iflist,
 	.get_proc = scap_linux_proc_get,
 	.refresh_proc_table = scap_linux_refresh_proc_table,
 	.is_thread_alive = scap_linux_is_thread_alive,

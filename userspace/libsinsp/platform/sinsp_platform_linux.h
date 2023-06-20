@@ -34,9 +34,12 @@ public:
 		return reinterpret_cast<scap_linux_platform*>(m_scap_platform);
 	}
 
+	int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) override;
 	int32_t get_agent_info(agent_info &agent_info) override;
 	uint32_t get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id) override;
 	int64_t get_global_pid() override;
+
+	int32_t dump_state(struct scap_dumper *d, uint64_t flags) override;
 
 protected:
 	std::unordered_map<unsigned long, uint32_t> m_dev_map;

@@ -112,7 +112,6 @@ static int32_t scap_setup_dump(scap_dumper_t *d, struct scap_platform *platform,
 	block_header bh;
 	section_header_block sh;
 	uint32_t bt;
-	scap_machine_info mi;
 
 	//
 	// Write the section header

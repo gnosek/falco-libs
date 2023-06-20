@@ -16,6 +16,8 @@ limitations under the License.
 */
 
 #include "sinsp_platform_linux.h"
+#include "addrlist_linux.h"
+#include "sinsp_dumper_utils.h"
 #include "linux/scap_linux.h"
 #include <sys/stat.h>
 #include <sys/utsname.h>
@@ -28,6 +30,19 @@ limitations under the License.
 #endif
 
 #define SECOND_TO_NS 1000000000
+
+int32_t libsinsp::linux_platform::init_platform(struct scap_engine_handle engine, struct scap_open_args *oargs)
+{
+	int32_t rc = scapwrapper_platform::init_platform(engine, oargs);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
+
+	libsinsp::platform_linux::get_interfaces(*m_network_interfaces.get());
+
+	return SCAP_SUCCESS;
+}
 
 uint32_t libsinsp::linux_platform::get_device_by_mount_id(const char *procdir, unsigned long requested_mount_id)
 {
@@ -160,4 +175,26 @@ int64_t libsinsp::linux_platform::get_global_pid()
 
 	fclose(f);
 	throw sinsp_errprintf(0, "could not find tgid in status file %s", filename);
+}
+
+int32_t libsinsp::linux_platform::dump_state(struct scap_dumper *d, uint64_t flags)
+{
+	int32_t rc = scapwrapper_platform::dump_state(d, flags);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
+
+#ifdef _DEBUG
+	struct scap_addrlist *addrlist = get_linux_storage()->m_addrlist;
+	if(addrlist != nullptr)
+	{
+		throw sinsp_exception("scap addrlist not empty");
+	}
+#endif
+
+	libsinsp::dumper::outer_block addrlist_block =
+		libsinsp::platform_linux::dump_addrlist(*m_network_interfaces);
+
+	return SCAP_SUCCESS;
 }

@@ -17,6 +17,12 @@ limitations under the License.
 
 #pragma once
 
+#include "scap_const.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Force struct alignment
 #if defined _MSC_VER
 #pragma pack(push)
@@ -203,3 +209,7 @@ static inline int32_t scap_write_padding(struct scap_dumper *d, uint32_t blockle
 		return SCAP_FAILURE;
 	}
 }
+
+#ifdef __cplusplus
+};
+#endif

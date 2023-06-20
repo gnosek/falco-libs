@@ -55,6 +55,8 @@ public:
 	sinsp_ipv6_ifinfo() {};
 
 	ipv6addr m_net;
+	ipv6addr m_netmask;
+	ipv6addr m_bcast;
 
 	std::string m_name;
 };
@@ -71,8 +73,8 @@ public:
 	bool is_ipv4addr_in_local_machine(uint32_t addr, sinsp_threadinfo* tinfo);
 	void import_ipv6_interface(const sinsp_ipv6_ifinfo& ifinfo);
 	bool is_ipv6addr_in_local_machine(ipv6addr &addr, sinsp_threadinfo* tinfo);
-	std::vector<sinsp_ipv4_ifinfo>* get_ipv4_list();
-	std::vector<sinsp_ipv6_ifinfo>* get_ipv6_list();
+	const std::vector<sinsp_ipv4_ifinfo>& get_ipv4_list() const;
+	const std::vector<sinsp_ipv6_ifinfo>& get_ipv6_list() const;
 	inline void clear();
 
 	ipv6addr m_ipv6_loopback_addr;
