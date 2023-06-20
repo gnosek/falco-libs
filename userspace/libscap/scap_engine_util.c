@@ -20,7 +20,6 @@ limitations under the License.
 #include <time.h>
 
 #include "scap.h"
-#include "scap-int.h"
 #include "scap_engine_util.h"
 #include "scap_vtable.h"
 #include "strerror.h"
