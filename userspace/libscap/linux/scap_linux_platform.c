@@ -82,6 +82,8 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 	linux_platform->m_lasterr = lasterr;
 	linux_platform->m_engine = engine;
 
+	linux_platform->m_debug_log_fn = oargs->debug_log_fn;
+
 	linux_platform->m_cgroup_version = scap_get_cgroup_version();
 	if(linux_platform->m_cgroup_version < 1)
 	{
