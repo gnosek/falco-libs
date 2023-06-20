@@ -185,17 +185,14 @@ int32_t scap_get_agent_info(scap_t* handle, scap_agent_info* agent_info)
 	return SCAP_FAILURE;
 }
 
-struct ppm_proclist_info* scap_get_threadlist(scap_t* handle)
+int32_t scap_get_threadlist(scap_t* handle, struct ppm_proclist_info** proclist)
 {
 	if (handle && handle->m_platform && handle->m_platform->m_vtable->get_threadlist)
 	{
-		if(handle->m_platform->m_vtable->get_threadlist(handle->m_platform, &handle->m_platform->m_driver_procinfo, handle->m_lasterr) == SCAP_SUCCESS)
-		{
-			return handle->m_platform->m_driver_procinfo;
-		}
-		return NULL;
+		return handle->m_platform->m_vtable->get_threadlist(handle->m_platform, proclist, handle->m_lasterr);
 	}
 
 	snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "operation not supported");
-	return NULL;
+	*proclist = NULL;
+	return SCAP_FAILURE;
 }

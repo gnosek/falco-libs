@@ -1210,8 +1210,7 @@ void sinsp::get_procs_cpu_from_driver(uint64_t ts)
 
 	m_last_procrequest_tod = procrequest_tod;
 
-	m_meinfo.m_pli = scap_get_threadlist(m_h);
-	if(m_meinfo.m_pli == NULL)
+	if(scap_get_threadlist(m_h, &m_meinfo.m_pli) != SCAP_SUCCESS)
 	{
 		throw sinsp_exception(std::string("scap error: ") + scap_getlasterr(m_h));
 	}

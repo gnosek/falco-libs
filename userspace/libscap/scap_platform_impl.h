@@ -96,8 +96,6 @@ struct scap_platform_vtable
 struct scap_platform
 {
 	const struct scap_platform_vtable* m_vtable;
-
-	struct ppm_proclist_info* m_driver_procinfo;
 };
 
 #ifdef __cplusplus

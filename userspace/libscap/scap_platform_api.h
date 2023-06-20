@@ -123,7 +123,7 @@ int32_t scap_get_agent_info(struct scap* handle, scap_agent_info* agent_info);
 /*!
   \brief Get the process list.
 */
-struct ppm_proclist_info* scap_get_threadlist(struct scap* handle);
+int32_t scap_get_threadlist(struct scap* handle, struct ppm_proclist_info** proclist_p);
 
 #ifdef __cplusplus
 };
