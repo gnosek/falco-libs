@@ -35,6 +35,33 @@ extern "C" {
 #pragma pack(push, 1)
 #endif
 
+//
+// The `flags` field in scap_machine_info is laid out as follows:
+// |<--SCAP_ARCH_BITS-->|<--SCAP_OS_BITS-->|<--SCAP_FLAGS_BITS-->|
+//
+// The top 8 bits describe the CPU architecture using one of the SCAP_ARCH_* constants
+// The next 8 bits describe the OS using one of the SCAP_OS_* constants
+// The final 48 bits describe any other remaining flags
+//
+
+#define SCAP_FLAGS_BITS 64
+
+#define SCAP_ARCH_BITS 8
+#define SCAP_ARCH_SHIFT (SCAP_FLAGS_BITS - SCAP_ARCH_BITS)
+#define SCAP_ARCH_MASK (((1ULL << SCAP_ARCH_BITS) - 1) << SCAP_ARCH_SHIFT)
+
+#define SCAP_ARCH_I386    (1ULL << SCAP_ARCH_SHIFT)
+#define SCAP_ARCH_X64     (2ULL << SCAP_ARCH_SHIFT)
+#define SCAP_ARCH_AARCH64 (3ULL << SCAP_ARCH_SHIFT)
+
+#define SCAP_OS_BITS 8
+#define SCAP_OS_SHIFT (SCAP_ARCH_SHIFT - SCAP_OS_BITS)
+#define SCAP_OS_MASK (((1ULL << SCAP_OS_BITS) - 1) << SCAP_OS_SHIFT)
+
+#define SCAP_OS_LINUX   (1ULL << SCAP_OS_SHIFT)
+#define SCAP_OS_WINDOWS (2ULL << SCAP_OS_SHIFT)
+#define SCAP_OS_MACOS   (3ULL << SCAP_OS_SHIFT)
+
 /*!
   \brief Machine information
 */
@@ -65,6 +92,11 @@ typedef struct _scap_agent_info
 	double start_time; ///< /proc/self/stat start_time divided by HZ, unit: seconds
 	char uname_r[128]; ///< Kernel release `uname -r`
 } scap_agent_info;
+
+static inline bool scap_machine_info_os_arch_present(scap_machine_info* machine_info)
+{
+	return machine_info->flags & (SCAP_ARCH_MASK | SCAP_OS_MASK);
+}
 
 #ifdef __cplusplus
 }
