@@ -102,7 +102,7 @@ sinsp::sinsp(bool static_container, const std::string &static_id, const std::str
 	m_filter = NULL;
 	m_fds_to_remove = new std::vector<int64_t>;
 	m_machine_info = NULL;
-	m_agent_info = NULL;
+	m_agent_info.start_ts_epoch = 0;
 #ifdef SIMULATE_DROP_MODE
 	m_isdropping = false;
 #endif
@@ -327,8 +327,7 @@ void sinsp::init()
 	//
 	// Retrieve agent information
 	//
-	m_agent_info = scap_get_agent_info(m_h);
-	if (m_agent_info == NULL)
+	if(scap_get_agent_info(m_h, &m_agent_info) != SCAP_SUCCESS)
 	{
 		ASSERT(false);
 	}
@@ -1942,7 +1941,12 @@ const scap_machine_info* sinsp::get_machine_info()
 
 const scap_agent_info* sinsp::get_agent_info()
 {
-	return m_agent_info;
+	if(m_agent_info.start_ts_epoch == 0)
+	{
+		// not initialized yet
+		return nullptr;
+	}
+	return &m_agent_info;
 }
 
 scap_stats_v2* sinsp::get_sinsp_stats_v2_buffer()

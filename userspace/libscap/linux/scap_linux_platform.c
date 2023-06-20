@@ -91,7 +91,7 @@ static int scap_get_cgroup_version()
 	return cgroup_version;
 }
 
-static void scap_linux_retrieve_agent_info(scap_agent_info* agent_info)
+static int32_t scap_linux_retrieve_agent_info(struct scap_platform* platform, scap_agent_info* agent_info)
 {
 	agent_info->start_ts_epoch = 0;
 	agent_info->start_time = 0;
@@ -138,6 +138,8 @@ static void scap_linux_retrieve_agent_info(scap_agent_info* agent_info)
 	struct utsname uts;
 	uname(&uts);
 	snprintf(agent_info->uname_r, sizeof(agent_info->uname_r), "%s", uts.release);
+
+	return SCAP_SUCCESS;
 }
 
 static uint64_t scap_linux_get_host_boot_time_ns(char* last_err)
@@ -291,8 +293,6 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 		return rc;
 	}
 
-	scap_linux_retrieve_agent_info(&platform->m_agent_info);
-
 	return SCAP_SUCCESS;
 }
 
@@ -340,6 +340,7 @@ struct scap_linux_storage* scap_linux_get_storage(struct scap_platform* platform
 
 static const struct scap_platform_vtable scap_linux_platform = {
 	.init_platform = scap_linux_init_platform,
+	.get_agent_info = scap_linux_retrieve_agent_info,
 	.refresh_addr_list = scap_linux_create_iflist,
 	.get_device_by_mount_id = scap_linux_get_device_by_mount_id,
 	.get_proc = scap_linux_proc_get,

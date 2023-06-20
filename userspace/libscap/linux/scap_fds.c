@@ -28,6 +28,7 @@ limitations under the License.
 #include "uthash.h"
 #include "compat/misc.h"
 #include "ppm_events_public.h"
+#include "scap_linux.h"
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/param.h>

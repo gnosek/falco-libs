@@ -118,7 +118,7 @@ const struct _scap_machine_info* scap_get_machine_info(struct scap* handle);
 
   \note for live captures only.
 */
-const scap_agent_info* scap_get_agent_info(struct scap* handle);
+int32_t scap_get_agent_info(struct scap* handle, scap_agent_info* agent_info);
 
 /*!
   \brief Get the process list.

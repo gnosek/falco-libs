@@ -1103,7 +1103,7 @@ private:
 	std::unique_ptr<sinsp_dumper> m_dumper;
 	bool m_is_dumping;
 	const scap_machine_info* m_machine_info;
-	const scap_agent_info* m_agent_info;
+	scap_agent_info m_agent_info;
 	scap_stats_v2 m_sinsp_stats_v2[SINSP_MAX_RESOURCE_UTILIZATION];
 	uint32_t m_num_cpus;
 	bool m_is_tracers_capture_enabled;

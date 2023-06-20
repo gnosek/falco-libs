@@ -22,6 +22,7 @@ limitations under the License.
 #include <stdio.h>
 #include "scap_linux_platform.h"
 #include "strlcpy.h"
+#include "scap_linux.h"
 
 #include <sys/types.h>
 
