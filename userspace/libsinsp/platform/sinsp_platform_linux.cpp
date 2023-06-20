@@ -193,8 +193,7 @@ int32_t libsinsp::linux_platform::dump_state(struct scap_dumper *d, uint64_t fla
 	}
 #endif
 
-	libsinsp::dumper::outer_block addrlist_block =
-		libsinsp::platform_linux::dump_addrlist(*m_network_interfaces);
+	libsinsp::platform_linux::dump_addrlist(*m_network_interfaces).dump(d);
 
 	return SCAP_SUCCESS;
 }
