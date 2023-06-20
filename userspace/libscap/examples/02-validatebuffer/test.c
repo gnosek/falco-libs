@@ -22,6 +22,7 @@ limitations under the License.
 #include <assert.h>
 
 #include <scap.h>
+#include <scap_engines.h>
 #include "../../../../driver/ppm_events_public.h"
 
 extern const struct ppm_event_info g_event_info[];
@@ -169,10 +170,17 @@ int main()
 
 	scap_open_args args = {.mode = SCAP_MODE_LIVE};
 
-	scap_t* h = scap_open(&args, error, &ret);
+	scap_t* h = scap_alloc();
 	if(h == NULL)
 	{
+		fprintf(stderr, "failed to allocate scap handle\n");
+		return SCAP_FAILURE;
+	}
+	ret = scap_init_int(h, &args, &scap_kmod_engine, NULL);
+	if(ret != SCAP_SUCCESS)
+	{
 		fprintf(stderr, "%s (%d)\n", error, ret);
+		scap_close(h);
 		return ret;
 	}
 

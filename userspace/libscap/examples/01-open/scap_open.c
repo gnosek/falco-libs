@@ -22,6 +22,7 @@ limitations under the License.
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include "strlcpy.h"
+#include "scap_engines.h"
 
 #define SYSCALL_NAME_MAX_LEN 40
 #define UNKNOWN_ENGINE "unknown"
@@ -852,10 +853,17 @@ int main(int argc, char** argv)
 
 	enable_sc_and_print();
 
-	g_h = scap_open(&oargs, error, &res);
-	if(g_h == NULL || res != SCAP_SUCCESS)
+	g_h = scap_alloc();
+	if(g_h == NULL)
+	{
+		fprintf(stderr, "failed to allocate scap handle\n");
+		return SCAP_FAILURE;
+	}
+	res = scap_init_int(g_h, &oargs, &scap_kmod_engine, NULL);
+	if(res != SCAP_SUCCESS)
 	{
 		fprintf(stderr, "%s (%d)\n", error, res);
+		scap_close(g_h);
 		return EXIT_FAILURE;
 	}
 

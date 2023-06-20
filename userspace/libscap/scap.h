@@ -218,8 +218,6 @@ scap_t* scap_alloc(void);
   If this function fails, the only thing you can safely do with the handle is to call
   \ref scap_deinit on it.
 */
-int32_t scap_init(scap_t* handle, scap_open_args* oargs);
-
 int32_t scap_init_int(scap_t* handle, scap_open_args* oargs, const struct scap_vtable* vtable, struct scap_platform* platform);
 
 /*!

@@ -1,4 +1,5 @@
 #include "scap.h"
+#include "scap_engines.h"
 #include <gtest/gtest.h>
 #include <unordered_set>
 #include <syscall.h>
@@ -37,7 +38,15 @@ scap_t* open_modern_bpf_engine(char* error_buf, int32_t* rc, unsigned long buffe
 	};
 	oargs.engine_params = &modern_bpf_params;
 
-	return scap_open(&oargs, error_buf, rc);
+	struct scap* h = scap_alloc();
+	*rc = scap_init_int(h, &oargs, &scap_modern_bpf_engine, nullptr);
+	if(*rc != SCAP_SUCCESS)
+	{
+		scap_close(h);
+		return nullptr;
+	}
+
+	return h;
 }
 
 void check_event_is_not_overwritten(scap_t* h)
