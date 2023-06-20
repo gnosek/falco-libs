@@ -171,7 +171,10 @@ static int32_t scap_setup_dump(scap_dumper_t* d, struct scap_platform *platform,
 			return SCAP_FAILURE;
 		}
 
-		return scap_savefile_write_linux_platform(d, platform);
+		if(platform->m_vtable->dump_state)
+		{
+			return platform->m_vtable->dump_state(platform, d);
+		}
 	}
 
 	//

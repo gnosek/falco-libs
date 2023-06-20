@@ -4,8 +4,8 @@
 #include "ifinfo.h"
 #include "userinfo.h"
 #include "scap_assert.h"
-#include "scap_savefile.h"
-#include "scap_savefile_api.h"
+#include "savefile/scap_savefile.h"
+#include "savefile/scap_savefile_api.h"
 #include "scap_platform_impl.h"
 
 #include <stdio.h>
@@ -875,8 +875,7 @@ static int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclis
 	return SCAP_SUCCESS;
 }
 
-
-int32_t scap_savefile_write_linux_platform(struct scap_dumper* d, struct scap_platform* platform)
+int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struct scap_dumper *d)
 {
 	//
 	// Write the interface list

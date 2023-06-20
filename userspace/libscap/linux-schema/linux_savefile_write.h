@@ -26,7 +26,7 @@ extern "C" {
 struct scap_dumper;
 struct scap_platform;
 
-int32_t scap_savefile_write_linux_platform(struct scap_dumper* d, struct scap_platform* platform);
+int32_t scap_savefile_write_linux_platform(struct scap_platform *platform, struct scap_dumper *d);
 
 #ifdef __cplusplus
 }

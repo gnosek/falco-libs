@@ -1,0 +1,1 @@
+add_library(scap_savefile scap_savefile.c)

@@ -65,7 +65,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(scap
 	scap.c
 	scap_fds.c
-	scap_savefile.c
 	scap_platform.c
 	scap_platform_api.c
 	scap_procs.c
@@ -142,6 +141,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 	target_link_libraries(scap_event_schema driver_event_schema)
 	set_scap_target_properties(scap_event_schema)
 endif()
+
+add_subdirectory(savefile)
+target_link_libraries(scap scap_savefile)
 
 add_subdirectory(linux-schema)
 target_link_libraries(scap scap_linux_schema)

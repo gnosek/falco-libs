@@ -24,6 +24,7 @@ limitations under the License.
 #include "strerror.h"
 
 #include "compat/misc.h"
+#include "linux-schema/linux_savefile_write.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -292,6 +293,7 @@ static const struct scap_platform_vtable scap_linux_platform = {
 	.is_thread_alive = scap_linux_is_thread_alive,
 	.get_global_pid = scap_linux_getpid_global,
 	.get_threadlist = scap_linux_get_threadlist,
+	.dump_state = scap_savefile_write_linux_platform,
 	.close_platform = scap_linux_close_platform,
 	.free_platform = scap_linux_free_platform,
 };

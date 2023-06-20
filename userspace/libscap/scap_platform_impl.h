@@ -38,9 +38,11 @@ extern "C" {
 #include "linux-schema/threadinfo.h"
 
 struct scap_addrlist;
+struct scap_dumper;
 struct scap_open_args;
 struct scap_platform;
 struct scap_proclist;
+struct scap_reader;
 struct scap_userlist;
 struct ppm_proclist_info;
 
@@ -65,6 +67,11 @@ struct scap_platform_vtable
 	bool (*is_thread_alive)(struct scap_platform*, int64_t pid, int64_t tid, const char* comm);
 	int32_t (*get_global_pid)(struct scap_platform*, int64_t *pid, char *error);
 	int32_t (*get_threadlist)(struct scap_platform* platform, struct ppm_proclist_info **procinfo_p, char *lasterr);
+
+	int32_t (*read_block)(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
+			      uint32_t block_type, char *error);
+
+	int32_t (*dump_state)(struct scap_platform *platform, struct scap_dumper *d);
 
 	// close the platform structure
 	// clean up all data, make it ready for another call to `init_platform`

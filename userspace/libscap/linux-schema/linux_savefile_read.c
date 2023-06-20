@@ -4,7 +4,7 @@
 #include "ifinfo.h"
 #include "scap_const.h"
 #include "scap_platform_impl.h"
-#include "scap_savefile.h"
+#include "savefile/scap_savefile.h"
 #include "userinfo.h"
 #include "engine/savefile/scap_reader.h"
 #include "engine/savefile/savefile.h"
@@ -1650,8 +1650,8 @@ static int32_t scap_read_fdlist(scap_reader_t* r, uint32_t block_length, uint32_
 	return SCAP_SUCCESS;
 }
 
-
-int32_t scap_read_linux_block(struct scap_reader* r, uint32_t block_length, uint32_t block_type, struct scap_platform *platform, char *error)
+int32_t scap_read_linux_block(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
+			      uint32_t block_type, char *error)
 {
 	switch(block_type)
 	{

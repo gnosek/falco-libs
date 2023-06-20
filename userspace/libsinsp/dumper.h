@@ -20,7 +20,7 @@ limitations under the License.
 class sinsp;
 class sinsp_evt;
 
-#include "scap_savefile_api.h"
+#include "savefile/scap_savefile_api.h"
 
 #include <string>
 

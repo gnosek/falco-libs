@@ -21,7 +21,7 @@ limitations under the License.
 #include "scap_const.h"
 #include "scap_limits.h"
 #include "scap_reader.h"
-#include "scap_savefile.h"
+#include "savefile/scap_savefile.h"
 
 #define READER_BUF_SIZE (1 << 16) // UINT16_MAX + 1, ie: 65536
 

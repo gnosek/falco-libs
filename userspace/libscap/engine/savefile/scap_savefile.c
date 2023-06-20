@@ -34,13 +34,14 @@ struct iovec {
 #include "scap.h"
 #include "scap-int.h"
 #include "scap_platform.h"
-#include "scap_savefile.h"
+#include "savefile/scap_savefile.h"
 #include "savefile_platform.h"
 #include "scap_reader.h"
 #include "../noop/noop.h"
 
 #include "strlcpy.h"
 #include "linux-schema/linux_savefile_read.h"
+#include "linux-schema/linux_savefile_write.h"
 
 //
 // Read the section header block
@@ -127,6 +128,12 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 	int32_t rc;
 	int8_t found_ev = 0;
 
+	if(!platform->m_vtable->read_block)
+	{
+		snprintf(error, SCAP_LASTERR_SIZE, "internal error: platform does not support read_block");
+		return SCAP_FAILURE;
+	}
+
 	//
 	// Read the section header block
 	//
@@ -196,8 +203,8 @@ static int32_t scap_read_init(struct savefile_engine *handle, scap_reader_t* r, 
 			break;
 
 		default:
-			rc = scap_read_linux_block(r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type,
-						   platform, error);
+			rc = platform->m_vtable->read_block(
+				platform, r, bh.block_total_length - sizeof(block_header) - 4, bh.block_type, error);
 
 			if(rc == SCAP_NOT_SUPPORTED)
 			{
@@ -500,6 +507,8 @@ bool scap_savefile_is_thread_alive(struct scap_platform* platform, int64_t pid, 
 static const struct scap_platform_vtable scap_savefile_platform_vtable = {
 	.init_platform = scap_savefile_init_platform,
 	.is_thread_alive = scap_savefile_is_thread_alive,
+	.read_block = scap_read_linux_block,
+	.dump_state = scap_savefile_write_linux_platform,
 	.close_platform = scap_savefile_close_platform,
 	.free_platform = scap_savefile_free_platform,
 };

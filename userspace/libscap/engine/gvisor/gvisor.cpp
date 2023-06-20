@@ -40,6 +40,7 @@ namespace scap_gvisor {
 
 #include "strerror.h"
 #include "strlcpy.h"
+#include "linux-schema/linux_savefile_write.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -126,6 +127,7 @@ static const struct scap_platform_vtable scap_gvisor_platform_vtable = {
 	.is_thread_alive = scap_gvisor_is_thread_alive,
 	.get_global_pid = NULL,
 	.get_threadlist = gvisor_get_threadlist,
+	.dump_state = scap_savefile_write_linux_platform,
 
 	.close_platform = scap_gvisor_close_platform,
 	.free_platform = scap_gvisor_free_platform,

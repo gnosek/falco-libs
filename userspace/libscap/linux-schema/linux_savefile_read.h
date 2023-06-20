@@ -26,7 +26,8 @@ extern "C" {
 struct scap_reader;
 struct scap_platform;
 
-int32_t scap_read_linux_block(struct scap_reader* r, uint32_t block_length, uint32_t block_type, struct scap_platform *platform, char *error);
+int32_t scap_read_linux_block(struct scap_platform *platform, struct scap_reader *r, uint32_t block_length,
+			      uint32_t block_type, char *error);
 
 #ifdef __cplusplus
 }
