@@ -43,6 +43,8 @@ limitations under the License.
 #include "plugin_filtercheck.h"
 #include "strlcpy.h"
 
+#include "platform/sinsp_platform_linux.h"
+
 #ifndef CYGWING_AGENT
 #ifndef MINIMAL_BUILD
 #include "k8s_api_handler.h"
@@ -575,11 +577,7 @@ void sinsp::open_kmod(unsigned long driver_buffer_bytes_dim, const libsinsp::eve
 	params.buffer_bytes_dim = driver_buffer_bytes_dim;
 	oargs.engine_params = &params;
 
-	struct scap_platform* plat = scap_linux_alloc_platform();
-	if(plat)
-	{
-		((struct scap_linux_platform*)plat)->m_linux_vtable = &scap_kmod_linux_vtable;
-	}
+	struct scap_platform* plat = libsinsp::linux_platform::alloc(&scap_kmod_linux_vtable);
 	open_common(&oargs, &scap_kmod_engine, plat);
 }
 
@@ -601,19 +599,19 @@ void sinsp::open_bpf(const std::string& bpf_path, unsigned long driver_buffer_by
 	params.buffer_bytes_dim = driver_buffer_bytes_dim;
 	params.bpf_probe = bpf_path.data();
 	oargs.engine_params = &params;
-	open_common(&oargs, &scap_bpf_engine, scap_linux_alloc_platform());
+	open_common(&oargs, &scap_bpf_engine, libsinsp::linux_platform::alloc());
 }
 
 void sinsp::open_udig()
 {
 	scap_open_args oargs = factory_open_args(UDIG_ENGINE, SCAP_MODE_LIVE);
-	open_common(&oargs, &scap_udig_engine, scap_linux_alloc_platform());
+	open_common(&oargs, &scap_udig_engine, libsinsp::linux_platform::alloc());
 }
 
 void sinsp::open_nodriver(bool full_proc_scan)
 {
 	scap_open_args oargs = factory_open_args(NODRIVER_ENGINE, SCAP_MODE_NODRIVER);
-	struct scap_platform* plat = scap_linux_alloc_platform();
+	struct scap_platform* plat = libsinsp::linux_platform::alloc();
 	if(plat && !full_proc_scan)
 	{
 		((struct scap_linux_platform*)plat)->m_fd_lookup_limit = SCAP_NODRIVER_MAX_FD_LOOKUP;
@@ -704,7 +702,7 @@ void sinsp::open_modern_bpf(unsigned long driver_buffer_bytes_dim, uint16_t cpus
 	params.allocate_online_only = online_only;
 	params.verbose = g_logger.has_output() && g_logger.is_enabled(sinsp_logger::severity::SEV_DEBUG);
 	oargs.engine_params = &params;
-	open_common(&oargs, &scap_modern_bpf_engine, scap_linux_alloc_platform());
+	open_common(&oargs, &scap_modern_bpf_engine, libsinsp::linux_platform::alloc());
 }
 
 void sinsp::open_test_input(scap_test_input_data* data)
@@ -716,7 +714,7 @@ void sinsp::open_test_input(scap_test_input_data* data)
 	params.test_input_data = data;
 	oargs.engine_params = &params;
 
-	struct scap_platform* plat = (test_input_mode == SCAP_MODE_TEST) ? scap_test_input_alloc_platform() : scap_linux_alloc_platform();
+	struct scap_platform* plat = (test_input_mode == SCAP_MODE_TEST) ? scap_test_input_alloc_platform() : libsinsp::linux_platform::alloc();
 
 	open_common(&oargs, &scap_test_input_engine, plat);
 

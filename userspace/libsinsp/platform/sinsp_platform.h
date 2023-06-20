@@ -27,6 +27,8 @@ namespace libsinsp
 	class platform
 	{
 	public:
+		virtual ~platform() = default;
+
 		virtual int32_t init_platform(struct scap_engine_handle engine, struct scap_open_args* oargs) = 0;
 
 		virtual int32_t get_agent_info(scap_agent_info* agent_info) = 0;
@@ -56,7 +58,7 @@ namespace libsinsp
 		struct ::scap_platform m_generic;
 		std::unique_ptr<platform> m_platform;
 	};
-
-	extern const struct scap_platform_vtable cpp_platform_vtable;
 }
+
+extern "C" const struct scap_platform_vtable cpp_platform_vtable;
 
