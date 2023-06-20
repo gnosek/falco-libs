@@ -17,9 +17,11 @@ limitations under the License.
 
 #include "sinsp_platform_linux.h"
 #include "addrlist_linux.h"
+#include "userlist_linux.h"
 #include "machineinfo.h"
 #include "sinsp_dumper_utils.h"
 #include "linux/scap_linux.h"
+#include "scap_open.h"
 #include <sys/stat.h>
 #include <sys/utsname.h>
 
@@ -105,6 +107,11 @@ int32_t libsinsp::linux_platform::init_platform(struct scap_engine_handle engine
 	fill_machine_info();
 
 	libsinsp::platform_linux::get_interfaces(*m_network_interfaces);
+
+//	if(oargs->import_users)
+//	{
+//		libsinsp::platform_linux::get_users(m_usergroup_manager);
+//	}
 
 	return SCAP_SUCCESS;
 }

@@ -20,72 +20,30 @@ limitations under the License.
 #endif
 
 #include <stdio.h>
-#include "scap_linux_platform.h"
-#include "strlcpy.h"
-#include "scap_linux.h"
+#include "scap_limits.h"
+#include "user.h"
+#include "sinsp_exception.h"
 
-#include <sys/types.h>
 
 #include <pwd.h>
 #include <grp.h>
 
-//
-// Allocate and return the list of users on this system
-//
-int32_t scap_linux_create_userlist(struct scap_platform* platform)
+namespace libsinsp::platform_linux
 {
-	struct scap_linux_platform* handle = (struct scap_linux_platform*)platform;
+
+void get_users(sinsp_usergroup_manager &usergroup_manager)
+{
 	bool file_lookup = false;
 	FILE *f = NULL;
 	char filename[SCAP_MAX_PATH_SIZE];
-	uint32_t usercnt, useridx;
-	uint32_t grpcnt, grpidx;
 	struct passwd *p;
 	struct group *g;
-	struct scap_userlist *userlist;
 
 	//
 	// If the list of users was already allocated for this handle (for example because this is
 	// not the first user list block), free it
 	//
-	if(handle->m_storage.m_userlist != NULL)
-	{
-		scap_free_userlist(handle->m_storage.m_userlist);
-		handle->m_storage.m_userlist = NULL;
-	}
-
-	//
-	// Memory allocations
-	//
-	handle->m_storage.m_userlist = (scap_userlist*)malloc(sizeof(scap_userlist));
-	if(handle->m_storage.m_userlist == NULL)
-	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(1)");
-		return SCAP_FAILURE;
-	}
-	userlist = handle->m_storage.m_userlist;
-
-	userlist->totsavelen = 0;
-	usercnt = 32; // initial user count; will be realloc'd if needed
-	userlist->users = (scap_userinfo*)malloc(usercnt * sizeof(scap_userinfo));
-	if(userlist->users == NULL)
-	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
-		free(userlist);
-		handle->m_storage.m_userlist = NULL;
-		return SCAP_FAILURE;
-	}
-
-	grpcnt = 32; // initial group count; will be realloc'd if needed
-	userlist->groups = (scap_groupinfo*)malloc(grpcnt * sizeof(scap_groupinfo));
-	if(userlist->groups == NULL)
-	{
-		snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
-		free(userlist->users);
-		free(userlist);
-		handle->m_storage.m_userlist = NULL;
-		return SCAP_FAILURE;
-	}
+	// Note: not supported by sinsp_usergroup_manager. Do we care?
 
 	// check for host root
 	const char *host_root = scap_get_host_root();
@@ -103,14 +61,10 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	{
 		snprintf(filename, sizeof(filename), "%s/etc/passwd", host_root);
 		f = fopen(filename, "r");
-		if(f == NULL)
+		if(f == nullptr)
 		{
 			// if we don't have it inside the host root, we'll proceed without a list
-			free(userlist->users);
-			free(userlist->groups);
-			free(userlist);
-			handle->m_storage.m_userlist = NULL;
-			return SCAP_SUCCESS;
+			return;
 		}
 	}
 	else
@@ -118,73 +72,10 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		setpwent();
 	}
 
-	for(useridx = 0; file_lookup ? (p = fgetpwent(f)) : (p = getpwent()); useridx++)
+	while(file_lookup ? (p = fgetpwent(f)) : (p = getpwent()))
 	{
-		if (useridx == usercnt)
-		{
-			usercnt<<=1;
-			void *tmp = realloc(userlist->users, usercnt * sizeof(scap_userinfo));
-			if (tmp)
-			{
-				userlist->users = tmp;
-			}
-			else
-			{
-				snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation failed(2)");
-				free(userlist->users);
-				free(userlist->groups);
-				free(userlist);
-				handle->m_storage.m_userlist = NULL;
-				if(file_lookup)
-				{
-					fclose(f);
-				}
-				else
-				{
-					endpwent();
-				}
-				return SCAP_FAILURE;
-			}
-		}
-
-		scap_userinfo *user = &userlist->users[useridx];
-		user->uid = p->pw_uid;
-		user->gid = p->pw_gid;
-		
-		if(p->pw_name)
-		{
-			strlcpy(user->name, p->pw_name, sizeof(user->name));
-		}
-		else
-		{
-			*user->name = '\0';
-		}
-
-		if(p->pw_dir)
-		{
-			strlcpy(user->homedir, p->pw_dir, sizeof(user->homedir));
-		}
-		else
-		{
-			*user->homedir = '\0';
-		}
-
-		if(p->pw_shell)
-		{
-			strlcpy(user->shell, p->pw_shell, sizeof(user->shell));
-		}
-		else
-		{
-			*user->shell = '\0';
-		}
-
-		userlist->totsavelen += 
-			sizeof(uint8_t) + // type
-			sizeof(uint32_t) +  // uid
-			sizeof(uint32_t) +  // gid
-			strlen(user->name) + 2 +
-			strlen(user->homedir) + 2 +
-			strlen(user->shell) + 2;
+		usergroup_manager.add_user("", -1, p->pw_uid, p->pw_gid, p->pw_name ? p->pw_name : "",
+					   p->pw_dir ? p->pw_dir : "", p->pw_shell ? p->pw_shell : "");
 	}
 
 	if(file_lookup)
@@ -196,37 +87,15 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		endpwent();
 	}
 
-	userlist->nusers = useridx;
-	if (useridx < usercnt)
-	{
-		// Reduce array size
-		scap_userinfo *reduced_userinfos = realloc(userlist->users, useridx * sizeof(scap_userinfo));
-		if(reduced_userinfos == NULL)
-		{
-			snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "userlist allocation while reducing array size");
-			free(userlist->users);
-			free(userlist->groups);
-			free(userlist);
-			handle->m_storage.m_userlist = NULL;
-			return SCAP_FAILURE;
-		}
-		userlist->users = reduced_userinfos;
-	}
-
 	// groups
 	if(file_lookup)
 	{
 		snprintf(filename, sizeof(filename), "%s/etc/group", host_root);
 		f = fopen(filename, "r");
-		if(f == NULL)
+		if(f == nullptr)
 		{
 			// if we reached this point we had passwd but we don't have group
-			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "failed to open %s", filename);
-			free(userlist->users);
-			free(userlist->groups);
-			free(userlist);
-			handle->m_storage.m_userlist = NULL;
-			return SCAP_FAILURE;
+			throw sinsp_errprintf(errno, "Failed to open %s", filename);
 		}
 	}
 	else
@@ -234,50 +103,9 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 		setgrent();
 	}
 
-	for(grpidx = 0; file_lookup ? (g = fgetgrent(f)) : (g = getgrent()); grpidx++)
+	while(file_lookup ? (g = fgetgrent(f)) : (g = getgrent()))
 	{
-		if (grpidx == grpcnt)
-		{
-			grpcnt<<=1;
-			void *tmp = realloc(userlist->groups, grpcnt * sizeof(scap_groupinfo));
-			if (tmp)
-			{
-				userlist->groups = tmp;
-			}
-			else
-			{
-				snprintf(handle->m_lasterr,	SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
-				free(userlist->users);
-				free(userlist->groups);
-				free(userlist);
-				handle->m_storage.m_userlist = NULL;
-				if(file_lookup)
-				{
-					fclose(f);
-				}
-				else
-				{
-					endgrent();
-				}
-				return SCAP_FAILURE;
-			}
-		}
-		scap_groupinfo *group = &userlist->groups[grpidx];
-		group->gid = g->gr_gid;
-
-		if(g->gr_name)
-		{
-			strlcpy(group->name, g->gr_name, sizeof(group->name));
-		}
-		else
-		{
-			*group->name = '\0';
-		}
-
-		userlist->totsavelen += 
-			sizeof(uint8_t) + // type
-			sizeof(uint32_t) +  // gid
-			strlen(group->name) + 2;
+		usergroup_manager.add_group("", -1, g->gr_gid, g->gr_name ? g->gr_name : "");
 	}
 
 	if(file_lookup)
@@ -288,22 +116,6 @@ int32_t scap_linux_create_userlist(struct scap_platform* platform)
 	{
 		endgrent();
 	}
+}
 
-	userlist->ngroups = grpidx;
-	if (grpidx < grpcnt)
-	{
-		// Reduce array size
-		scap_groupinfo *reduced_groups = realloc(userlist->groups, grpidx * sizeof(scap_groupinfo));
-		if(reduced_groups == NULL)
-		{
-			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "grouplist allocation failed(2)");
-			free(userlist->users);
-			free(userlist->groups);
-			free(userlist);
-			handle->m_storage.m_userlist = NULL;
-			return SCAP_FAILURE;
-		}
-		userlist->groups = reduced_groups;
-	}
-	return SCAP_SUCCESS;
 }

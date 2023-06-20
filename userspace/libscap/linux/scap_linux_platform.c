@@ -108,16 +108,6 @@ int32_t scap_linux_init_platform(struct scap_platform* platform, char* lasterr, 
 		return scap_errprintf(lasterr, errno, "failed to fetch cgroup version information");
 	}
 
-	if(oargs->import_users)
-	{
-		rc = scap_linux_create_userlist(platform);
-		if(rc != SCAP_SUCCESS)
-		{
-			scap_linux_free_platform(platform);
-			return rc;
-		}
-	}
-
 	linux_platform->m_lasterr[0] = '\0';
 	char proc_scan_err[SCAP_LASTERR_SIZE];
 	rc = scap_linux_refresh_proc_table(platform, &linux_platform->m_storage.m_proclist);

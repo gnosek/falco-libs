@@ -33,16 +33,6 @@ struct scap_addrlist;
 struct _scap_machine_info;
 struct scap_threadinfo;
 
-/*!
-  \brief Return the machine user and group lists
-
-  \param handle Handle to the capture instance.
-
-  \return The pointer to a \ref scap_userlist structure containing the user and
-  group lists, or NULL if the function fails.
-*/
-struct scap_userlist* scap_get_user_list(struct scap* handle);
-
 // Get the information about a process.
 // The returned pointer must be freed via scap_proc_free by the caller.
 struct scap_threadinfo* scap_proc_get(struct scap* handle, int64_t tid, bool scan_sockets);

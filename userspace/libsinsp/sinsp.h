@@ -1024,7 +1024,6 @@ private:
 	void consume_initialstate_events();
 	bool is_initialstate_event(scap_evt* pevent);
 	void import_thread_table();
-	void import_user_list();
 	void add_protodecoders();
 	void remove_thread(int64_t tid, bool force);
 
@@ -1107,8 +1106,6 @@ private:
 	bool m_flush_memory_dump;
 	bool m_large_envs_enabled;
 	scap_test_input_data *m_test_input_data = nullptr;
-
-//	sinsp_network_interfaces* m_network_interfaces;
 
 	std::string m_host_root;
 

@@ -43,17 +43,6 @@ static struct scap_linux_storage* scap_get_linux_storage(scap_t* handle)
 	return handle->m_platform->m_vtable->get_linux_storage(handle->m_platform);
 }
 
-scap_userlist* scap_get_user_list(scap_t* handle)
-{
-	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
-	if (storage)
-	{
-		return storage->m_userlist;
-	}
-
-	return NULL;
-}
-
 struct scap_threadinfo* scap_proc_get(scap_t* handle, int64_t tid, bool scan_sockets)
 {
 	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
@@ -108,27 +97,6 @@ bool scap_is_thread_alive(scap_t* handle, int64_t pid, int64_t tid, const char* 
 
 	// keep on the safe side, don't consider threads dead too early
 	return true;
-}
-
-const scap_machine_info* scap_get_machine_info(scap_t* handle)
-{
-	struct scap_linux_storage* storage = scap_get_linux_storage(handle);
-
-	if(!storage)
-	{
-		return NULL;
-	}
-
-	scap_machine_info* machine_info = &storage->m_machine_info;
-	if(machine_info->num_cpus != (uint32_t)-1)
-	{
-		return machine_info;
-	}
-
-	//
-	// Reading from a file with no process info block
-	//
-	return NULL;
 }
 
 int32_t scap_get_threadlist(scap_t* handle, struct ppm_proclist_info** proclist)

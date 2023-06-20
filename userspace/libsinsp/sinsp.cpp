@@ -371,8 +371,6 @@ void sinsp::init()
 		import_thread_table();
 	}
 
-	import_user_list();
-
 	//
 	// Scan the list to create the proper parent/child dependencies
 	//
@@ -1021,25 +1019,6 @@ void sinsp::import_thread_table()
 sinsp_network_interfaces* sinsp::get_ifaddr_list()
 {
 	return &m_platform->m_platform->network_interfaces();
-}
-
-void sinsp::import_user_list()
-{
-	uint32_t j;
-	scap_userlist* ul = scap_get_user_list(m_h);
-
-	if(ul)
-	{
-		for(j = 0; j < ul->nusers; j++)
-		{
-			m_usergroup_manager.add_user("", -1, ul->users[j].uid, ul->users[j].gid, ul->users[j].name, ul->users[j].homedir, ul->users[j].shell);
-		}
-
-		for(j = 0; j < ul->ngroups; j++)
-		{
-			m_usergroup_manager.add_group("", -1, ul->groups[j].gid, ul->groups[j].name);
-		}
-	}
 }
 
 bool should_drop(sinsp_evt *evt, bool* stopped, bool* switched);
