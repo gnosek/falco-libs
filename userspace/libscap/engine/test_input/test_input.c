@@ -37,6 +37,103 @@ typedef struct test_input_engine test_input_engine;
 #include "scap-int.h"
 #include "scap_proc_util.h"
 #include "strlcpy.h"
+#include "test_input_platform.h"
+#include "linux-schema/linux_savefile_write.h"
+
+static int32_t get_fdinfos(void* ctx, const scap_threadinfo *tinfo, uint64_t *n, const scap_fdinfo **fdinfos)
+{
+	test_input_engine *engine = ctx;
+	scap_test_input_data *data = engine->m_data;
+	size_t i;
+
+	for (i = 0; i < data->thread_count; i++)
+	{
+		if(data->threads[i].tid == tinfo->tid) {
+			*fdinfos = data->fdinfo_data[i].fdinfos;
+			*n = data->fdinfo_data[i].fdinfo_count;
+			return SCAP_SUCCESS;
+		}
+	}
+
+	snprintf(engine->m_lasterr, SCAP_LASTERR_SIZE, "Could not find thread info for tid %lu", tinfo->tid);
+	return SCAP_FAILURE;
+}
+
+static int32_t
+scap_test_input_init_platform(struct scap_platform *platform, char *lasterr, struct scap_engine_handle engine,
+			    struct scap_open_args *oargs)
+{
+	struct scap_test_input_platform* test_input_platform = (struct scap_test_input_platform*)platform;
+
+	int32_t rc = scap_linux_storage_init(&test_input_platform->m_storage, lasterr, oargs);
+	if(rc != SCAP_SUCCESS)
+	{
+		return rc;
+	}
+
+	struct scap_test_input_engine_params *params = oargs->engine_params;
+	scap_test_input_data *data = params->test_input_data;
+
+	if (data == NULL) {
+		strlcpy(lasterr, "No test input data provided", SCAP_LASTERR_SIZE);
+		return SCAP_FAILURE;
+	}
+
+	return scap_proc_scan_vtable(lasterr, &test_input_platform->m_storage.m_proclist, data->thread_count,
+				     data->threads, engine.m_handle, get_fdinfos);
+}
+
+static int32_t scap_test_input_close_platform(struct scap_platform* platform)
+{
+	struct scap_test_input_platform* test_input_platform = (struct scap_test_input_platform*)platform;
+	scap_linux_storage_close(&test_input_platform->m_storage);
+	return SCAP_SUCCESS;
+}
+
+static void scap_test_input_free_platform(struct scap_platform* platform)
+{
+	free(platform);
+}
+
+static bool scap_test_input_is_thread_alive(struct scap_platform* platform, int64_t pid, int64_t tid, const char* comm)
+{
+	return false;
+}
+
+static int32_t scap_test_input_dump_state(struct scap_platform* platform, struct scap_dumper* d, uint64_t flags)
+{
+	struct scap_test_input_platform* test_input_platform = (struct scap_test_input_platform*)platform;
+	return scap_savefile_write_linux_platform(&test_input_platform->m_storage, d);
+}
+
+static struct scap_linux_storage* scap_test_input_get_storage(struct scap_platform* platform)
+{
+	struct scap_test_input_platform* test_input_platform = (struct scap_test_input_platform*)platform;
+	return &test_input_platform->m_storage;
+}
+
+static const struct scap_platform_vtable scap_test_input_platform_vtable = {
+	.init_platform = scap_test_input_init_platform,
+	.is_thread_alive = scap_test_input_is_thread_alive,
+	.dump_state = scap_test_input_dump_state,
+	.get_linux_storage = scap_test_input_get_storage,
+	.close_platform = scap_test_input_close_platform,
+	.free_platform = scap_test_input_free_platform,
+};
+
+struct scap_platform* scap_test_input_alloc_platform()
+{
+	struct scap_test_input_platform* platform = calloc(sizeof(*platform), 1);
+
+	if(platform == NULL)
+	{
+		return NULL;
+	}
+
+	platform->m_generic.m_vtable = &scap_test_input_platform_vtable;
+	return &platform->m_generic;
+}
+
 
 static struct test_input_engine* alloc_handle(scap_t* main_handle, char* lasterr_ptr)
 {
@@ -69,25 +166,6 @@ static int32_t next(struct scap_engine_handle handle, scap_evt** pevent, uint16_
 }
 
 
-static int32_t get_fdinfos(void* ctx, const scap_threadinfo *tinfo, uint64_t *n, const scap_fdinfo **fdinfos)
-{
-	test_input_engine *engine = ctx;
-	scap_test_input_data *data = engine->m_data;
-	size_t i;
-
-	for (i = 0; i < data->thread_count; i++)
-	{
-		if(data->threads[i].tid == tinfo->tid) {
-			*fdinfos = data->fdinfo_data[i].fdinfos;
-			*n = data->fdinfo_data[i].fdinfo_count;
-			return SCAP_SUCCESS;
-		}
-	}
-
-	snprintf(engine->m_lasterr, SCAP_LASTERR_SIZE, "Could not find thread info for tid %lu", tinfo->tid);
-	return SCAP_FAILURE;
-}
-
 static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 {
 	test_input_engine *engine = main_handle->m_engine.m_handle;
@@ -99,15 +177,7 @@ static int32_t init(scap_t* main_handle, scap_open_args* oargs)
 		return SCAP_FAILURE;
 	}
 
-#warning "TODO make a platform for this"
 	return SCAP_SUCCESS;
-//	return scap_proc_scan_vtable(
-//		main_handle->m_lasterr,
-//		&main_handle->m_platform->m_storage.m_proclist,
-//		engine->m_data->thread_count,
-//		engine->m_data->threads,
-//		engine,
-//		get_fdinfos);
 }
 
 const struct scap_vtable scap_test_input_engine = {

@@ -130,7 +130,7 @@ int32_t scap_init(scap_t* handle, scap_open_args* oargs)
 		}
 		else
 		{
-			platform = scap_generic_alloc_platform();
+			platform = scap_test_input_alloc_platform();
 		}
 	}
 #endif
