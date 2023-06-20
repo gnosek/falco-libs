@@ -17,8 +17,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "scap.h"
-#include "scap-int.h"
+#include "scap_assert.h"
 #include "scap_linux_int.h"
 #include "scap_linux_platform.h"
 #include "strlcpy.h"
@@ -28,6 +27,7 @@ limitations under the License.
 #include <fcntl.h>
 #include "uthash.h"
 #include "compat/misc.h"
+#include "ppm_events_public.h"
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/param.h>
