@@ -267,7 +267,7 @@ bool sinsp_filter_check_fd::extract_fdname_from_creator(sinsp_evt *evt, OUT uint
 		}
 	case PPME_SYSCALL_OPEN_BY_HANDLE_AT_X:
 		{
-			m_tstr = evt->get_param_const_char(3);
+			m_tstr = evt->get_param<std::string_view>(3);
 
 			if(sanitize_strings)
 			{

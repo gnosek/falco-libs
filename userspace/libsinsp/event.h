@@ -19,6 +19,7 @@ limitations under the License.
 #pragma once
 
 #include <optional>
+#include <string_view>
 #include <unordered_map>
 
 #include <json/json.h>
@@ -109,6 +110,12 @@ private:
 
 	friend class sinsp_evt;
 };
+
+class sinsp_evt;
+namespace
+{
+template<class T> inline T get_event_param(sinsp_evt& evt, uint32_t id);
+}
 
 /*!
   \brief Event class.
@@ -352,47 +359,7 @@ public:
 	template<class T>
 	inline T get_param(uint32_t id)
 	{
-		T ret;
-		const sinsp_evt_param *param = get_param(id);
-
-		if (param->m_len != sizeof(T))
-		{
-			// By moving this error string building operation to a separate function
-			// the compiler is more likely to inline this entire function.
-			// This is important since get_param<> is called in the hot path.
-			throw sinsp_exception(invalid_param_len_error(id, sizeof(T)));
-		}
-
-		memcpy(&ret, param->m_val, sizeof(T));
-
-		return ret;
-	}
-
-	/*!
-	  \brief Get the value of a string param as a const char*.
-
-	  \param id The parameter number.
-	*/
-
-	inline const char* get_param_const_char(uint32_t id)
-	{
-		const sinsp_evt_param *param = get_param(id);
-
-		if (param->m_len == 0)
-		{
-			return nullptr;
-		}
-
-		size_t string_len = strnlen(param->m_val, param->m_len);
-		if (param->m_len == string_len)
-		{
-			// By moving this error string building operation to a separate function
-			// the compiler is more likely to inline this entire function.
-			// This is important since get_param<> is called in the hot path.
-			throw sinsp_exception(invalid_param_len_error(id, string_len));
-		}
-
-		return param->m_val;
+		return get_event_param<T>(*this, id);
 	}
 
 	/*!
@@ -696,5 +663,56 @@ VISIBILITY_PRIVATE
 	friend class test_helpers::sinsp_mock;
 	friend class sinsp_usergroup_manager;
 };
+
+namespace
+{
+/*!
+  \brief Get the value of a fixed param (fixed length type or packed struct).
+
+  \param evt The event.
+  \param id The parameter number.
+*/
+template<class T>
+inline T get_event_param(sinsp_evt& evt, uint32_t id)
+{
+	T ret;
+	const sinsp_evt_param *param = evt.get_param(id);
+
+	if (param->m_len != sizeof(T))
+	{
+		// By moving this error string building operation to a separate function
+		// the compiler is more likely to inline this entire function.
+		// This is important since get_param<> is called in the hot path.
+		throw sinsp_exception(evt.invalid_param_len_error(id, sizeof(T)));
+	}
+
+	memcpy(&ret, param->m_val, sizeof(T));
+
+	return ret;
+}
+
+template<>
+inline std::string_view get_event_param<std::string_view>(sinsp_evt& evt, uint32_t id)
+{
+	const sinsp_evt_param *param = evt.get_param(id);
+
+	if (param->m_len == 0)
+	{
+		return {};
+	}
+
+	size_t string_len = strnlen(param->m_val, param->m_len);
+	if (param->m_len == string_len)
+	{
+		// By moving this error string building operation to a separate function
+		// the compiler is more likely to inline this entire function.
+		// This is important since get_param<> is called in the hot path.
+		throw sinsp_exception(evt.invalid_param_len_error(id, string_len));
+	}
+
+	return {param->m_val, param->m_len};
+}
+
+}
 
 /*@}*/

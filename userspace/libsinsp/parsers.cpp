@@ -1366,7 +1366,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt *evt, int64_t child_tid)
 	child_tinfo->m_vpid = child_tinfo->m_pid;	
 
 	/* exe */
-	child_tinfo->m_exe = evt->get_param_const_char(1);
+	child_tinfo->m_exe = evt->get_param<std::string_view>(1);
 
 	/* args */
 	parinfo = evt->get_param(2);
@@ -1388,7 +1388,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt *evt, int64_t child_tid)
 	case PPME_SYSCALL_VFORK_17_X:
 	case PPME_SYSCALL_VFORK_20_X:
 	case PPME_SYSCALL_CLONE3_X:
-		child_tinfo->m_comm = evt->get_param_const_char(13);
+		child_tinfo->m_comm = evt->get_param<std::string_view>(13);
 		break;
 	default:
 		ASSERT(false);
@@ -1809,7 +1809,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt *evt)
 	 */
 
 	/* exe */
-	child_tinfo->m_exe = evt->get_param_const_char(1);
+	child_tinfo->m_exe = evt->get_param<std::string_view>(1);
 
 	/* comm */
 	switch(etype)
@@ -1827,7 +1827,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt *evt)
 	case PPME_SYSCALL_VFORK_17_X:
 	case PPME_SYSCALL_VFORK_20_X:
 	case PPME_SYSCALL_CLONE3_X:
-		child_tinfo->m_comm = evt->get_param_const_char(13);
+		child_tinfo->m_comm = evt->get_param<std::string_view>(13);
 		break;
 	default:
 		ASSERT(false);
@@ -2222,7 +2222,7 @@ void sinsp_parser::parse_execve_exit(sinsp_evt *evt)
 	case PPME_SYSCALL_EXECVE_19_X:
 	case PPME_SYSCALL_EXECVEAT_X:
 		// Get the comm
-		evt->m_tinfo->m_comm = evt->get_param_const_char(13);
+		evt->m_tinfo->m_comm = evt->get_param<std::string_view>(13);
 		break;
 	default:
 		ASSERT(false);
@@ -2444,19 +2444,19 @@ void sinsp_parser::parse_execve_exit(sinsp_evt *evt)
 				* 	 Please note:
 				*   The path is empty in the kernel but in userspace, we will obtain a `<NA>`.
 				*/
-				const char *pathname = enter_evt->get_param_const_char(1);
+				std::string_view pathname = enter_evt->get_param<std::string_view>(1);
 
 				/* If the pathname is `<NA>` here we shouldn't have problems during `parse_dirfd`.
 				* It doesn't start with "/" so it is not considered an absolute path.
 				*/
 				std::string sdir;
-				parse_dirfd(evt, pathname, dirfd, &sdir);
+				parse_dirfd(evt, pathname.data(), dirfd, &sdir);
 
 				/* (4) In this case, we were not able to recover the pathname from the kernel or
 				* we are not able to recover information about `dirfd` in our `sinsp` state.
 				* Fallback to `<NA>`.
 				*/
-				if((!(flags & PPM_EXVAT_AT_EMPTY_PATH) && strncmp(pathname, "<NA>", 5) == 0) ||
+				if((!(flags & PPM_EXVAT_AT_EMPTY_PATH) && strncmp(pathname.data(), "<NA>", 5) == 0) ||
 				sdir.compare("<UNKNOWN>") == 0)
 				{
 					/* we copy also the string terminator `\0`. */
@@ -2487,8 +2487,8 @@ void sinsp_parser::parse_execve_exit(sinsp_evt *evt)
 					sinsp_utils::concatenate_paths(fullpath, SCAP_MAX_PATH_SIZE,
 												sdir.c_str(),
 												(uint32_t)sdir.length(),
-												pathname,
-												strlen(pathname));
+												pathname.data(),
+												pathname.size());
 				}
 			}
 			evt->m_tinfo->m_exepath = fullpath;
@@ -2840,8 +2840,8 @@ void sinsp_parser::schedule_mesos_events()
 void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 {
 	int64_t fd;
-	const char *name;
-	const char *enter_evt_name;
+	std::string_view name;
+	std::string_view enter_evt_name;
 	uint32_t flags;
 	uint32_t enter_evt_flags;
 	sinsp_fdinfo_t fdi;
@@ -2876,7 +2876,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 	//
 	if(etype == PPME_SYSCALL_OPEN_X)
 	{
-		name = evt->get_param_const_char(1);
+		name = evt->get_param<std::string_view>(1);
 		flags = evt->get_param<uint32_t>(2);
 
 		if(evt->get_num_params() > 4)
@@ -2893,10 +2893,10 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 		//
 		if(lastevent_retrieved && enter_evt->get_num_params() >= 2)
 		{
-			enter_evt_name = enter_evt->get_param_const_char(0);
+			enter_evt_name = enter_evt->get_param<std::string_view>(0);
 			enter_evt_flags = enter_evt->get_param<uint32_t>(1);
 
-			if(enter_evt_name != nullptr && strncmp(enter_evt_name, "<NA>", 5) != 0)
+			if(enter_evt_name.data() != nullptr && strncmp(enter_evt_name.data(), "<NA>", 5) != 0)
 			{
 				name = enter_evt_name;
 
@@ -2912,7 +2912,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 	}
 	else if(etype == PPME_SYSCALL_CREAT_X)
 	{
-		name = evt->get_param_const_char(1);
+		name = evt->get_param<std::string_view>(1);
 
 		flags = 0;
 
@@ -2927,10 +2927,10 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 
 		if(lastevent_retrieved && enter_evt->get_num_params() >= 1)
 		{
-			enter_evt_name = enter_evt->get_param_const_char(0);
+			enter_evt_name = enter_evt->get_param<std::string_view>(0);
 			enter_evt_flags = 0;
 
-			if(enter_evt_name != nullptr && strncmp(enter_evt_name, "<NA>", 5) != 0)
+			if(enter_evt_name.data() != nullptr && strncmp(enter_evt_name.data(), "<NA>", 5) != 0)
 			{
 				name = enter_evt_name;
 
@@ -2946,17 +2946,17 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 	}
 	else if(etype == PPME_SYSCALL_OPENAT_X)
 	{
-		name = enter_evt->get_param_const_char(1);
+		name = enter_evt->get_param<std::string_view>(1);
 
 		flags = enter_evt->get_param<uint32_t>(2);
 
 		int64_t dirfd = enter_evt->get_param<int64_t>(0);
 
-		parse_dirfd(evt, name, dirfd, &sdir);
+		parse_dirfd(evt, name.data(), dirfd, &sdir);
 	}
 	else if(etype == PPME_SYSCALL_OPENAT_2_X || etype == PPME_SYSCALL_OPENAT2_X)
 	{
-		name = evt->get_param_const_char(2);
+		name = evt->get_param<std::string_view>(2);
 
 		flags = evt->get_param<uint32_t>(3);
 
@@ -2976,11 +2976,11 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 		//
 		if(lastevent_retrieved && enter_evt->get_num_params() >= 3)
 		{
-			enter_evt_name = enter_evt->get_param_const_char(1);
+			enter_evt_name = enter_evt->get_param<std::string_view>(1);
 			enter_evt_flags = enter_evt->get_param<uint32_t>(2);
 			int64_t enter_evt_dirfd = enter_evt->get_param<int64_t>(0);
 
-			if(enter_evt_name != nullptr && strncmp(enter_evt_name, "<NA>", 5) != 0)
+			if(enter_evt_name.data() != nullptr && strncmp(enter_evt_name.data(), "<NA>", 5) != 0)
 			{
 				name = enter_evt_name;
 
@@ -2994,7 +2994,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 			}
 		}
 
-		parse_dirfd(evt, name, dirfd, &sdir);
+		parse_dirfd(evt, name.data(), dirfd, &sdir);
 	}
 	else if (etype == PPME_SYSCALL_OPEN_BY_HANDLE_AT_X)
 	{
@@ -3006,7 +3006,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 		/*
 		 * Path
 		 */
-		name = evt->get_param_const_char(3);
+		name = evt->get_param<std::string_view>(3);
 
 		// since open_by_handle_at returns an absolute path we will always start at /
 		sdir = "";
@@ -3025,7 +3025,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 	char fullpath[SCAP_MAX_PATH_SIZE];
 
 	sinsp_utils::concatenate_paths(fullpath, SCAP_MAX_PATH_SIZE, sdir.c_str(), (uint32_t)sdir.length(),
-		name, strlen(name));
+		name.data(), name.size());
 
 	if(fd >= 0)
 	{
@@ -3045,7 +3045,7 @@ void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt *evt)
 		fdi.m_mount_id = 0;
 		fdi.m_dev = dev;
 		fdi.m_ino = ino;
-		fdi.add_filename_raw(name);
+		fdi.add_filename_raw(name.data());
 		fdi.add_filename(fullpath);
 
 		//
@@ -5849,23 +5849,23 @@ void sinsp_parser::parse_container_evt(sinsp_evt *evt)
 void sinsp_parser::parse_user_evt(sinsp_evt *evt)
 {
 	uint32_t uid, gid;
-	const char *name, *home, *shell, *container_id;
+	std::string_view name, home, shell, container_id;
 
 	uid = evt->get_param<uint32_t>(0);
 
 	gid = evt->get_param<uint32_t>(1);
 
-	name = evt->get_param_const_char(2);
-	home = evt->get_param_const_char(3);
-	shell = evt->get_param_const_char(4);
-	container_id = evt->get_param_const_char(5);
+	name = evt->get_param<std::string_view>(2);
+	home = evt->get_param<std::string_view>(3);
+	shell = evt->get_param<std::string_view>(4);
+	container_id = evt->get_param<std::string_view>(5);
 
 	if (evt->m_pevt->type == PPME_USER_ADDED_E)
 	{
-		m_inspector->m_usergroup_manager.add_user(container_id, -1, uid, gid, name, home, shell);
+		m_inspector->m_usergroup_manager.add_user(container_id.data(), -1, uid, gid, name.data(), home.data(), shell.data());
 	} else
 	{
-		m_inspector->m_usergroup_manager.rm_user(container_id, uid);
+		m_inspector->m_usergroup_manager.rm_user(container_id.data(), uid);
 	}
 }
 
@@ -5873,15 +5873,15 @@ void sinsp_parser::parse_group_evt(sinsp_evt *evt)
 {
 	uint32_t gid = evt->get_param<uint32_t>(0);
 
-	const char *name = evt->get_param_const_char(1);
-	const char *container_id = evt->get_param_const_char(2);
+	std::string_view name = evt->get_param<std::string_view>(1);
+	std::string_view container_id = evt->get_param<std::string_view>(2);
 
 	if ( evt->m_pevt->type == PPME_GROUP_ADDED_E)
 	{
-		m_inspector->m_usergroup_manager.add_group(container_id, -1, gid, name);
+		m_inspector->m_usergroup_manager.add_group(container_id.data(), -1, gid, name.data());
 	} else
 	{
-		m_inspector->m_usergroup_manager.rm_group(container_id, gid);
+		m_inspector->m_usergroup_manager.rm_group(container_id.data(), gid);
 	}
 }
 
@@ -6265,7 +6265,7 @@ void sinsp_parser::parse_memfd_create_exit(sinsp_evt *evt, scap_fd_type type)
 	Suppose you create a memfd named libstest resulting in a fd.name libstest while on disk 
 	(e.g. ls -l /proc/$PID/fd/$FD_NUM) it may look like /memfd:libstest (deleted)
 	*/
-	std::string name = std::string(evt->get_param_const_char(1));
+	std::string name = std::string(evt->get_param<std::string_view>(1));
 	
 	/* flags */
 	flags = evt->get_param<uint32_t>(2);

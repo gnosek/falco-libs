@@ -559,7 +559,7 @@ uint8_t *sinsp_filter_check_event::extract_abspath(sinsp_evt *evt, OUT uint32_t 
 
 	int64_t dirfd = evt->get_param<int64_t>(dirfdargidx);
 
-	const char *path = evt->get_param_const_char(pathargidx);
+	std::string_view path = evt->get_param<std::string_view>(pathargidx);
 
 	string sdir;
 
@@ -601,7 +601,7 @@ uint8_t *sinsp_filter_check_event::extract_abspath(sinsp_evt *evt, OUT uint32_t 
 
 	char fullname[SCAP_MAX_PATH_SIZE];
 	sinsp_utils::concatenate_paths(fullname, SCAP_MAX_PATH_SIZE, sdir.c_str(),
-		(uint32_t)sdir.length(), path, strlen(path));
+		(uint32_t)sdir.length(), path.data(), path.size());
 
 	m_strstorage = fullname;
 
@@ -1761,7 +1761,7 @@ uint8_t* sinsp_filter_check_event::extract(sinsp_evt *evt, OUT uint32_t* len, bo
 
 			if(etype == PPME_INFRASTRUCTURE_EVENT_E)
 			{
-				const char *descstr = evt->get_param_const_char(2);
+				std::string descstr{evt->get_param<std::string_view>(2)};
 				vector<string> elements = sinsp_split(descstr, ';');
 				for(string ute : elements)
 				{
