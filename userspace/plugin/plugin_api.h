@@ -60,7 +60,7 @@ typedef struct
 // This allows discovering the fields available in the table, defining new ones,
 // and obtaining accessors usable at runtime for reading and writing the fields'
 // data from each entry of a given state table.
-typedef struct
+typedef struct ss_plugin_table_fields_vtable_ext
 {
 	// Returns a pointer to an array containing info about all the fields
 	// available in the entries of the table. nfields will be filled with the number
@@ -84,6 +84,8 @@ typedef struct
 	// Returns NULL in case of issues (including when a field is defined multiple
 	// times with different data types).
 	ss_plugin_table_field_t* (*add_table_field)(ss_plugin_table_t* t, const char* name, ss_plugin_state_type data_type);
+
+	struct ss_plugin_table_fields_vtable_ext* (*get_fields)(ss_plugin_table_t *t);
 } ss_plugin_table_fields_vtable_ext;
 
 // Supported by the API but deprecated. Use the extended version ss_plugin_table_reader_vtable_ext instead.
@@ -116,6 +118,10 @@ typedef struct
 	// Returns the number of entries in the table, or ((uint64_t) -1) in
 	// case of error.
 	uint64_t (*get_table_size)(ss_plugin_table_t* t);
+	ss_plugin_owner_t (*get_table_owner)(ss_plugin_table_t* t);
+	ss_plugin_field_type (*get_table_key_type)(ss_plugin_table_t *);
+	ss_plugin_rc (*get_reader)(ss_plugin_table_t *t, ss_plugin_table_reader_vtable* vtable);
+
 	//
 	// Returns an opaque pointer to an entry present in the table at the given
 	// key, or NULL in case of issues (including if no entry is found at the
@@ -129,6 +135,7 @@ typedef struct
 	// The read value is stored in the "out" parameter.
 	// Returns SS_PLUGIN_SUCCESS if successful, and SS_PLUGIN_FAILURE otherwise.
 	ss_plugin_rc (*read_entry_field)(ss_plugin_table_t* t, ss_plugin_table_entry_t* e, const ss_plugin_table_field_t* f, ss_plugin_state_data* out);
+
 	//
 	// Releases a table entry obtained by from previous invocation of get_table_entry().
 	// After being released, the same table entry cannot be reused by the invoker.
@@ -157,6 +164,7 @@ typedef struct
 // Vtable for controlling a state table for write operations.
 typedef struct
 {
+	ss_plugin_table_writer_vtable* (*get_writer)(ss_plugin_table_t *t);
 	// Erases all the entries of the table.
 	// Returns SS_PLUGIN_SUCCESS if successful, and SS_PLUGIN_FAILURE otherwise.
 	ss_plugin_rc (*clear_table)(ss_plugin_table_t* t);

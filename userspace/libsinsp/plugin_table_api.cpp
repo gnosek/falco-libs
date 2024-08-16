@@ -1235,11 +1235,27 @@ ss_plugin_rc sinsp_plugin::sinsp_table_wrapper::read_entry_field(ss_plugin_table
 	if (t->m_table_plugin_input)
 	{
 		auto pt = t->m_table_plugin_input->table;
-		auto ret = t->m_table_plugin_input->reader_ext->read_entry_field(pt, _e, f, out);
+		ss_plugin_state_data nested;
+		auto ret = t->m_table_plugin_input->reader_ext->read_entry_field(pt, _e, f, &nested);
 		if (ret == SS_PLUGIN_FAILURE)
 		{
 			t->m_owner_plugin->m_last_owner_err = t->m_table_plugin_owner->get_last_error();
 		}
+
+		auto key_type = t->m_table_plugin_input->reader_ext->get_key_type(nested.table);
+		auto owner = t->m_table_plugin_input->reader_ext->get_owner(nested.table);
+		ss_plugin_table_reader_vtable_ext *subreader = t->m_table_plugin_input->reader_ext->get_reader(nested.table);
+		ss_plugin_table_input input = {
+			// ...
+		};
+
+		plugin_table_wrapper<key_type> wrapper = plugin_table_wrapper<key_type>(owner, input);
+
+		auto& slot = t->m_owner_plugin->find_unset_ephemeral_table();
+		slot.wrapper.set<plugin_table_wrapper<key_type>>(owner, wrapper);
+		slot.update();
+		out->table = &slot.input;
+
 		return ret;
 	}
 
