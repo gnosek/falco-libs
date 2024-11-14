@@ -1636,10 +1636,7 @@ static int32_t scap_read_section_header(scap_reader_t *r, char *error) {
 //
 static int32_t scap_read_init(struct savefile_engine *handle,
                               scap_reader_t *r,
-                              scap_machine_info *machine_info_p,
-                              struct scap_proclist *proclist_p,
-                              scap_addrlist **addrlist_p,
-                              scap_userlist **userlist_p,
+                              struct scap_platform *platform,
                               char *error) {
 	block_header bh;
 	uint32_t bt;
@@ -1688,7 +1685,7 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 		case MI_BLOCK_TYPE_INT:
 
 			if(scap_read_machine_info(r,
-			                          machine_info_p,
+			                          &platform->m_machine_info,
 			                          error,
 			                          bh.block_total_length - sizeof(block_header) - 4) !=
 			   SCAP_SUCCESS) {
@@ -1711,7 +1708,7 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			if(scap_read_proclist(r,
 			                      bh.block_total_length - sizeof(block_header) - 4,
 			                      bh.block_type,
-			                      proclist_p,
+			                      &platform->m_proclist,
 			                      error) != SCAP_SUCCESS) {
 				return SCAP_FAILURE;
 			}
@@ -1723,7 +1720,7 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			if(scap_read_fdlist(r,
 			                    bh.block_total_length - sizeof(block_header) - 4,
 			                    bh.block_type,
-			                    proclist_p,
+			                    &platform->m_proclist,
 			                    error) != SCAP_SUCCESS) {
 				return SCAP_FAILURE;
 			}
@@ -1748,7 +1745,7 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			if(scap_read_iflist(r,
 			                    bh.block_total_length - sizeof(block_header) - 4,
 			                    bh.block_type,
-			                    addrlist_p,
+			                    &platform->m_addrlist,
 			                    error) != SCAP_SUCCESS) {
 				return SCAP_FAILURE;
 			}
@@ -1760,7 +1757,7 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			if(scap_read_userlist(r,
 			                      bh.block_total_length - sizeof(block_header) - 4,
 			                      bh.block_type,
-			                      userlist_p,
+			                      &platform->m_userlist,
 			                      error) != SCAP_SUCCESS) {
 				return SCAP_FAILURE;
 			}
@@ -2137,13 +2134,7 @@ static int32_t init(struct scap *main_handle, struct scap_open_args *oargs) {
 
 	handle->m_use_last_block_header = false;
 
-	res = scap_read_init(handle,
-	                     reader,
-	                     &platform->m_machine_info,
-	                     &platform->m_proclist,
-	                     &platform->m_addrlist,
-	                     &platform->m_userlist,
-	                     main_handle->m_lasterr);
+	res = scap_read_init(handle, reader, platform, main_handle->m_lasterr);
 
 	if(res != SCAP_SUCCESS) {
 		reader->close(reader);
@@ -2194,13 +2185,7 @@ static int32_t scap_savefile_restart_capture(scap_t *handle) {
 
 	scap_platform_close(platform);
 
-	if((res = scap_read_init(engine,
-	                         engine->m_reader,
-	                         &platform->m_machine_info,
-	                         &platform->m_proclist,
-	                         &platform->m_addrlist,
-	                         &platform->m_userlist,
-	                         handle->m_lasterr)) != SCAP_SUCCESS) {
+	if((res = scap_read_init(engine, engine->m_reader, platform, handle->m_lasterr)) != SCAP_SUCCESS) {
 		char error[SCAP_LASTERR_SIZE];
 		snprintf(error,
 		         SCAP_LASTERR_SIZE,
