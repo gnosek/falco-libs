@@ -29,7 +29,7 @@ extern "C" {
 //
 // todo(jasondellaluce): when/if major changes to v4, check and solve all todos
 #define PLUGIN_API_VERSION_MAJOR 3
-#define PLUGIN_API_VERSION_MINOR 9
+#define PLUGIN_API_VERSION_MINOR 10
 #define PLUGIN_API_VERSION_PATCH 0
 
 //
@@ -499,6 +499,34 @@ typedef struct ss_plugin_capture_listen_input {
 typedef ss_plugin_rc (*ss_plugin_async_event_handler_t)(ss_plugin_owner_t* o,
                                                         const ss_plugin_event* evt,
                                                         char* err);
+
+typedef void ss_plugin_savefile_reader;
+
+typedef ss_plugin_rc (*ss_plugin_savefile_read_fn)(ss_plugin_owner_t* o,
+                                                   ss_plugin_savefile_reader* reader,
+                                                   char* buf,
+                                                   uint64_t to_read,
+                                                   uint64_t* read);
+
+typedef void ss_plugin_savefile_writer;
+
+typedef ss_plugin_rc (*ss_plugin_savefile_write_fn)(ss_plugin_owner_t* o,
+                                                    ss_plugin_savefile_writer* writer,
+                                                    char* buf,
+                                                    uint64_t size);
+
+typedef struct ss_plugin_savefile_read_input {
+	ss_plugin_savefile_read_fn read_fn;
+	ss_plugin_savefile_reader* reader;
+
+	uint32_t block_type;
+	uint32_t block_length;
+} ss_plugin_savefile_read_input;
+
+typedef struct ss_plugin_savefile_write_input {
+	ss_plugin_savefile_write_fn write_fn;
+	ss_plugin_savefile_writer* writer;
+} ss_plugin_savefile_write_input;
 
 //
 // The struct below define the functions and arguments for plugins capabilities:
@@ -1103,6 +1131,11 @@ typedef struct {
 		//
 		// Return value: A ss_plugin_rc with values SS_PLUGIN_SUCCESS or SS_PLUGIN_FAILURE.
 		ss_plugin_rc (*capture_close)(ss_plugin_t* s, const ss_plugin_capture_listen_input* i);
+	};
+
+	struct {
+		ss_plugin_rc (*read_savefile_block)(ss_plugin_t* s, ss_plugin_savefile_read_input* i);
+		ss_plugin_rc (*write_state)(ss_plugin_t* s, ss_plugin_savefile_write_input* i);
 	};
 } plugin_api;
 

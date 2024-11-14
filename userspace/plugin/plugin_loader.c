@@ -126,6 +126,8 @@ plugin_handle_t* plugin_load(const char* path, char* err) {
 	SYM_RESOLVE(ret, get_metrics);
 	SYM_RESOLVE(ret, capture_open);
 	SYM_RESOLVE(ret, capture_close);
+	SYM_RESOLVE(ret, read_savefile_block);
+	SYM_RESOLVE(ret, write_state);
 	return ret;
 }
 
@@ -278,6 +280,16 @@ plugin_caps_t plugin_get_capabilities(const plugin_handle_t* h, char* err) {
 		err_append(err,
 		           "must implement both 'plugin_capture_open' and 'plugin_capture_close' (capture "
 		           "listening)",
+		           ", ");
+	}
+
+	if(h->api.read_savefile_block != NULL && h->api.write_state != NULL) {
+		caps = (plugin_caps_t)((uint32_t)caps | (uint32_t)CAP_SAVEFILE);
+	} else if(h->api.read_savefile_block != NULL || h->api.write_state != NULL) {
+		caps = (plugin_caps_t)((uint32_t)caps | (uint32_t)CAP_BROKEN);
+		err_append(err,
+		           "must implement both 'plugin_read_savefile_block' and 'plugin_write_state' "
+		           "(savefile)",
 		           ", ");
 	}
 
