@@ -891,9 +891,7 @@ int32_t scap_write_userlist(scap_dumper_t *d, struct scap_userlist *userlist) {
 //
 // Create the dump file headers and add the tables
 //
-static int32_t scap_setup_dump(scap_dumper_t *d,
-                               struct scap_platform *platform,
-                               const char *fname) {
+static int32_t scap_setup_dump(scap_dumper_t *d, const char *fname) {
 	block_header bh;
 	section_header_block sh;
 	uint32_t bt;
@@ -925,10 +923,7 @@ static int32_t scap_setup_dump(scap_dumper_t *d,
 }
 
 // fname is only used for log messages in scap_setup_dump
-static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform *platform,
-                                            gzFile gzfile,
-                                            const char *fname,
-                                            char *lasterr) {
+static scap_dumper_t *scap_dump_open_gzfile(gzFile gzfile, const char *fname, char *lasterr) {
 	scap_dumper_t *res = (scap_dumper_t *)malloc(sizeof(scap_dumper_t));
 	res->m_f = gzfile;
 	res->m_type = DT_FILE;
@@ -936,7 +931,7 @@ static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform *platform,
 	res->m_targetbufcurpos = NULL;
 	res->m_targetbufend = NULL;
 
-	if(scap_setup_dump(res, platform, fname) != SCAP_SUCCESS) {
+	if(scap_setup_dump(res, fname) != SCAP_SUCCESS) {
 		strlcpy(lasterr, res->m_lasterr, SCAP_LASTERR_SIZE);
 		free(res);
 		res = NULL;
@@ -948,10 +943,7 @@ static scap_dumper_t *scap_dump_open_gzfile(struct scap_platform *platform,
 //
 // Open a "savefile" for writing.
 //
-scap_dumper_t *scap_dump_open(struct scap_platform *platform,
-                              const char *fname,
-                              compression_mode compress,
-                              char *lasterr) {
+scap_dumper_t *scap_dump_open(const char *fname, compression_mode compress, char *lasterr) {
 	gzFile f = NULL;
 	int fd = -1;
 	const char *mode;
@@ -994,15 +986,12 @@ scap_dumper_t *scap_dump_open(struct scap_platform *platform,
 		return NULL;
 	}
 
-	return scap_dump_open_gzfile(platform, f, fname, lasterr);
+	return scap_dump_open_gzfile(f, fname, lasterr);
 }
 
 //
 // Open a savefile for writing, using the provided fd
-scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
-                                 int fd,
-                                 compression_mode compress,
-                                 char *lasterr) {
+scap_dumper_t *scap_dump_open_fd(int fd, compression_mode compress, char *lasterr) {
 	gzFile f = NULL;
 
 	switch(compress) {
@@ -1023,16 +1012,13 @@ scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
 		return NULL;
 	}
 
-	return scap_dump_open_gzfile(platform, f, "", lasterr);
+	return scap_dump_open_gzfile(f, "", lasterr);
 }
 
 //
 // Open a memory "savefile"
 //
-scap_dumper_t *scap_memory_dump_open(struct scap_platform *platform,
-                                     uint8_t *targetbuf,
-                                     uint64_t targetbufsize,
-                                     char *lasterr) {
+scap_dumper_t *scap_memory_dump_open(uint8_t *targetbuf, uint64_t targetbufsize, char *lasterr) {
 	scap_dumper_t *res = (scap_dumper_t *)malloc(sizeof(scap_dumper_t));
 	if(res == NULL) {
 		snprintf(lasterr, SCAP_LASTERR_SIZE, "scap_dump_memory_open memory allocation failure (1)");
@@ -1045,7 +1031,7 @@ scap_dumper_t *scap_memory_dump_open(struct scap_platform *platform,
 	res->m_targetbufcurpos = targetbuf;
 	res->m_targetbufend = targetbuf + targetbufsize;
 
-	if(scap_setup_dump(res, platform, "") != SCAP_SUCCESS) {
+	if(scap_setup_dump(res, "") != SCAP_SUCCESS) {
 		strlcpy(lasterr, res->m_lasterr, SCAP_LASTERR_SIZE);
 		free(res);
 		res = NULL;

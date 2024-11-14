@@ -78,16 +78,10 @@ void sinsp_dumper::open(sinsp* inspector, const std::string& filename, bool comp
 	}
 
 	if(m_target_memory_buffer) {
-		m_dumper = scap_memory_dump_open(inspector->get_scap_platform(),
-		                                 m_target_memory_buffer,
-		                                 m_target_memory_buffer_size,
-		                                 error);
+		m_dumper = scap_memory_dump_open(m_target_memory_buffer, m_target_memory_buffer_size, error);
 	} else {
 		auto compress_mode = compress ? SCAP_COMPRESSION_GZIP : SCAP_COMPRESSION_NONE;
-		m_dumper = scap_dump_open(inspector->get_scap_platform(),
-		                          filename.c_str(),
-		                          compress_mode,
-		                          error);
+		m_dumper = scap_dump_open(filename.c_str(), compress_mode, error);
 	}
 
 	if(m_dumper == nullptr) {
@@ -106,7 +100,7 @@ void sinsp_dumper::fdopen(sinsp* inspector, int fd, bool compress) {
 	}
 
 	auto compress_mode = compress ? SCAP_COMPRESSION_GZIP : SCAP_COMPRESSION_NONE;
-	m_dumper = scap_dump_open_fd(inspector->get_scap_platform(), fd, compress_mode, error);
+	m_dumper = scap_dump_open_fd(fd, compress_mode, error);
 
 	if(m_dumper == nullptr) {
 		throw sinsp_exception(error);

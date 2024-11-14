@@ -64,10 +64,7 @@ uint8_t *scap_get_memorydumper_curpos(scap_dumper_t *d);
 int32_t scap_write_proc_fds(scap_dumper_t *d, struct scap_threadinfo *tinfo);
 scap_dumper_t *scap_write_proclist_begin();
 int scap_write_proclist_end(scap_dumper_t *d, scap_dumper_t *proclist_dumper, uint32_t totlen);
-scap_dumper_t *scap_memory_dump_open(struct scap_platform *platform,
-                                     uint8_t *targetbuf,
-                                     uint64_t targetbufsize,
-                                     char *lasterr);
+scap_dumper_t *scap_memory_dump_open(uint8_t *targetbuf, uint64_t targetbufsize, char *lasterr);
 scap_dumper_t *scap_managedbuf_dump_create();
 
 // Variant of scap_write_proclist_entry where array-backed information
@@ -96,10 +93,7 @@ int32_t scap_write_proclist_entry_bufs(scap_dumper_t *d,
 
   \return Dump handle that can be used to identify this specific dump instance.
 */
-scap_dumper_t *scap_dump_open(struct scap_platform *platform,
-                              const char *fname,
-                              compression_mode compress,
-                              char *lasterr);
+scap_dumper_t *scap_dump_open(const char *fname, compression_mode compress, char *lasterr);
 
 /*!
   \brief Open a trace file for writing, using the provided fd.
@@ -109,10 +103,7 @@ scap_dumper_t *scap_dump_open(struct scap_platform *platform,
 
   \return Dump handle that can be used to identify this specific dump instance.
 */
-scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
-                                 int fd,
-                                 compression_mode compress,
-                                 char *lasterr);
+scap_dumper_t *scap_dump_open_fd(int fd, compression_mode compress, char *lasterr);
 
 int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info);
 int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist);
