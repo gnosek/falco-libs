@@ -1631,12 +1631,13 @@ static int32_t scap_read_section_header(scap_reader_t *r, char *error) {
 	return SCAP_SUCCESS;
 }
 
-static int32_t scap_parse_linux_block(scap_reader_t *r,
+int32_t scap_parse_linux_block(scap_reader_t *r,
 	uint32_t block_type,
 	uint32_t block_length,
-	struct scap_platform *platform,
+	bool import_users,
+	void *void_platform,
 	char *error) {
-
+		struct scap_platform* platform = void_platform;
 		switch(block_type) {
 		case MI_BLOCK_TYPE:
 		case MI_BLOCK_TYPE_INT:
@@ -1669,7 +1670,15 @@ static int32_t scap_parse_linux_block(scap_reader_t *r,
 		case UL_BLOCK_TYPE:
 		case UL_BLOCK_TYPE_INT:
 		case UL_BLOCK_TYPE_V2:
-		    return scap_read_userlist(r, block_length, block_type, &platform->m_userlist, error);
+		    if(import_users) {
+			    return scap_read_userlist(r,
+			                              block_length,
+			                              block_type,
+			                              &platform->m_userlist,
+			                              error);
+		    } else {
+			    return SCAP_NOT_SUPPORTED;
+		    }
 
 		default:
 			return SCAP_NOT_SUPPORTED;
@@ -1682,7 +1691,6 @@ static int32_t scap_parse_linux_block(scap_reader_t *r,
 //
 static int32_t scap_read_init(struct savefile_engine *handle,
                               scap_reader_t *r,
-                              struct scap_platform *platform,
                               char *error) {
 	block_header bh;
 	uint32_t bt;
@@ -1741,11 +1749,19 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			handle->m_use_last_block_header = true;
 			break;
 		default:
-			switch(scap_parse_linux_block(r,
+			int res;
+			if(handle->m_block_parser) {
+				res = handle->m_block_parser(r,
 			                              bh.block_type,
 			                              bh.block_total_length - sizeof(block_header) - 4,
-			                              platform,
-			                              error)) {
+			                              handle->m_import_users,
+			                              handle->m_block_parser_arg,
+			                              error);
+			} else {
+				res = SCAP_NOT_SUPPORTED;
+			}
+
+			switch(res) {
 			case SCAP_SUCCESS:
 				break;
 			case SCAP_NOT_SUPPORTED:
@@ -2082,8 +2098,9 @@ static int32_t init(struct scap *main_handle, struct scap_open_args *oargs) {
 	uint64_t start_offset = params->start_offset;
 	uint32_t fbuffer_size = params->fbuffer_size;
 
-	struct scap_platform *platform = params->platform;
-	handle->m_platform = params->platform;
+	handle->m_import_users = oargs->import_users;
+	handle->m_block_parser = params->block_parser;
+	handle->m_block_parser_arg = params->block_parser_arg;
 
 	if(fd != 0) {
 		gzfile = gzdopen(fd, "rb");
@@ -2124,7 +2141,7 @@ static int32_t init(struct scap *main_handle, struct scap_open_args *oargs) {
 
 	handle->m_use_last_block_header = false;
 
-	res = scap_read_init(handle, reader, platform, main_handle->m_lasterr);
+	res = scap_read_init(handle, reader, main_handle->m_lasterr);
 
 	if(res != SCAP_SUCCESS) {
 		reader->close(reader);
@@ -2138,13 +2155,6 @@ static int32_t init(struct scap *main_handle, struct scap_open_args *oargs) {
 	}
 	handle->m_reader_evt_buf_size = READER_BUF_SIZE;
 	handle->m_reader = reader;
-
-	if(!oargs->import_users) {
-		if(platform->m_userlist != NULL) {
-			scap_free_userlist(platform->m_userlist);
-			platform->m_userlist = NULL;
-		}
-	}
 
 	return SCAP_SUCCESS;
 }
@@ -2170,12 +2180,9 @@ static int32_t scap_savefile_close(struct scap_engine_handle engine) {
 
 static int32_t scap_savefile_restart_capture(scap_t *handle) {
 	struct savefile_engine *engine = handle->m_engine.m_handle;
-	struct scap_platform *platform = engine->m_platform;
 	int32_t res;
 
-	scap_platform_close(platform);
-
-	if((res = scap_read_init(engine, engine->m_reader, platform, handle->m_lasterr)) != SCAP_SUCCESS) {
+	if((res = scap_read_init(engine, engine->m_reader, handle->m_lasterr)) != SCAP_SUCCESS) {
 		char error[SCAP_LASTERR_SIZE];
 		snprintf(error,
 		         SCAP_LASTERR_SIZE,

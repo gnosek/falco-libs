@@ -14,6 +14,7 @@ limitations under the License.
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <libscap/scap_procs.h>
 
@@ -23,6 +24,14 @@ limitations under the License.
 extern "C" {
 #endif
 struct scap_platform;
+typedef struct scap_reader scap_reader_t;
+
+typedef int32_t (*scap_block_parser_t)(scap_reader_t *r,
+	uint32_t block_type,
+	uint32_t block_length,
+	bool import_users,
+	void *arg,
+	char *error);
 
 struct scap_savefile_engine_params {
 	int fd;                 ///< If non-zero, will be used instead of fname.
@@ -32,11 +41,25 @@ struct scap_savefile_engine_params {
 	uint32_t fbuffer_size;  ///< If non-zero, offline captures will read from file using a buffer of
 	                        ///< this size.
 
-	struct scap_platform* platform;
+	scap_block_parser_t block_parser; ///< Used to parse each block in savefile (except the event
+	                                  ///< block). If null, non-event blocks are ignored
+	void* block_parser_arg;           ///< Argument to pass to the block parser
 };
 
 struct scap_platform* scap_savefile_alloc_platform(proc_entry_callback proc_callback,
                                                    void* proc_callback_context);
+
+struct scap_linux_block_parser_args {
+	struct scap_platform* platform;
+
+};
+
+int32_t scap_parse_linux_block(scap_reader_t *r,
+	uint32_t block_type,
+	uint32_t block_length,
+	bool import_users,
+	void *platform, /* actually struct scap_platform* but make it usable as a block parser */
+	char *error);
 
 #ifdef __cplusplus
 };

@@ -21,6 +21,7 @@ limitations under the License.
 #include <stddef.h>
 #include <libscap/scap_const.h>
 #include <libscap/scap_limits.h>
+#include <libscap/engine/savefile/savefile_public.h>
 #include <libscap/engine/savefile/scap_reader.h>
 #include <libscap/scap_savefile.h>
 
@@ -109,5 +110,8 @@ struct savefile_engine {
 	char* m_reader_evt_buf;
 	size_t m_reader_evt_buf_size;
 	uint32_t m_last_evt_dump_flags;
-	struct scap_platform* m_platform;
+
+	scap_block_parser_t m_block_parser; ///< Used to parse each block in savefile (except the event block)
+	void* m_block_parser_arg;           ///< Argument to pass to the block parser
+	bool m_import_users;
 };

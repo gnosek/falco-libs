@@ -512,7 +512,8 @@ void sinsp::open_savefile(const std::string& filename, int fd) {
 	oargs.engine_params = &params;
 
 	scap_platform* platform = scap_savefile_alloc_platform(::on_new_entry_from_proc, this);
-	params.platform = platform;
+	params.block_parser = scap_parse_linux_block;
+	params.block_parser_arg = platform;
 	open_common(&oargs, &scap_savefile_engine, platform, SINSP_MODE_CAPTURE);
 #else
 	throw sinsp_exception("SAVEFILE engine is not supported in this build");
@@ -959,6 +960,7 @@ void sinsp::restart_capture() {
 
 	// Restart the scap capture, which also trigger a re-initialization of
 	// scap's internal state.
+	scap_platform_close(m_platform);
 	if(scap_restart_capture(m_h) != SCAP_SUCCESS) {
 		throw sinsp_exception(std::string("scap error: ") + scap_getlasterr(m_h));
 	}
