@@ -66,20 +66,6 @@ void sinsp_dumper::dump_state(sinsp& inspector) {
 		throw sinsp_exception("failed to write user list");
 	}
 
-	//
-	// Write the process list
-	//
-	if(scap_write_proclist(m_dumper, &platform->m_proclist) != SCAP_SUCCESS) {
-		throw sinsp_exception("failed to write process list");
-	}
-
-	//
-	// Write the fd lists
-	//
-	if(scap_write_fdlist(m_dumper, &platform->m_proclist) != SCAP_SUCCESS) {
-		throw sinsp_exception("failed to write fd list");
-	}
-
 	inspector.m_thread_manager->dump_threads_to_file(m_dumper);
 	inspector.m_container_manager.dump_containers(*this);
 	inspector.m_usergroup_manager.dump_users_groups(*this);

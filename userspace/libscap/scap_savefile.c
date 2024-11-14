@@ -397,26 +397,6 @@ int32_t scap_write_proc_fds(scap_dumper_t *d, struct scap_threadinfo *tinfo) {
 }
 
 //
-// Write the fd list blocks
-//
-int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclist) {
-	struct scap_threadinfo *tinfo;
-	struct scap_threadinfo *ttinfo;
-	int32_t res;
-
-	HASH_ITER(hh, proclist->m_proclist, tinfo, ttinfo) {
-		if(!tinfo->filtered_out) {
-			res = scap_write_proc_fds(d, tinfo);
-			if(res != SCAP_SUCCESS) {
-				return res;
-			}
-		}
-	}
-
-	return SCAP_SUCCESS;
-}
-
-//
 // Since the process list isn't thread-safe, we at least reduce the
 // time window and write everything at once with a secondary dumper.
 // By doing so, the likelihood of having a wrong total length is lower.
@@ -501,32 +481,6 @@ int scap_write_proclist_end(scap_dumper_t *d, scap_dumper_t *proclist_dumper, ui
 	scap_dump_close(proclist_dumper);
 
 	return res;
-}
-
-//
-// Write the process list block
-//
-static int32_t scap_write_proclist_entry(scap_dumper_t *d,
-                                         struct scap_threadinfo *tinfo,
-                                         uint32_t *len) {
-	struct iovec args = {tinfo->args, tinfo->args_len};
-	struct iovec env = {tinfo->env, tinfo->env_len};
-	struct iovec cgroups = {tinfo->cgroups.path, tinfo->cgroups.len};
-
-	return scap_write_proclist_entry_bufs(d,
-	                                      tinfo,
-	                                      len,
-	                                      tinfo->comm,
-	                                      tinfo->exe,
-	                                      tinfo->exepath,
-	                                      &args,
-	                                      1,
-	                                      &env,
-	                                      1,
-	                                      tinfo->cwd,
-	                                      &cgroups,
-	                                      1,
-	                                      tinfo->root);
 }
 
 static uint16_t iov_size(const struct iovec *iov, uint32_t iovcnt) {
@@ -661,42 +615,6 @@ int32_t scap_write_proclist_entry_bufs(scap_dumper_t *d,
 	}
 
 	return SCAP_SUCCESS;
-}
-
-//
-// Write the process list block
-//
-int32_t scap_write_proclist(scap_dumper_t *d, struct scap_proclist *proclist) {
-	//
-	// Exit immediately if the process list is empty
-	//
-	if(HASH_COUNT(proclist->m_proclist) == 0) {
-		return SCAP_SUCCESS;
-	}
-
-	scap_dumper_t *proclist_dumper = scap_write_proclist_begin();
-	if(proclist_dumper == NULL) {
-		return SCAP_FAILURE;
-	}
-
-	uint32_t totlen = 0;
-	struct scap_threadinfo *tinfo;
-	struct scap_threadinfo *ttinfo;
-	HASH_ITER(hh, proclist->m_proclist, tinfo, ttinfo) {
-		if(tinfo->filtered_out) {
-			continue;
-		}
-
-		uint32_t len = 0;
-		if(scap_write_proclist_entry(proclist_dumper, tinfo, &len) != SCAP_SUCCESS) {
-			scap_dump_close(proclist_dumper);
-			return SCAP_FAILURE;
-		}
-
-		totlen += len;
-	}
-
-	return scap_write_proclist_end(d, proclist_dumper, totlen);
 }
 
 //
