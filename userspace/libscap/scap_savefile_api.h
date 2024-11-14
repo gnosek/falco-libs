@@ -112,7 +112,6 @@ scap_dumper_t *scap_dump_open(struct scap_platform *platform,
 scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
                                  int fd,
                                  compression_mode compress,
-                                 bool skip_proc_scan,
                                  char *lasterr);
 
 int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info);

@@ -106,7 +106,7 @@ void sinsp_dumper::fdopen(sinsp* inspector, int fd, bool compress) {
 	}
 
 	auto compress_mode = compress ? SCAP_COMPRESSION_GZIP : SCAP_COMPRESSION_NONE;
-	m_dumper = scap_dump_open_fd(inspector->get_scap_platform(), fd, compress_mode, true, error);
+	m_dumper = scap_dump_open_fd(inspector->get_scap_platform(), fd, compress_mode, error);
 
 	if(m_dumper == nullptr) {
 		throw sinsp_exception(error);

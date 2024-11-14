@@ -1002,7 +1002,6 @@ scap_dumper_t *scap_dump_open(struct scap_platform *platform,
 scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
                                  int fd,
                                  compression_mode compress,
-                                 bool skip_proc_scan,
                                  char *lasterr) {
 	gzFile f = NULL;
 
