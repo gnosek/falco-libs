@@ -117,6 +117,8 @@ public:
 	inline void set_inspector(sinsp* inspector) { m_inspector = inspector; }
 
 private:
+	void dump_state(sinsp& inspector);
+
 	sinsp* m_inspector;
 	scap_dumper_t* m_dumper;
 	uint8_t* m_target_memory_buffer;

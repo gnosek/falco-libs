@@ -40,6 +40,12 @@ sinsp_dumper::~sinsp_dumper() {
 	}
 }
 
+void sinsp_dumper::dump_state(sinsp& inspector) {
+	inspector.m_thread_manager->dump_threads_to_file(m_dumper);
+	inspector.m_container_manager.dump_containers(*this);
+	inspector.m_usergroup_manager.dump_users_groups(*this);
+}
+
 void sinsp_dumper::open(sinsp* inspector, const std::string& filename, bool compress) {
 	char error[SCAP_LASTERR_SIZE];
 	if(inspector->get_scap_handle() == NULL) {
@@ -63,9 +69,7 @@ void sinsp_dumper::open(sinsp* inspector, const std::string& filename, bool comp
 		throw sinsp_exception(error);
 	}
 
-	inspector->m_thread_manager->dump_threads_to_file(m_dumper);
-	inspector->m_container_manager.dump_containers(*this);
-	inspector->m_usergroup_manager.dump_users_groups(*this);
+	dump_state(*inspector);
 
 	m_nevts = 0;
 }
@@ -83,9 +87,7 @@ void sinsp_dumper::fdopen(sinsp* inspector, int fd, bool compress) {
 		throw sinsp_exception(error);
 	}
 
-	inspector->m_thread_manager->dump_threads_to_file(m_dumper);
-	inspector->m_container_manager.dump_containers(*this);
-	inspector->m_usergroup_manager.dump_users_groups(*this);
+	dump_state(*inspector);
 
 	m_nevts = 0;
 }
