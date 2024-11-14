@@ -399,7 +399,7 @@ int32_t scap_write_proc_fds(scap_dumper_t *d, struct scap_threadinfo *tinfo) {
 //
 // Write the fd list blocks
 //
-static int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclist) {
+int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclist) {
 	struct scap_threadinfo *tinfo;
 	struct scap_threadinfo *ttinfo;
 	int32_t res;
@@ -666,7 +666,7 @@ int32_t scap_write_proclist_entry_bufs(scap_dumper_t *d,
 //
 // Write the process list block
 //
-static int32_t scap_write_proclist(scap_dumper_t *d, struct scap_proclist *proclist) {
+int32_t scap_write_proclist(scap_dumper_t *d, struct scap_proclist *proclist) {
 	//
 	// Exit immediately if the process list is empty
 	//
@@ -702,7 +702,7 @@ static int32_t scap_write_proclist(scap_dumper_t *d, struct scap_proclist *procl
 //
 // Write the machine info block
 //
-static int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info) {
+int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info) {
 	block_header bh;
 	uint32_t bt;
 
@@ -728,7 +728,7 @@ static int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *mach
 //
 // Write the interface list block
 //
-static int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist) {
+int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist) {
 	block_header bh;
 	uint32_t bt;
 	uint32_t entrylen;
@@ -829,7 +829,7 @@ static int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist) {
 //
 // Write the user list block
 //
-static int32_t scap_write_userlist(scap_dumper_t *d, struct scap_userlist *userlist) {
+int32_t scap_write_userlist(scap_dumper_t *d, struct scap_userlist *userlist) {
 	block_header bh;
 	uint32_t bt;
 	uint32_t j;
@@ -998,43 +998,6 @@ static int32_t scap_setup_dump(scap_dumper_t *d,
 	   scap_dump_write(d, &bt, sizeof(bt)) != sizeof(bt)) {
 		snprintf(d->m_lasterr, SCAP_LASTERR_SIZE, "error writing to file %s  (5)", fname);
 		return SCAP_FAILURE;
-	}
-
-	if(platform) {
-		//
-		// Write the machine info
-		//
-		if(scap_write_machine_info(d, &platform->m_machine_info) != SCAP_SUCCESS) {
-			return SCAP_FAILURE;
-		}
-
-		//
-		// Write the interface list
-		//
-		if(scap_write_iflist(d, platform->m_addrlist) != SCAP_SUCCESS) {
-			return SCAP_FAILURE;
-		}
-
-		//
-		// Write the user list
-		//
-		if(scap_write_userlist(d, platform->m_userlist) != SCAP_SUCCESS) {
-			return SCAP_FAILURE;
-		}
-
-		//
-		// Write the process list
-		//
-		if(scap_write_proclist(d, &platform->m_proclist) != SCAP_SUCCESS) {
-			return SCAP_FAILURE;
-		}
-
-		//
-		// Write the fd lists
-		//
-		if(scap_write_fdlist(d, &platform->m_proclist) != SCAP_SUCCESS) {
-			return SCAP_FAILURE;
-		}
 	}
 
 	//

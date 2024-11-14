@@ -41,6 +41,45 @@ sinsp_dumper::~sinsp_dumper() {
 }
 
 void sinsp_dumper::dump_state(sinsp& inspector) {
+	scap_platform* platform = inspector.get_scap_platform();
+	if(!platform) {
+		return;
+	}
+	//
+	// Write the machine info
+	//
+	if(scap_write_machine_info(m_dumper, &platform->m_machine_info) != SCAP_SUCCESS) {
+		throw sinsp_exception("failed to write machine info");
+	}
+
+	//
+	// Write the interface list
+	//
+	if(scap_write_iflist(m_dumper, platform->m_addrlist) != SCAP_SUCCESS) {
+		throw sinsp_exception("failed to write interface list");
+	}
+
+	//
+	// Write the user list
+	//
+	if(scap_write_userlist(m_dumper, platform->m_userlist) != SCAP_SUCCESS) {
+		throw sinsp_exception("failed to write user list");
+	}
+
+	//
+	// Write the process list
+	//
+	if(scap_write_proclist(m_dumper, &platform->m_proclist) != SCAP_SUCCESS) {
+		throw sinsp_exception("failed to write process list");
+	}
+
+	//
+	// Write the fd lists
+	//
+	if(scap_write_fdlist(m_dumper, &platform->m_proclist) != SCAP_SUCCESS) {
+		throw sinsp_exception("failed to write fd list");
+	}
+
 	inspector.m_thread_manager->dump_threads_to_file(m_dumper);
 	inspector.m_container_manager.dump_containers(*this);
 	inspector.m_usergroup_manager.dump_users_groups(*this);

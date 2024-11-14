@@ -115,6 +115,12 @@ scap_dumper_t *scap_dump_open_fd(struct scap_platform *platform,
                                  bool skip_proc_scan,
                                  char *lasterr);
 
+int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_info);
+int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist);
+int32_t scap_write_userlist(scap_dumper_t *d, struct scap_userlist *userlist);
+int32_t scap_write_proclist(scap_dumper_t *d, struct scap_proclist *proclist);
+int32_t scap_write_fdlist(scap_dumper_t *d, struct scap_proclist *proclist);
+
 /*!
   \brief Close a trace file.
 
