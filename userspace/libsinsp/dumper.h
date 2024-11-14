@@ -61,10 +61,6 @@ public:
 
 	  \param compress true to save the trace file in a compressed format.
 
-	  \param threads_from_sinsp If, true the thread and FD tables in the file
-	   will be created from the current sinsp's tables instead of reusing the scap
-	   ones.
-
 	  \note There's no close() because the file is closed when the dumper is
 	   destroyed.
 	*/
