@@ -37,6 +37,8 @@ limitations under the License.
 #include <libsinsp/sinsp_thread_pool.h>
 #endif
 
+typedef struct scap_dumper scap_dumper_t;
+
 /**
  * @brief An object-oriented representation of a plugin.
  */
@@ -207,6 +209,11 @@ public:
 	        std::function<void(const sinsp_plugin&, std::unique_ptr<sinsp_evt>)>;
 
 	bool set_async_event_handler(async_event_handler_t handler);
+
+	/** Savefile Support **/
+	int32_t read_savefile_block(scap_reader_t *r, uint32_t block_type, uint32_t block_length);
+
+	int32_t write_state(scap_dumper_t *d);
 
 	// note(jasondellaluce): we set these as protected in order to allow unit
 	// testing mocking these values, without having to declare their accessors

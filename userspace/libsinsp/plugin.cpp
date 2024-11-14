@@ -28,6 +28,7 @@ limitations under the License.
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #include <valijson/adapters/jsoncpp_adapter.hpp>
 #pragma GCC diagnostic pop
+#include <engine/savefile/scap_reader.h>
 #include <valijson/schema.hpp>
 #include <valijson/schema_parser.hpp>
 #include <valijson/validator.hpp>
@@ -1174,4 +1175,82 @@ bool sinsp_plugin::set_async_event_handler(async_event_handler_t handler) {
 	}
 
 	return rc == SS_PLUGIN_SUCCESS;
+}
+
+namespace {
+ss_plugin_rc plugin_savefile_read(ss_plugin_owner_t* o,
+                                  ss_plugin_savefile_reader* reader,
+                                  char* buf,
+                                  uint64_t to_read,
+                                  uint64_t* read) {
+	scap_reader_t* r = (scap_reader_t*)reader;
+	int32_t ret = r->read(r, buf, to_read);
+	if(ret < 0) {
+		return SS_PLUGIN_FAILURE;
+	}
+
+	*read = ret;
+	return SS_PLUGIN_SUCCESS;
+}
+
+ss_plugin_rc plugin_savefile_write(ss_plugin_owner_t* o,
+                                                    ss_plugin_savefile_writer* writer,
+                                                    char* buf,
+                                                    uint64_t size) {
+	scap_dumper_t* d = (scap_dumper_t*)writer;
+	if((int64_t)scap_dump_write(d, buf, size) != (int64_t)size) {
+		return SS_PLUGIN_FAILURE;
+	}
+
+	return SS_PLUGIN_SUCCESS;
+}
+
+int32_t plugin_rc_to_scap_rc(ss_plugin_rc rc) {
+	switch(rc) {
+	case SS_PLUGIN_SUCCESS:
+		return SCAP_SUCCESS;
+		break;
+	case SS_PLUGIN_FAILURE:
+		return SCAP_FAILURE;
+		break;
+	case SS_PLUGIN_TIMEOUT:
+		return SCAP_TIMEOUT;
+		break;
+	case SS_PLUGIN_EOF:
+		return SCAP_EOF;
+		break;
+	case SS_PLUGIN_NOT_SUPPORTED:
+		return SCAP_NOT_SUPPORTED;
+		break;
+	default:
+		ASSERT(false);
+		return SCAP_FAILURE;
+	}
+}
+}
+
+int32_t sinsp_plugin::read_savefile_block(scap_reader_t *r, uint32_t block_type, uint32_t block_length) {
+	if(!m_inited) {
+		throw sinsp_exception(std::string(s_not_init_err) + ": " + m_name);
+	}
+
+	ss_plugin_savefile_read_input in;
+	in.read_fn = plugin_savefile_read;
+	in.reader = r;
+	in.block_type = block_type;
+	in.block_length = block_length;
+
+	return plugin_rc_to_scap_rc(m_handle->api.read_savefile_block(m_state, &in));
+}
+
+int32_t sinsp_plugin::write_state(scap_dumper_t *d) {
+	if(!m_inited) {
+		throw sinsp_exception(std::string(s_not_init_err) + ": " + m_name);
+	}
+
+	ss_plugin_savefile_write_input in;
+	in.write_fn = plugin_savefile_write;
+	in.writer = d;
+
+	return plugin_rc_to_scap_rc(m_handle->api.write_state(m_state, &in));
 }

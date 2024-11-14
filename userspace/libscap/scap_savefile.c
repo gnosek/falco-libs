@@ -49,7 +49,7 @@ const char *scap_dump_getlasterr(scap_dumper_t *d) {
 //
 // Write data into a dump file
 //
-static int scap_dump_write(scap_dumper_t *d, void *buf, unsigned len) {
+int scap_dump_write(scap_dumper_t *d, void *buf, unsigned len) {
 	if(d->m_type == DT_FILE) {
 		return gzwrite(d->m_f, buf, len);
 	} else {

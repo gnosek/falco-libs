@@ -109,6 +109,8 @@ int32_t scap_write_machine_info(scap_dumper_t *d, scap_machine_info *machine_inf
 int32_t scap_write_iflist(scap_dumper_t *d, scap_addrlist *addrlist);
 int32_t scap_write_userlist(scap_dumper_t *d, struct scap_userlist *userlist);
 
+int scap_dump_write(scap_dumper_t *d, void *buf, unsigned len);
+
 /*!
   \brief Close a trace file.
 
