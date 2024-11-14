@@ -1631,6 +1631,52 @@ static int32_t scap_read_section_header(scap_reader_t *r, char *error) {
 	return SCAP_SUCCESS;
 }
 
+static int32_t scap_parse_linux_block(scap_reader_t *r,
+	uint32_t block_type,
+	uint32_t block_length,
+	struct scap_platform *platform,
+	char *error) {
+
+		switch(block_type) {
+		case MI_BLOCK_TYPE:
+		case MI_BLOCK_TYPE_INT:
+		    return scap_read_machine_info(r, &platform->m_machine_info, error, block_length);
+
+		case PL_BLOCK_TYPE_V1:
+		case PL_BLOCK_TYPE_V2:
+		case PL_BLOCK_TYPE_V3:
+		case PL_BLOCK_TYPE_V4:
+		case PL_BLOCK_TYPE_V5:
+		case PL_BLOCK_TYPE_V6:
+		case PL_BLOCK_TYPE_V7:
+		case PL_BLOCK_TYPE_V8:
+		case PL_BLOCK_TYPE_V9:
+		case PL_BLOCK_TYPE_V1_INT:
+		case PL_BLOCK_TYPE_V2_INT:
+		case PL_BLOCK_TYPE_V3_INT:
+			return scap_read_proclist(r, block_length, block_type, &platform->m_proclist, error);
+
+		case FDL_BLOCK_TYPE:
+		case FDL_BLOCK_TYPE_INT:
+		case FDL_BLOCK_TYPE_V2:
+		    return scap_read_fdlist(r, block_length, block_type, &platform->m_proclist, error);
+
+		case IL_BLOCK_TYPE:
+		case IL_BLOCK_TYPE_INT:
+		case IL_BLOCK_TYPE_V2:
+		    return scap_read_iflist(r, block_length, block_type, &platform->m_addrlist, error);
+
+		case UL_BLOCK_TYPE:
+		case UL_BLOCK_TYPE_INT:
+		case UL_BLOCK_TYPE_V2:
+		    return scap_read_userlist(r, block_length, block_type, &platform->m_userlist, error);
+
+		default:
+			return SCAP_NOT_SUPPORTED;
+		}
+
+}
+
 //
 // Parse the headers of a trace file and load the tables
 //
@@ -1681,50 +1727,6 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 		CHECK_READ_SIZE_ERR(readsize, sizeof(bh), error);
 
 		switch(bh.block_type) {
-		case MI_BLOCK_TYPE:
-		case MI_BLOCK_TYPE_INT:
-
-			if(scap_read_machine_info(r,
-			                          &platform->m_machine_info,
-			                          error,
-			                          bh.block_total_length - sizeof(block_header) - 4) !=
-			   SCAP_SUCCESS) {
-				return SCAP_FAILURE;
-			}
-			break;
-		case PL_BLOCK_TYPE_V1:
-		case PL_BLOCK_TYPE_V2:
-		case PL_BLOCK_TYPE_V3:
-		case PL_BLOCK_TYPE_V4:
-		case PL_BLOCK_TYPE_V5:
-		case PL_BLOCK_TYPE_V6:
-		case PL_BLOCK_TYPE_V7:
-		case PL_BLOCK_TYPE_V8:
-		case PL_BLOCK_TYPE_V9:
-		case PL_BLOCK_TYPE_V1_INT:
-		case PL_BLOCK_TYPE_V2_INT:
-		case PL_BLOCK_TYPE_V3_INT:
-
-			if(scap_read_proclist(r,
-			                      bh.block_total_length - sizeof(block_header) - 4,
-			                      bh.block_type,
-			                      &platform->m_proclist,
-			                      error) != SCAP_SUCCESS) {
-				return SCAP_FAILURE;
-			}
-			break;
-		case FDL_BLOCK_TYPE:
-		case FDL_BLOCK_TYPE_INT:
-		case FDL_BLOCK_TYPE_V2:
-
-			if(scap_read_fdlist(r,
-			                    bh.block_total_length - sizeof(block_header) - 4,
-			                    bh.block_type,
-			                    &platform->m_proclist,
-			                    error) != SCAP_SUCCESS) {
-				return SCAP_FAILURE;
-			}
-			break;
 		case EV_BLOCK_TYPE:
 		case EV_BLOCK_TYPE_INT:
 		case EV_BLOCK_TYPE_V2:
@@ -1738,42 +1740,30 @@ static int32_t scap_read_init(struct savefile_engine *handle,
 			found_ev = 1;
 			handle->m_use_last_block_header = true;
 			break;
-		case IL_BLOCK_TYPE:
-		case IL_BLOCK_TYPE_INT:
-		case IL_BLOCK_TYPE_V2:
-
-			if(scap_read_iflist(r,
-			                    bh.block_total_length - sizeof(block_header) - 4,
-			                    bh.block_type,
-			                    &platform->m_addrlist,
-			                    error) != SCAP_SUCCESS) {
-				return SCAP_FAILURE;
-			}
-			break;
-		case UL_BLOCK_TYPE:
-		case UL_BLOCK_TYPE_INT:
-		case UL_BLOCK_TYPE_V2:
-
-			if(scap_read_userlist(r,
-			                      bh.block_total_length - sizeof(block_header) - 4,
-			                      bh.block_type,
-			                      &platform->m_userlist,
-			                      error) != SCAP_SUCCESS) {
-				return SCAP_FAILURE;
-			}
-			break;
 		default:
-			//
-			// Unknown block type. Skip the block.
-			//
-			toread = bh.block_total_length - sizeof(block_header) - 4;
-			fseekres = (int)r->seek(r, (long)toread, SEEK_CUR);
-			if(fseekres == -1) {
-				snprintf(error,
-				         SCAP_LASTERR_SIZE,
-				         "corrupted input file. Can't skip block of type %x and size %u.",
-				         (int)bh.block_type,
-				         (unsigned int)toread);
+			switch(scap_parse_linux_block(r,
+			                              bh.block_type,
+			                              bh.block_total_length - sizeof(block_header) - 4,
+			                              platform,
+			                              error)) {
+			case SCAP_SUCCESS:
+				break;
+			case SCAP_NOT_SUPPORTED:
+				//
+				// Unknown block type. Skip the block.
+				//
+				toread = bh.block_total_length - sizeof(block_header) - 4;
+				fseekres = (int)r->seek(r, (long)toread, SEEK_CUR);
+				if(fseekres == -1) {
+					snprintf(error,
+					         SCAP_LASTERR_SIZE,
+					         "corrupted input file. Can't skip block of type %x and size %u.",
+					         (int)bh.block_type,
+					         (unsigned int)toread);
+					return SCAP_FAILURE;
+				}
+				break;
+			default:
 				return SCAP_FAILURE;
 			}
 			break;
