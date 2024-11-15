@@ -45,6 +45,8 @@ limitations under the License.
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <sinsp_reader.h>
+#include <engine/savefile/scap_reader.h>
 
 /**
  * This is the maximum size assigned to the concurrent asynchronous event
@@ -478,6 +480,51 @@ void sinsp::open_nodriver(bool full_proc_scan) {
 #endif
 }
 
+struct block_parser_args {
+	struct scap_platform* platform;
+	sinsp_plugin_manager& plugin_manager;
+};
+
+int32_t parse_savefile_block(scap_reader_t *r,
+	uint32_t block_type,
+	uint32_t block_length,
+	bool import_users,
+	void *arg,
+	char *error) {
+
+	std::vector<char> buf(block_length);
+	int32_t res = r->read(r, buf.data(), block_length);
+	if(res < 0 || static_cast<uint32_t>(res) != block_length) {
+		snprintf(error, SCAP_LASTERR_SIZE, "error reading from file (1)");
+		return SCAP_FAILURE;
+	}
+
+	scap_reader_t nr = sinsp_mem_reader(buf).get_reader();
+
+	auto args = static_cast<block_parser_args*>(arg);
+	bool ok = true;
+
+	// SCAP_NOT_SUPPORTED is not an error
+	if(scap_parse_linux_block(&nr, block_type, block_length, import_users, args->platform, error) == SCAP_FAILURE) {
+		ok = false;
+	}
+
+	for(const auto& plugin: args->plugin_manager.plugins()) {
+		if(plugin->caps() & CAP_SAVEFILE) {
+			if(plugin->read_savefile_block(&nr, block_type, block_length) == SCAP_FAILURE) {
+				ok = false;
+			}
+		}
+	}
+
+	if(ok) {
+		return SCAP_SUCCESS;
+	} else {
+		return SCAP_FAILURE;
+	}
+}
+
+
 void sinsp::open_savefile(const std::string& filename, int fd) {
 #ifdef HAS_ENGINE_SAVEFILE
 	scap_open_args oargs{};
@@ -510,10 +557,12 @@ void sinsp::open_savefile(const std::string& filename, int fd) {
 	params.start_offset = 0;
 	params.fbuffer_size = 0;
 	oargs.engine_params = &params;
-
 	scap_platform* platform = scap_savefile_alloc_platform(::on_new_entry_from_proc, this);
-	params.block_parser = scap_parse_linux_block;
-	params.block_parser_arg = platform;
+
+	struct block_parser_args args{platform, *m_plugin_manager};
+
+	params.block_parser = parse_savefile_block;
+	params.block_parser_arg = &args;
 	open_common(&oargs, &scap_savefile_engine, platform, SINSP_MODE_CAPTURE);
 #else
 	throw sinsp_exception("SAVEFILE engine is not supported in this build");

@@ -16,6 +16,7 @@ limitations under the License.
 
 */
 
+#include <plugin_manager.h>
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
 #include <libscap/scap.h>
@@ -64,6 +65,14 @@ void sinsp_dumper::dump_state(sinsp& inspector) {
 	//
 	if(scap_write_userlist(m_dumper, platform->m_userlist) != SCAP_SUCCESS) {
 		throw sinsp_exception("failed to write user list");
+	}
+
+	for(const auto& plugin: inspector.m_plugin_manager->plugins()) {
+		if(plugin->caps() & CAP_SAVEFILE) {
+			if(plugin->write_state(m_dumper) != SCAP_SUCCESS) {
+				throw sinsp_exception("failed to write plugin state");
+			}
+		}
 	}
 
 	inspector.m_thread_manager->dump_threads_to_file(m_dumper);
