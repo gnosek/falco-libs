@@ -664,7 +664,7 @@ TEST_F(sinsp_with_test_input, plugin_tables) {
 	ASSERT_EQ(sfield->second.valid(), true);
 	ASSERT_EQ(sfield->second.index(), 0);
 	ASSERT_EQ(sfield->second.name(), "u64_val");
-	ASSERT_EQ(sfield->second.info(), libsinsp::state::typeinfo::of<uint64_t>());
+	ASSERT_EQ(sfield->second.type_id(), libsinsp::state::typeinfo::of<uint64_t>().index());
 
 	// add a new field in the plugin table
 	const auto& dfield = table->dynamic_fields()->add_field<std::string>("str_val");
@@ -675,7 +675,7 @@ TEST_F(sinsp_with_test_input, plugin_tables) {
 	ASSERT_EQ(dfield.valid(), true);
 	ASSERT_EQ(dfield.index(), 1);
 	ASSERT_EQ(dfield.name(), "str_val");
-	ASSERT_EQ(dfield.info(), libsinsp::state::typeinfo::of<std::string>());
+	ASSERT_EQ(dfield.type_id(), libsinsp::state::typeinfo::of<std::string>().index());
 
 	// we open a capture and iterate, so that we make sure that all
 	// the state operations keep working at every round of the loop
@@ -788,7 +788,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables) {
 	ASSERT_EQ(field->second.readonly(), true);
 	ASSERT_EQ(field->second.valid(), true);
 	ASSERT_EQ(field->second.name(), "file_descriptors");
-	ASSERT_EQ(field->second.info(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>());
+	ASSERT_EQ(field->second.type_id(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>().index());
 
 	ASSERT_EQ(table->entries_count(), 0);
 
@@ -811,7 +811,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables) {
 	ASSERT_EQ(sfield->second.readonly(), false);
 	ASSERT_EQ(sfield->second.valid(), true);
 	ASSERT_EQ(sfield->second.name(), "pid");
-	ASSERT_EQ(sfield->second.info(), libsinsp::state::typeinfo::of<int64_t>());
+	ASSERT_EQ(sfield->second.type_id(), libsinsp::state::typeinfo::of<int64_t>().index());
 	auto sfieldacc = sfield->second.new_accessor<int64_t>();
 
 	// get an accessor to a dynamic field declared by the plugin
@@ -886,7 +886,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array) {
 	ASSERT_EQ(field->second.readonly(), true);
 	ASSERT_EQ(field->second.valid(), true);
 	ASSERT_EQ(field->second.name(), "env");
-	ASSERT_EQ(field->second.info(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>());
+	ASSERT_EQ(field->second.type_id(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>().index());
 
 	ASSERT_EQ(table->entries_count(), 0);
 
@@ -912,7 +912,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array) {
 	ASSERT_EQ(dfield->second.readonly(), false);
 	ASSERT_EQ(dfield->second.valid(), true);
 	ASSERT_EQ(dfield->second.name(), "value");
-	ASSERT_EQ(dfield->second.info(), libsinsp::state::typeinfo::of<std::string>());
+	ASSERT_EQ(dfield->second.type_id(), libsinsp::state::typeinfo::of<std::string>().index());
 	auto dfieldacc = dfield->second.new_accessor<std::string>();
 
 	// start the event capture
@@ -979,7 +979,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array_pair) {
 	ASSERT_EQ(field->second.readonly(), true);
 	ASSERT_EQ(field->second.valid(), true);
 	ASSERT_EQ(field->second.name(), "cgroups");
-	ASSERT_EQ(field->second.info(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>());
+	ASSERT_EQ(field->second.type_id(), libsinsp::state::typeinfo::of<libsinsp::state::base_table*>().index());
 
 	ASSERT_EQ(table->entries_count(), 0);
 
@@ -1006,7 +1006,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array_pair) {
 	ASSERT_EQ(dfield_first->second.readonly(), false);
 	ASSERT_EQ(dfield_first->second.valid(), true);
 	ASSERT_EQ(dfield_first->second.name(), "first");
-	ASSERT_EQ(dfield_first->second.info(), libsinsp::state::typeinfo::of<std::string>());
+	ASSERT_EQ(dfield_first->second.type_id(), libsinsp::state::typeinfo::of<std::string>().index());
 	auto dfield_first_acc = dfield_first->second.new_accessor<std::string>();
 
 	auto dfield_second = subtable->dynamic_fields()->fields().find("second");
@@ -1014,7 +1014,7 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array_pair) {
 	ASSERT_EQ(dfield_second->second.readonly(), false);
 	ASSERT_EQ(dfield_second->second.valid(), true);
 	ASSERT_EQ(dfield_second->second.name(), "second");
-	ASSERT_EQ(dfield_second->second.info(), libsinsp::state::typeinfo::of<std::string>());
+	ASSERT_EQ(dfield_second->second.type_id(), libsinsp::state::typeinfo::of<std::string>().index());
 	auto dfield_second_acc = dfield_second->second.new_accessor<std::string>();
 
 	// start the event capture

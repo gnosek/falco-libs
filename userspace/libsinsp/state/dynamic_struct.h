@@ -72,7 +72,7 @@ public:
 		inline field_info& operator=(const field_info& s) = default;
 
 		friend inline bool operator==(const field_info& a, const field_info& b) {
-			return a.info() == b.info() && a.name() == b.name() && a.m_index == b.m_index &&
+			return a.m_info == b.m_info && a.name() == b.name() && a.m_index == b.m_index &&
 			       a.m_defs_id == b.m_defs_id;
 		};
 
@@ -109,10 +109,21 @@ public:
 		 */
 		inline size_t index() const { return m_index; }
 
-		/**
-		 * @brief Returns the type info of the field.
-		 */
-		inline const libsinsp::state::typeinfo& info() const { return m_info; }
+		inline typeinfo::index_t type_id() const { return m_info.index(); }
+
+		inline bool type_matches(const field_info& rhs) const { return m_info == rhs.m_info; }
+
+		inline const char* type_name() const { return m_info.name(); }
+
+		inline size_t type_size() const { return m_info.size(); }
+
+		inline void construct_value(void* val) const {
+			m_info.construct(val);
+		}
+
+		inline void destroy_value(void* val) const {
+			m_info.destroy(val);
+		}
 
 		/**
 		 * @brief Returns a strongly-typed accessor for the given field,
@@ -210,19 +221,18 @@ public:
 
 	protected:
 		virtual const field_info& add_field_info(const field_info& field) {
-			if(field.info().index() == typeinfo::index_t::TI_TABLE) {
+			if(field.type_id() == typeinfo::index_t::TI_TABLE) {
 				throw sinsp_exception("dynamic fields of type table are not supported");
 			}
 
 			const auto& it = m_definitions.find(field.name());
 			if(it != m_definitions.end()) {
-				const auto& t = field.info();
-				if(it->second.info() != t) {
+				if(!it->second.type_matches(field)) {
 					throw sinsp_exception(
 					        "multiple definitions of dynamic field with different types in "
 					        "struct: " +
-					        field.name() + ", prevtype=" + it->second.info().name() +
-					        ", newtype=" + t.name());
+					        field.name() + ", prevtype=" + it->second.type_name() +
+					        ", newtype=" + field.type_name());
 				}
 				return it->second;
 			}
@@ -308,10 +318,10 @@ protected:
 	 */
 	virtual void get_dynamic_field(const field_info& i, void* out) {
 		const auto* buf = _access_dynamic_field(i.m_index);
-		if(i.info().index() == typeinfo::index_t::TI_STRING) {
+		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)buf)->c_str();
 		} else {
-			memcpy(out, buf, i.info().size());
+			memcpy(out, buf, i.type_size());
 		}
 	}
 
@@ -323,10 +333,10 @@ protected:
 	 */
 	virtual void set_dynamic_field(const field_info& i, const void* in) {
 		auto* buf = _access_dynamic_field(i.m_index);
-		if(i.info().index() == typeinfo::index_t::TI_STRING) {
+		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)buf) = *((const char**)in);
 		} else {
-			memcpy(buf, in, i.info().size());
+			memcpy(buf, in, i.type_size());
 		}
 	}
 
@@ -338,7 +348,7 @@ protected:
 			return;
 		}
 		for(size_t i = 0; i < m_fields.size(); i++) {
-			m_dynamic_fields->m_definitions_ordered[i]->info().destroy(m_fields[i]);
+			m_dynamic_fields->m_definitions_ordered[i]->destroy_value(m_fields[i]);
 			free(m_fields[i]);
 		}
 		m_fields.clear();
@@ -367,8 +377,8 @@ private:
 		}
 		while(m_fields.size() <= index) {
 			auto def = m_dynamic_fields->m_definitions_ordered[m_fields.size()];
-			void* fieldbuf = malloc(def->info().size());
-			def->info().construct(fieldbuf);
+			void* fieldbuf = malloc(def->type_size());
+			def->construct_value(fieldbuf);
 			m_fields.push_back(fieldbuf);
 		}
 		return m_fields[index];

@@ -54,7 +54,7 @@ public:
 		inline field_info& operator=(const field_info& s) = default;
 
 		friend inline bool operator==(const field_info& a, const field_info& b) {
-			return a.info() == b.info() && a.name() == b.name() && a.readonly() == b.readonly() &&
+			return a.m_info == b.m_info && a.name() == b.name() && a.readonly() == b.readonly() &&
 			       a.m_offset == b.m_offset;
 		};
 
@@ -77,10 +77,7 @@ public:
 		 */
 		inline const std::string& name() const { return m_name; }
 
-		/**
-		 * @brief Returns the type info of the field.
-		 */
-		inline const libsinsp::state::typeinfo& info() const { return m_info; }
+		inline typeinfo::index_t type_id() const { return m_info.index(); }
 
 		/**
 		 * @brief Returns a strongly-typed accessor for the given field,

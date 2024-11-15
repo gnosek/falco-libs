@@ -75,6 +75,7 @@ public:
 	 * @brief Returns the non-null type info about the table's key.
 	 */
 	inline const typeinfo& key_info() const { return m_key_info; }
+	inline const typeinfo::index_t key_type_id() const { return m_key_info.index(); }
 
 	/**
 	 * @brief Returns the fields metadata list for the static fields defined

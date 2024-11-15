@@ -71,8 +71,9 @@ limitations under the License.
 		}                                                                           \
 	}
 
-static inline ss_plugin_state_type typeinfo_to_state_type(const libsinsp::state::typeinfo& i) {
-	switch(i.index()) {
+static inline ss_plugin_state_type type_id_to_state_type(
+        const libsinsp::state::typeinfo::index_t i) {
+	switch(i) {
 	case libsinsp::state::typeinfo::index_t::TI_INT8:
 		return ss_plugin_state_type::SS_PLUGIN_ST_INT8;
 	case libsinsp::state::typeinfo::index_t::TI_INT16:
@@ -97,7 +98,7 @@ static inline ss_plugin_state_type typeinfo_to_state_type(const libsinsp::state:
 		return ss_plugin_state_type::SS_PLUGIN_ST_TABLE;
 	default:
 		throw sinsp_exception("can't convert typeinfo to plugin state type: " +
-		                      std::to_string(i.index()));
+		                      std::to_string(i));
 	}
 }
 
@@ -322,7 +323,7 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 					auto facc =
 					        m_input->fields_ext->get_table_field(m_input->table,
 					                                             f.name().c_str(),
-					                                             typeinfo_to_state_type(f.info()));
+					                                             type_id_to_state_type(f.type_id()));
 					if(facc == NULL) {
 						throw sinsp_exception(
 						        table_input_error_prefix(m_owner, m_input.get()) +
@@ -337,7 +338,7 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 		virtual const ds::field_info& add_field_info(const ds::field_info& field) override {
 			auto ret = m_input->fields_ext->add_table_field(m_input->table,
 			                                                field.name().c_str(),
-			                                                typeinfo_to_state_type(field.info()));
+			                                                type_id_to_state_type(field.type_id()));
 			if(ret == NULL) {
 				throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
 				                      "add table field failure: " + m_owner->get_last_error());
@@ -399,7 +400,7 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 		}
 
 		virtual void get_dynamic_field(const ds::field_info& i, void* out) override {
-			if(i.info().index() == libsinsp::state::typeinfo::index_t::TI_TABLE) {
+			if(i.type_id() == libsinsp::state::typeinfo::index_t::TI_TABLE) {
 				throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
 				                      "read field failure: dynamic table fields not supported");
 			}
@@ -419,12 +420,12 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 			// and as const char*s by the plugin API.
 			// todo(jasondellaluce): maybe find a common place for all this
 			// type conversions knowledge (also leaked in dynamic_struct.h)
-			if(i.info().index() == libsinsp::state::typeinfo::index_t::TI_STRING) {
+			if(i.type_id() == libsinsp::state::typeinfo::index_t::TI_STRING) {
 				*(const char**)out = dout.str;
 			} else {
 #define _X(_type, _dtype) \
 	{ convert_types(dout._dtype, *((_type*)out)); }
-				__PLUGIN_STATETYPE_SWITCH(typeinfo_to_state_type(i.info()));
+				__PLUGIN_STATETYPE_SWITCH(type_id_to_state_type(i.type_id()));
 #undef _X
 			}
 		}
@@ -438,12 +439,12 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 			// and as const char*s by the plugin API.
 			// todo(jasondellaluce): maybe find a common place for all this
 			// type conversions knowledge (also leaked in dynamic_struct.h)
-			if(i.info().index() == libsinsp::state::typeinfo::index_t::TI_STRING) {
+			if(i.type_id() == libsinsp::state::typeinfo::index_t::TI_STRING) {
 				v.str = *(const char**)in;
 			} else {
 #define _X(_type, _dtype) \
 	{ convert_types(*((_type*)in), v._dtype); }
-				__PLUGIN_STATETYPE_SWITCH(typeinfo_to_state_type(i.info()));
+				__PLUGIN_STATETYPE_SWITCH(type_id_to_state_type(i.type_id()));
 #undef _X
 			}
 
@@ -477,7 +478,7 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 	        m_dyn_fields(std::make_shared<plugin_field_infos>(o, m_input)),
 	        m_dyn_fields_as_base_class(m_dyn_fields) {
 		auto t = libsinsp::state::typeinfo::of<KeyType>();
-		if(m_input->key_type != typeinfo_to_state_type(t)) {
+		if(m_input->key_type != type_id_to_state_type(t.index())) {
 			throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
 			                      "invalid key type: " + std::string(t.name()));
 		}
@@ -739,7 +740,7 @@ void sinsp_plugin::sinsp_table_wrapper::set(sinsp_plugin* p, libsinsp::state::ta
 
 	m_table = t;
 	m_owner_plugin = p;
-	m_key_type = typeinfo_to_state_type(t->key_info());
+	m_key_type = type_id_to_state_type(t->key_type_id());
 	m_field_list.clear();
 	m_table_plugin_owner = nullptr;
 	m_table_plugin_input = nullptr;
@@ -788,14 +789,14 @@ const ss_plugin_table_fieldinfo* sinsp_plugin::sinsp_table_wrapper::list_fields(
 		for(auto& info : *t->m_table->static_fields()) {
 			ss_plugin_table_fieldinfo i;
 			i.name = info.second.name().c_str();
-			i.field_type = typeinfo_to_state_type(info.second.info());
+			i.field_type = type_id_to_state_type(info.second.type_id());
 			i.read_only = info.second.readonly();
 			t->m_field_list.push_back(i);
 		}
 		for(auto& info : t->m_table->dynamic_fields()->fields()) {
 			ss_plugin_table_fieldinfo i;
 			i.name = info.second.name().c_str();
-			i.field_type = typeinfo_to_state_type(info.second.info());
+			i.field_type = type_id_to_state_type(info.second.type_id());
 			i.read_only = false;
 			t->m_field_list.push_back(i);
 		}
@@ -854,7 +855,7 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::get_field(
 	}
 	__CATCH_ERR_MSG(t->m_owner_plugin->m_last_owner_err, {
 		if(fixed_it != t->m_table->static_fields()->end()) {
-			if(data_type != typeinfo_to_state_type(fixed_it->second.info())) {
+			if(data_type != type_id_to_state_type(fixed_it->second.type_id())) {
 				throw sinsp_exception("incompatible data types for static field: " +
 				                      std::string(name));
 			}
@@ -876,7 +877,7 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::get_field(
 	}
 	__CATCH_ERR_MSG(t->m_owner_plugin->m_last_owner_err, {
 		if(dyn_it != t->m_table->dynamic_fields()->fields().end()) {
-			if(data_type != typeinfo_to_state_type(dyn_it->second.info())) {
+			if(data_type != type_id_to_state_type(dyn_it->second.type_id())) {
 				throw sinsp_exception("incompatible data types for dynamic field: " +
 				                      std::string(name));
 			}
@@ -1484,7 +1485,7 @@ ss_plugin_table_info* sinsp_plugin::table_api_list_tables(ss_plugin_owner_t* o, 
 		for(const auto& d : p->m_table_registry->tables()) {
 			ss_plugin_table_info info;
 			info.name = d.second->name().c_str();
-			info.key_type = typeinfo_to_state_type(d.second->key_info());
+			info.key_type = type_id_to_state_type(d.second->key_type_id());
 			p->m_table_infos.push_back(info);
 		}
 		*ntables = p->m_table_infos.size();
