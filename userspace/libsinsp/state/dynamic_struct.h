@@ -117,12 +117,15 @@ public:
 
 		inline size_t type_size() const { return m_info.size(); }
 
-		inline void construct_value(void* val) const {
+		inline void* construct_value() const {
+			void* val = malloc(m_info.size());
 			m_info.construct(val);
+			return val;
 		}
 
 		inline void destroy_value(void* val) const {
 			m_info.destroy(val);
+			free(val);
 		}
 
 		/**
@@ -349,7 +352,6 @@ protected:
 		}
 		for(size_t i = 0; i < m_fields.size(); i++) {
 			m_dynamic_fields->m_definitions_ordered[i]->destroy_value(m_fields[i]);
-			free(m_fields[i]);
 		}
 		m_fields.clear();
 	}
@@ -377,8 +379,7 @@ private:
 		}
 		while(m_fields.size() <= index) {
 			auto def = m_dynamic_fields->m_definitions_ordered[m_fields.size()];
-			void* fieldbuf = malloc(def->type_size());
-			def->construct_value(fieldbuf);
+			void* fieldbuf = def->construct_value();
 			m_fields.push_back(fieldbuf);
 		}
 		return m_fields[index];
