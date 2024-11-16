@@ -124,7 +124,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->thread_opencount_field =
 	        in->tables->fields.add_table_field(ret->thread_table,
 	                                           "open_evt_count",
-	                                           ss_plugin_state_type::SS_PLUGIN_ST_UINT64);
+	                                           ss_plugin_state_type::SS_PLUGIN_ST_UINT64,
+	                                           nullptr);
 	if(!ret->thread_opencount_field) {
 		*rc = SS_PLUGIN_FAILURE;
 		auto err = in->get_owner_last_error(in->owner);
@@ -138,7 +139,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->event_count_table_count_field = ret->event_count_table->fields.add_table_field(
 	        ret->event_count_table->table,
 	        "count",
-	        ss_plugin_state_type::SS_PLUGIN_ST_UINT64);
+	        ss_plugin_state_type::SS_PLUGIN_ST_UINT64,
+	        nullptr);
 	if(!ret->event_count_table_count_field) {
 		*rc = SS_PLUGIN_FAILURE;
 		ret->lasterr = "can't define event counter fields (count)";

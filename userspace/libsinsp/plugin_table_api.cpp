@@ -338,7 +338,8 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 		virtual const ds::field_info& add_field_info(const ds::field_info& field) override {
 			auto ret = m_input->fields_ext->add_table_field(m_input->table,
 			                                                field.name().c_str(),
-			                                                type_id_to_state_type(field.type_id()));
+			                                                type_id_to_state_type(field.type_id()),
+			                                                nullptr); // TODO: add field ops
 			if(ret == NULL) {
 				throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
 				                      "add table field failure: " + m_owner->get_last_error());
@@ -894,7 +895,8 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::get_field(
 ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::add_field(
         ss_plugin_table_t* _t,
         const char* name,
-        ss_plugin_state_type data_type) {
+        ss_plugin_state_type data_type,
+        const ss_plugin_field_ops* field_ops) {
 	auto t = static_cast<sinsp_table_wrapper*>(_t);
 
 	if(data_type == ss_plugin_state_type::SS_PLUGIN_ST_TABLE) {
@@ -905,7 +907,7 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::add_field(
 
 	if(t->m_table_plugin_input) {
 		auto pt = t->m_table_plugin_input->table;
-		auto ret = t->m_table_plugin_input->fields_ext->add_table_field(pt, name, data_type);
+		auto ret = t->m_table_plugin_input->fields_ext->add_table_field(pt, name, data_type, field_ops);
 		if(ret == NULL) {
 			t->m_owner_plugin->m_last_owner_err = t->m_table_plugin_owner->get_last_error();
 		}
@@ -918,6 +920,7 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::add_field(
 		return NULL;
 	}
 
+	// TODO pass field_ops to the dynamic field creation
 #define _X(_type, _dtype)                                     \
 	{                                                         \
 		t->m_table->dynamic_fields()->add_field<_type>(name); \
@@ -1356,9 +1359,10 @@ static ss_plugin_table_field_t* dispatch_get_field(ss_plugin_table_t* _t,
 
 static ss_plugin_table_field_t* dispatch_add_field(ss_plugin_table_t* _t,
                                                    const char* name,
-                                                   ss_plugin_state_type data_type) {
+                                                   ss_plugin_state_type data_type,
+                                                   const ss_plugin_field_ops* field_ops) {
 	auto t = static_cast<ss_plugin_table_input*>(_t);
-	return t->fields_ext->add_table_field(t->table, name, data_type);
+	return t->fields_ext->add_table_field(t->table, name, data_type, field_ops);
 }
 
 static const char* dispatch_get_name(ss_plugin_table_t* _t) {

@@ -146,7 +146,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->table_field_fdtable_custom =
 	        in->tables->fields_ext->add_table_field(fdtable,
 	                                                "custom",
-	                                                ss_plugin_state_type::SS_PLUGIN_ST_STRING);
+	                                                ss_plugin_state_type::SS_PLUGIN_ST_STRING,
+	                                                nullptr);
 	if(!ret->table_field_fdtable_custom) {
 		*rc = SS_PLUGIN_FAILURE;
 		ret->lasterr = "can't add sub-table custom field";

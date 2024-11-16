@@ -327,7 +327,8 @@ private:
 		                                                 ss_plugin_state_type data_type);
 		static inline ss_plugin_table_field_t* add_field(ss_plugin_table_t* _t,
 		                                                 const char* name,
-		                                                 ss_plugin_state_type data_type);
+		                                                 ss_plugin_state_type data_type,
+		                                                 const ss_plugin_field_ops* field_ops);
 		static inline const char* get_name(ss_plugin_table_t* _t);
 		static inline uint64_t get_size(ss_plugin_table_t* _t);
 		static inline ss_plugin_table_entry_t* get_entry(ss_plugin_table_t* _t,

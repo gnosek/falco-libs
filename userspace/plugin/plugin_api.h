@@ -46,6 +46,16 @@ extern "C" {
 //
 #define PLUGIN_MAX_ERRLEN 1024
 
+typedef struct {
+	void* arg;
+
+	void* (*allocate_field)(void* arg);
+	void (*free_field)(void* arg, void* field);
+
+	ss_plugin_rc (*read_field)(void* arg, const void* field, ss_plugin_state_data* out);
+	ss_plugin_rc (*write_field)(void* arg, void* field, const ss_plugin_state_data* in);
+} ss_plugin_field_ops;
+
 // Supported by the API but deprecated. Use the extended version ss_plugin_table_reader_vtable_ext
 // instead. todo(jasondellaluce): when/if major changes to v4, remove this and give this name to the
 // associated *_ext struct.
@@ -56,7 +66,8 @@ typedef struct {
 	                                            ss_plugin_state_type data_type);
 	ss_plugin_table_field_t* (*add_table_field)(ss_plugin_table_t* t,
 	                                            const char* name,
-	                                            ss_plugin_state_type data_type);
+	                                            ss_plugin_state_type data_type,
+	                                            const ss_plugin_field_ops* field_ops);
 } ss_plugin_table_fields_vtable;
 
 // Vtable for controlling and the fields for the entries of a state table.
@@ -89,7 +100,8 @@ typedef struct {
 	// times with different data types).
 	ss_plugin_table_field_t* (*add_table_field)(ss_plugin_table_t* t,
 	                                            const char* name,
-	                                            ss_plugin_state_type data_type);
+	                                            ss_plugin_state_type data_type,
+	                                            const ss_plugin_field_ops* field_ops);
 } ss_plugin_table_fields_vtable_ext;
 
 // Supported by the API but deprecated. Use the extended version ss_plugin_table_reader_vtable_ext

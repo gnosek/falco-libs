@@ -96,7 +96,8 @@ public:
 
 	static ss_plugin_table_field_t* add_field(ss_plugin_table_t* _t,
 	                                          const char* name,
-	                                          ss_plugin_state_type data_type) {
+	                                          ss_plugin_state_type data_type,
+	                                          const ss_plugin_field_ops* field_ops) { // TODO use field_ops?
 		auto t = static_cast<sample_table*>(_t);
 		for(size_t i = 0; i < t->fields.size(); i++) {
 			const auto& f = t->fields[i];

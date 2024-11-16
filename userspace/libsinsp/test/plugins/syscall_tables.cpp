@@ -108,7 +108,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->thread_dynamic_field =
 	        in->tables->fields.add_table_field(ret->thread_table,
 	                                           "some_new_dynamic_field",
-	                                           ss_plugin_state_type::SS_PLUGIN_ST_UINT64);
+	                                           ss_plugin_state_type::SS_PLUGIN_ST_UINT64,
+	                                           nullptr);
 	if(!ret->thread_dynamic_field) {
 		*rc = SS_PLUGIN_FAILURE;
 		auto err = in->get_owner_last_error(in->owner);
@@ -118,7 +119,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->thread_dynamic_field_str =
 	        in->tables->fields.add_table_field(ret->thread_table,
 	                                           "some_new_dynamic_field_str",
-	                                           ss_plugin_state_type::SS_PLUGIN_ST_STRING);
+	                                           ss_plugin_state_type::SS_PLUGIN_ST_STRING,
+	                                           nullptr);
 	if(!ret->thread_dynamic_field_str) {
 		*rc = SS_PLUGIN_FAILURE;
 		auto err = in->get_owner_last_error(in->owner);
@@ -132,7 +134,8 @@ ss_plugin_t* plugin_init(const ss_plugin_init_input* in, ss_plugin_rc* rc) {
 	ret->internal_dynamic_field =
 	        ret->internal_table->fields.add_table_field(ret->internal_table->table,
 	                                                    "u64_val",
-	                                                    ss_plugin_state_type::SS_PLUGIN_ST_UINT64);
+	                                                    ss_plugin_state_type::SS_PLUGIN_ST_UINT64,
+	                                                    nullptr);
 	if(!ret->internal_dynamic_field) {
 		*rc = SS_PLUGIN_FAILURE;
 		ret->lasterr = "can't define internal table field";
