@@ -19,10 +19,12 @@ limitations under the License.
 #pragma once
 
 #include <libsinsp/state/type_info.h>
+#include <plugin/plugin_api.h>
 
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <optional>
 
 namespace libsinsp {
 namespace state {
@@ -45,8 +47,9 @@ public:
 		static inline field_info build(const std::string& name,
 		                               size_t index,
 		                               uintptr_t defsptr,
-		                               bool readonly = false) {
-			return field_info(name, index, libsinsp::state::typeinfo::of<T>(), defsptr, readonly);
+		                               bool readonly = false,
+		                               ss_plugin_field_ops* ops = nullptr) {
+			return field_info(name, index, libsinsp::state::typeinfo::of<T>(), defsptr, readonly, ops);
 		}
 
 		inline field_info():
@@ -145,18 +148,22 @@ public:
 		                  size_t in,
 		                  const typeinfo& i,
 		                  uintptr_t defsptr,
-		                  bool r):
+		                  bool r,
+		                  const ss_plugin_field_ops* ops):
 		        m_readonly(r),
 		        m_index(in),
 		        m_name(n),
 		        m_info(i),
-		        m_defs_id(defsptr) {}
+		        m_defs_id(defsptr),
+				m_field_ops(ops ? std::optional(*ops) : std::nullopt){}
 
 		bool m_readonly;
 		size_t m_index;
 		std::string m_name;
 		libsinsp::state::typeinfo m_info;
 		uintptr_t m_defs_id;
+
+		std::optional<ss_plugin_field_ops> m_field_ops;
 	};
 
 	/**
@@ -214,8 +221,8 @@ public:
 		 * @param name Display name of the field.
 		 */
 		template<typename T>
-		inline const field_info& add_field(const std::string& name) {
-			auto field = field_info::build<T>(name, m_definitions.size(), id());
+		inline const field_info& add_field(const std::string& name, const ss_plugin_field_ops* ops = nullptr) {
+			auto field = field_info::build<T>(name, m_definitions.size(), id(), ops);
 			return add_field_info(field);
 		}
 
