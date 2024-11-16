@@ -108,6 +108,10 @@ public:
 
 		inline const char* type_name() const { return m_info.name(); }
 
+		inline const ss_plugin_field_ops* field_ops() const {
+			return m_field_ops ? &m_field_ops.value() : nullptr;
+		}
+
 		inline void* construct_value() const {
 			void* val = malloc(m_info.size());
 			m_info.construct(val);

@@ -339,7 +339,7 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 			auto ret = m_input->fields_ext->add_table_field(m_input->table,
 			                                                field.name().c_str(),
 			                                                type_id_to_state_type(field.type_id()),
-			                                                nullptr); // TODO: add field ops
+			                                                field.field_ops());
 			if(ret == NULL) {
 				throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
 				                      "add table field failure: " + m_owner->get_last_error());
@@ -920,10 +920,9 @@ ss_plugin_table_field_t* sinsp_plugin::sinsp_table_wrapper::add_field(
 		return NULL;
 	}
 
-	// TODO pass field_ops to the dynamic field creation
 #define _X(_type, _dtype)                                     \
 	{                                                         \
-		t->m_table->dynamic_fields()->add_field<_type>(name); \
+		t->m_table->dynamic_fields()->add_field<_type>(name, field_ops); \
 		break;                                                \
 	}
 	__CATCH_ERR_MSG(t->m_owner_plugin->m_last_owner_err, {
