@@ -49,16 +49,6 @@ public:
 			return field_info(name, index, libsinsp::state::typeinfo::of<T>(), defsptr, readonly);
 		}
 
-		inline field_info(const std::string& n,
-		                  size_t in,
-		                  const typeinfo& i,
-		                  uintptr_t defsptr,
-		                  bool r):
-		        m_readonly(r),
-		        m_index(in),
-		        m_name(n),
-		        m_info(i),
-		        m_defs_id(defsptr) {}
 		inline field_info():
 		        m_readonly(true),
 		        m_index((size_t)-1),
@@ -149,6 +139,17 @@ public:
 		}
 
 	private:
+		inline field_info(const std::string& n,
+		                  size_t in,
+		                  const typeinfo& i,
+		                  uintptr_t defsptr,
+		                  bool r):
+		        m_readonly(r),
+		        m_index(in),
+		        m_name(n),
+		        m_info(i),
+		        m_defs_id(defsptr) {}
+
 		bool m_readonly;
 		size_t m_index;
 		std::string m_name;
