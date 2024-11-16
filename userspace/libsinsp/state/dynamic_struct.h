@@ -87,9 +87,15 @@ public:
 		 * @brief Returns true if the field info is valid.
 		 */
 		inline bool valid() const {
-			// note(jasondellaluce): for now dynamic fields of type table are
-			// not supported, so we consider them to be invalid
-			return m_index != (size_t)-1 && m_info.index() != typeinfo::index_t::TI_TABLE;
+			if(m_index == (size_t)-1) {
+				return false;
+			}
+
+			if(m_info.index() == typeinfo::index_t::TI_TABLE) {
+                return m_field_ops.has_value();
+            }
+
+			return true;
 		}
 
 		/**

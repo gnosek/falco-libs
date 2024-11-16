@@ -401,10 +401,6 @@ struct plugin_table_wrapper : public libsinsp::state::table<KeyType> {
 		}
 
 		virtual void get_dynamic_field(const ds::field_info& i, void* out) override {
-			if(i.type_id() == libsinsp::state::typeinfo::index_t::TI_TABLE) {
-				throw sinsp_exception(table_input_error_prefix(m_owner, m_input.get()) +
-				                      "read field failure: dynamic table fields not supported");
-			}
 			const auto& infos = get_plugin_field_infos();
 			ss_plugin_state_data dout;
 			auto rc = m_input->reader_ext->read_entry_field(m_input->table,
