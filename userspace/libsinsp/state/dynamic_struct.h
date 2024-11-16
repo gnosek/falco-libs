@@ -113,21 +113,39 @@ public:
 		}
 
 		inline void* construct_value() const {
+			if(m_field_ops) {
+				return m_field_ops->allocate_field(m_field_ops->arg);
+			}
+
 			void* val = malloc(m_info.size());
 			m_info.construct(val);
 			return val;
 		}
 
 		inline void destroy_value(void* val) const {
+			if(m_field_ops) {
+				m_field_ops->free_field(m_field_ops->arg, val);
+				return;
+			}
+
 			m_info.destroy(val);
 			free(val);
 		}
 
 		inline void get(void* to, const void* from) const {
+			if(m_field_ops) {
+				m_field_ops->read_field(m_field_ops->arg, from, static_cast<ss_plugin_state_data*>(to));
+				return;
+			}
+
 			memcpy(to, from, m_info.size());
 		}
 
 		inline void set(void* to, const void* from) const {
+			if(m_field_ops) {
+				m_field_ops->write_field(m_field_ops->arg, to, static_cast<const ss_plugin_state_data*>(from));
+			}
+
             memcpy(to, from, m_info.size());
         }
 
