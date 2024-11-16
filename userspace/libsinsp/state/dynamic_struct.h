@@ -155,8 +155,6 @@ public:
 		std::string m_name;
 		libsinsp::state::typeinfo m_info;
 		uintptr_t m_defs_id;
-
-		friend class dynamic_struct;
 	};
 
 	/**
@@ -321,7 +319,7 @@ protected:
 	 * For strings, "out" is considered of type const char**.
 	 */
 	virtual void get_dynamic_field(const field_info& i, void* out) {
-		const auto* buf = _access_dynamic_field(i.m_index);
+		const auto* buf = _access_dynamic_field(i.index());
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)buf)->c_str();
 		} else {
@@ -336,7 +334,7 @@ protected:
 	 * For strings, "in" is considered of type const char**.
 	 */
 	virtual void set_dynamic_field(const field_info& i, const void* in) {
-		auto* buf = _access_dynamic_field(i.m_index);
+		auto* buf = _access_dynamic_field(i.index());
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)buf) = *((const char**)in);
 		} else {
@@ -362,7 +360,7 @@ private:
 		if(!i.valid()) {
 			throw sinsp_exception("can't set invalid field in dynamic struct");
 		}
-		if(m_dynamic_fields->id() != i.m_defs_id) {
+		if(m_dynamic_fields->id() != i.defs_id()) {
 			throw sinsp_exception(
 			        "using dynamic field accessor on struct it was not created from: " + i.name());
 		}
