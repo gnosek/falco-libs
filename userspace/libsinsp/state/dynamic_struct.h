@@ -123,9 +123,13 @@ public:
 			free(val);
 		}
 
-		inline void copy(void* to, const void* from) const {
+		inline void get(void* to, const void* from) const {
 			memcpy(to, from, m_info.size());
 		}
+
+		inline void set(void* to, const void* from) const {
+            memcpy(to, from, m_info.size());
+        }
 
 		/**
 		 * @brief Returns a strongly-typed accessor for the given field,
@@ -336,7 +340,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)buf)->c_str();
 		} else {
-			i.copy(out, buf);
+			i.get(out, buf);
 		}
 	}
 
@@ -351,7 +355,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)buf) = *((const char**)in);
 		} else {
-			i.copy(buf, in);
+			i.set(buf, in);
 		}
 	}
 
