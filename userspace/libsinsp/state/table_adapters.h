@@ -119,7 +119,7 @@ private:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)value)->c_str();
 		} else {
-			memcpy(out, (const void*)value, i.type_size());
+			i.copy(out, (const void*)value);
 		}
 	}
 
@@ -128,7 +128,7 @@ private:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)value) = *((const char**)in);
 		} else {
-			memcpy((void*)value, in, i.type_size());
+			i.copy((void*)value, in);
 		}
 	}
 };
@@ -178,7 +178,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)m_value)->c_str();
 		} else {
-			memcpy(out, (const void*)m_value, i.type_size());
+			i.copy(out, (const void*)m_value);
 		}
 	}
 
@@ -192,7 +192,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)m_value) = *((const char**)in);
 		} else {
-			memcpy((void*)m_value, in, i.type_size());
+			i.copy((void*)m_value, in);
 		}
 	}
 

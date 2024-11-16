@@ -105,8 +105,6 @@ public:
 
 		inline const char* type_name() const { return m_info.name(); }
 
-		inline size_t type_size() const { return m_info.size(); }
-
 		inline void* construct_value() const {
 			void* val = malloc(m_info.size());
 			m_info.construct(val);
@@ -116,6 +114,10 @@ public:
 		inline void destroy_value(void* val) const {
 			m_info.destroy(val);
 			free(val);
+		}
+
+		inline void copy(void* to, const void* from) const {
+			memcpy(to, from, m_info.size());
 		}
 
 		/**
@@ -323,7 +325,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((const char**)out) = ((const std::string*)buf)->c_str();
 		} else {
-			memcpy(out, buf, i.type_size());
+			i.copy(out, buf);
 		}
 	}
 
@@ -338,7 +340,7 @@ protected:
 		if(i.type_id() == typeinfo::index_t::TI_STRING) {
 			*((std::string*)buf) = *((const char**)in);
 		} else {
-			memcpy(buf, in, i.type_size());
+			i.copy(buf, in);
 		}
 	}
 
