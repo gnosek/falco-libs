@@ -1893,7 +1893,7 @@ TEST_F(sys_call_test, thread_lookup_live) {
 			return;
 		}
 
-		const auto evt_thread_tid = evt_tinfo->m_tid;
+		const auto evt_thread_tid = evt_tinfo->m_tid.load();
 		const auto evt_thread_pid = evt_tinfo->m_pid;
 		const auto evt_thread_vtid = evt_tinfo->m_vtid;
 

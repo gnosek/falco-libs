@@ -2022,12 +2022,11 @@ bool sinsp_thread_manager::remove_inactive_threads() {
 	// 2. Threads that we are not using and that are no more alive in /proc.
 	std::unordered_set<int64_t> to_delete;
 	m_threadtable.loop([&](sinsp_threadinfo& tinfo) {
-		if(tinfo.is_invalid() || (last_event_ts > tinfo.m_lastaccess_ts + m_thread_timeout_ns &&
-		                          !scap_is_thread_alive(m_scap_platform,
-		                                                tinfo.m_pid,
-		                                                tinfo.m_tid,
-		                                                tinfo.m_comm.c_str()))) {
-			to_delete.insert(tinfo.m_tid);
+		int64_t tid = tinfo.m_tid;
+		if(tinfo.is_invalid() ||
+		   (last_event_ts > tinfo.m_lastaccess_ts + m_thread_timeout_ns &&
+		    !scap_is_thread_alive(m_scap_platform, tinfo.m_pid, tid, tinfo.m_comm.c_str()))) {
+			to_delete.insert(tid);
 		}
 		return true;
 	});

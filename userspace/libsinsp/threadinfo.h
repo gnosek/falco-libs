@@ -351,7 +351,7 @@ public:
 	//
 	// Core state
 	//
-	int64_t m_tid;   ///< The id of this thread
+	std::atomic<int64_t> m_tid;  ///< The id of this thread
 	int64_t m_pid;   ///< The id of the process containing this thread. In single thread threads,
 	                 ///< this is equal to tid.
 	int64_t m_ptid;  ///< The id of the process that started this thread.
@@ -558,8 +558,9 @@ public:
 	typedef std::shared_ptr<sinsp_threadinfo> ptr_t;
 
 	inline const ptr_t& put(const ptr_t& tinfo) {
-		m_threads[tinfo->m_tid] = tinfo;
-		return m_threads[tinfo->m_tid];
+		int64_t tid = tinfo->m_tid;
+		m_threads[tid] = tinfo;
+		return m_threads[tid];
 	}
 
 	inline sinsp_threadinfo* get(uint64_t tid) {
