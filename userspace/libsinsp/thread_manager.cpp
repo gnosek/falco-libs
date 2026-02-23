@@ -451,13 +451,14 @@ void sinsp_thread_manager::remove_thread(int64_t tid) {
 	 */
 	if(thread_to_remove->m_children.size()) {
 		sinsp_threadinfo* reaper_tinfo = nullptr;
+		int64_t reaper_tid = thread_to_remove->m_reaper_tid.load();
 
-		if(thread_to_remove->m_reaper_tid > 0) {
+		if(reaper_tid > 0) {
 			/* The kernel sent us a valid reaper
 			 * We should have the reaper thread in the table, but if we don't have
 			 * it, we try to create it from /proc
 			 */
-			reaper_tinfo = get_thread(thread_to_remove->m_reaper_tid).get();
+			reaper_tinfo = get_thread(reaper_tid).get();
 		}
 
 		if(reaper_tinfo == nullptr || reaper_tinfo->is_invalid()) {
@@ -469,7 +470,7 @@ void sinsp_thread_manager::remove_thread(int64_t tid) {
 
 		if(reaper_tinfo != nullptr) {
 			/* We update the reaper tid if necessary. */
-			thread_to_remove->m_reaper_tid = reaper_tinfo->m_tid;
+			thread_to_remove->m_reaper_tid.store(reaper_tinfo->m_tid.load());
 
 			/* If that thread group was not marked as a reaper we mark it now.
 			 * Since the reaper could be also a thread in the same thread group
