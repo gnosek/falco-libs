@@ -52,7 +52,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	libsinsp::state::static_field_infos ret;
 	// todo(jasondellaluce): support missing fields that are vectors, maps, or sub-tables
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_tid, "tid", SS_PLUGIN_ST_INT64);
-	DEFINE_STATIC_FIELD(ret, self, m_pid, "pid");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_pid, "pid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_FIELD(ret, self, m_ptid, "ptid");
 	DEFINE_STATIC_FIELD(ret, self, m_reaper_tid, "reaper_tid");
 	DEFINE_STATIC_FIELD(ret, self, m_sid, "sid");
@@ -444,7 +444,7 @@ void sinsp_threadinfo::set_env(const char* const env, size_t len, const bool can
 		if(set_env_from_proc()) {
 			libsinsp_logger()->format(sinsp_logger::SEV_DEBUG,
 			                          "Large environment for process %lu [%s], loaded from /proc",
-			                          m_pid,
+			                          m_pid.load(),
 			                          m_comm.c_str());
 			return;
 		}
@@ -452,7 +452,7 @@ void sinsp_threadinfo::set_env(const char* const env, size_t len, const bool can
 		libsinsp_logger()->format(sinsp_logger::SEV_INFO,
 		                          "Failed to load environment for process %lu [%s] from /proc, "
 		                          "using first %d bytes",
-		                          m_pid,
+		                          m_pid.load(),
 		                          m_comm.c_str(),
 		                          SCAP_MAX_ENV_SIZE);
 	}

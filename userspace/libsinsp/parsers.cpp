@@ -861,14 +861,14 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		/* Create info about the thread group */
 
 		/* pid */
-		child_tinfo->m_pid = child_tinfo->m_tid;
+		child_tinfo->m_pid.store(child_tinfo->m_tid.load());
 
 		/* The child parent is the calling process */
 		child_tinfo->m_ptid = caller_tinfo->m_tid;
 	} else /* Simple thread case */
 	{
 		/* pid */
-		child_tinfo->m_pid = caller_tinfo->m_pid;
+		child_tinfo->m_pid.store(caller_tinfo->m_pid.load());
 
 		/* ptid */
 		/* The parent is the parent of the calling process */
@@ -1175,7 +1175,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 			/* pid. */
 			/* the new thread pid is the same of the main thread */
-			lookup_tinfo->m_pid = child_tinfo->m_pid;
+			lookup_tinfo->m_pid.store(child_tinfo->m_pid.load());
 
 			/* ptid */
 			/* the new thread ptid is the same of the main thread */
@@ -2173,7 +2173,7 @@ inline void sinsp_parser::infer_send_sendto_sendmsg_fdinfo(sinsp_evt &evt) const
 		        fd,
 		        (domain == PPM_AF_INET) ? "PPM_AF_INET" : "PPM_AF_INET6",
 		        evt.get_tinfo()->get_comm().c_str(),
-		        evt.get_tinfo()->m_pid);
+		        evt.get_tinfo()->m_pid.load());
 #endif
 
 		// Here we're assuming send*() means SOCK_DGRAM/UDP, but it

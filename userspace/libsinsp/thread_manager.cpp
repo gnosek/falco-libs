@@ -172,17 +172,18 @@ void sinsp_thread_manager::create_thread_dependencies(
 	}
 
 	bool reaper = false;
+	int64_t pid = tinfo->m_pid;
 	/* reaper should be true if we are an init process for the init namespace or for an inner
 	 * namespace */
-	if(tinfo->m_pid == 1 || tinfo->m_vpid == 1) {
+	if(pid == 1 || tinfo->m_vpid == 1) {
 		reaper = true;
 	}
 
 	/* Create the thread group info for the thread. */
-	auto tginfo = get_thread_group_info(tinfo->m_pid);
+	auto tginfo = get_thread_group_info(pid);
 	if(tginfo == nullptr) {
-		tginfo = std::make_shared<thread_group_info>(tinfo->m_pid, reaper, tinfo);
-		set_thread_group_info(tinfo->m_pid, tginfo);
+		tginfo = std::make_shared<thread_group_info>(pid, reaper, tinfo);
+		set_thread_group_info(pid, tginfo);
 	} else {
 		tginfo->add_thread_to_group(tinfo, tinfo->is_main_thread());
 	}
@@ -203,7 +204,7 @@ void sinsp_thread_manager::create_thread_dependencies(
 	}
 
 	/* init group has no parent */
-	if(tinfo->m_pid == 1) {
+	if(pid == 1) {
 		return;
 	}
 
@@ -237,7 +238,7 @@ const std::shared_ptr<sinsp_threadinfo>& sinsp_thread_manager::add_thread(
 				        sinsp_logger::SEV_INFO,
 				        "Thread table full, dropping tid %lu (pid %lu, comm \"%s\")",
 				        threadinfo->m_tid.load(),
-				        threadinfo->m_pid,
+				        threadinfo->m_pid.load(),
 				        threadinfo->m_comm.c_str());
 			}
 			m_sinsp_stats_v2->m_n_drops_full_threadtable++;
@@ -428,6 +429,7 @@ void sinsp_thread_manager::remove_thread(int64_t tid) {
 		thread_to_remove->set_dead();
 	}
 
+	int64_t pid = thread_to_remove->m_pid;
 	/* [Reparent children]
 	 * There are different cases:
 	 * 1. We have no children so we have nothing to reparent.
@@ -479,7 +481,7 @@ void sinsp_thread_manager::remove_thread(int64_t tid) {
 			 * `is_child_subreaper` but here we don't make distinctions we mark reapers and sub
 			 * reapers with the same flag.
 			 */
-			if(reaper_tinfo->m_pid != thread_to_remove->m_pid && reaper_tinfo->m_tginfo) {
+			if(reaper_tinfo->m_pid != pid && reaper_tinfo->m_tginfo) {
 				reaper_tinfo->m_tginfo->set_reaper(true);
 			}
 		}
@@ -497,8 +499,8 @@ void sinsp_thread_manager::remove_thread(int64_t tid) {
 		 * the same so it's ok.
 		 */
 		remove_child_from_parent(thread_to_remove->m_ptid);
-		m_thread_groups.erase(thread_to_remove->m_pid);
-		m_threadtable.erase(thread_to_remove->m_pid);
+		m_thread_groups.erase(pid);
+		m_threadtable.erase(pid);
 	}
 
 	/* [Remove the current thread]

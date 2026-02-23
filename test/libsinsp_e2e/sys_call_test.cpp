@@ -1894,7 +1894,7 @@ TEST_F(sys_call_test, thread_lookup_live) {
 		}
 
 		const auto evt_thread_tid = evt_tinfo->m_tid.load();
-		const auto evt_thread_pid = evt_tinfo->m_pid;
+		const auto evt_thread_pid = evt_tinfo->m_pid.load();
 		const auto evt_thread_vtid = evt_tinfo->m_vtid;
 
 		if(scap_proc_read_thread(linux_platform, proclist, proc, tid, err_buf, false) ==

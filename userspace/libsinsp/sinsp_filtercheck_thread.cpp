@@ -1090,10 +1090,11 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		}
 		RETURN_EXTRACT_VAR(m_val.s64);
 	case TYPE_PID:
-		if(!should_extract_xid(tinfo->m_pid)) {
+		m_val.s64 = tinfo->m_pid;
+		if(!should_extract_xid(m_val.s64)) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(tinfo->m_pid);
+		RETURN_EXTRACT_VAR(m_val.s64);
 	case TYPE_SID:
 		RETURN_EXTRACT_VAR(tinfo->m_sid);
 	case TYPE_VPGID:
@@ -1308,7 +1309,9 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		if(!should_extract_xid(mt->m_pid)) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(mt->m_pid);
+
+		m_val.s64 = mt->m_pid;
+		RETURN_EXTRACT_VAR(m_val.s64);
 	}
 	case TYPE_PNAME: {
 		sinsp_threadinfo* ptinfo = m_inspector->m_thread_manager->get_ancestor_process(*tinfo);
@@ -1346,7 +1349,9 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		if(!should_extract_xid(mt->m_pid)) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(mt->m_pid);
+
+		m_val.s64 = mt->m_pid;
+		RETURN_EXTRACT_VAR(m_val.s64);
 	}
 	case TYPE_ANAME: {
 		sinsp_threadinfo* mt = m_inspector->m_thread_manager->get_ancestor_process(*tinfo, m_argid);
@@ -1395,7 +1400,6 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 	}
 	case TYPE_LOGINSHELLID: {
 		sinsp_threadinfo* mt = NULL;
-		int64_t* res = NULL;
 
 		if(tinfo->is_main_thread()) {
 			mt = tinfo;
@@ -1407,11 +1411,11 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 			}
 		}
 
-		sinsp_thread_manager::visitor_func_t check_thread_for_shell = [&res](sinsp_threadinfo* pt) {
+		sinsp_thread_manager::visitor_func_t check_thread_for_shell = [&](sinsp_threadinfo* pt) {
 			size_t len = pt->m_comm.size();
 
 			if(len >= 2 && pt->m_comm[len - 2] == 's' && pt->m_comm[len - 1] == 'h') {
-				res = &pt->m_pid;
+				m_val.s64 = pt->m_pid.load();
 			}
 
 			return true;
@@ -1423,7 +1427,7 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		// Then check all its parents to see if they are shells
 		m_inspector->m_thread_manager->traverse_parent_state(*mt, check_thread_for_shell);
 
-		RETURN_EXTRACT_PTR(res);
+		RETURN_EXTRACT_VAR(m_val.s64);
 	}
 	case TYPE_DURATION: {
 		if(tinfo->m_clone_ts != 0) {
