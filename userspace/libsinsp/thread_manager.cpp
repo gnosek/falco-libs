@@ -239,7 +239,7 @@ const std::shared_ptr<sinsp_threadinfo>& sinsp_thread_manager::add_thread(
 				        "Thread table full, dropping tid %lu (pid %lu, comm \"%s\")",
 				        threadinfo->m_tid.load(),
 				        threadinfo->m_pid.load(),
-				        threadinfo->m_comm.c_str());
+				        threadinfo->m_comm.lock()->c_str());
 			}
 			m_sinsp_stats_v2->m_n_drops_full_threadtable++;
 		}
@@ -682,8 +682,9 @@ void sinsp_thread_manager::traverse_parent_state(sinsp_threadinfo& tinfo, visito
 			break;
 		}
 
+		int64_t slow_ptid = slow->m_ptid;
 		// Advance slow one step and advance fast two steps
-		slow = find_thread(slow->m_ptid, true).get();
+		slow = find_thread(slow_ptid, true).get();
 
 		// advance fast 2 steps, checking to see if we meet
 		// slow after each step.
@@ -693,7 +694,7 @@ void sinsp_thread_manager::traverse_parent_state(sinsp_threadinfo& tinfo, visito
 			// If not at the end but fast == slow or if
 			// slow points to itself, there's a loop in
 			// the thread state.
-			if(slow && (slow == fast || slow->m_tid == slow->m_ptid)) {
+			if(slow && (slow == fast || slow->m_ptid == slow->m_tid)) {
 				tinfo.report_thread_loop(*slow);
 				return;
 			}
@@ -780,7 +781,7 @@ void sinsp_thread_manager::dump_threads_to_file(scap_dumper_t* dumper) {
 		if(scap_write_proclist_entry_bufs(proclist_dumper,
 		                                  &sctinfo,
 		                                  &entrylen,
-		                                  tinfo.m_comm.c_str(),
+		                                  tinfo.m_comm.lock()->c_str(),
 		                                  tinfo.m_exe.c_str(),
 		                                  tinfo.m_exepath.c_str(),
 		                                  args_iov,
@@ -939,7 +940,7 @@ const threadinfo_map_t::ptr_t& sinsp_thread_manager::get_thread(const int64_t ti
 			fake_tinfo->m_ptid = -1;
 			fake_tinfo->m_reaper_tid = -1;
 			fake_tinfo->m_not_expired_children = 0;
-			fake_tinfo->m_comm = "<NA>";
+			*fake_tinfo->m_comm.lock() = "<NA>";
 			fake_tinfo->m_exe = "<NA>";
 			fake_tinfo->m_uid = 0xffffffff;
 			fake_tinfo->m_gid = 0xffffffff;

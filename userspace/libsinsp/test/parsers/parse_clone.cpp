@@ -87,7 +87,7 @@ TEST_F(sinsp_with_test_input, CLONE_CALLER_tid_collision) {
 
 	sinsp_threadinfo* p1_t1_tinfo = thread_manager->find_thread(p1_t1_tid, true).get();
 	ASSERT_TRUE(p1_t1_tinfo);
-	ASSERT_EQ(p1_t1_tinfo->m_comm, "old_bash");
+	ASSERT_EQ(*p1_t1_tinfo->m_comm.lock(), "old_bash");
 
 	/* Remove the `PPM_CL_CLONE_INVERTED` flag */
 	p1_t1_tinfo->m_flags = p1_t1_tinfo->m_flags & ~PPM_CL_CLONE_INVERTED;
@@ -108,7 +108,7 @@ TEST_F(sinsp_with_test_input, CLONE_CALLER_tid_collision) {
 	p1_t1_tinfo = thread_manager->find_thread(p1_t1_tid, true).get();
 	ASSERT_TRUE(p1_t1_tinfo);
 	/* We should find the new name now since this should be a fresh thread info */
-	ASSERT_EQ(p1_t1_tinfo->m_comm, "new_bash");
+	ASSERT_EQ(*p1_t1_tinfo->m_comm.lock(), "new_bash");
 }
 
 TEST_F(sinsp_with_test_input, CLONE_CALLER_keep_existing_child) {
@@ -136,7 +136,7 @@ TEST_F(sinsp_with_test_input, CLONE_CALLER_keep_existing_child) {
 
 	sinsp_threadinfo* p1_t1_tinfo = thread_manager->find_thread(p1_t1_tid, true).get();
 	ASSERT_TRUE(p1_t1_tinfo);
-	ASSERT_EQ(p1_t1_tinfo->m_comm, "old_bash");
+	ASSERT_EQ(*p1_t1_tinfo->m_comm.lock(), "old_bash");
 
 	/* Parent clone exit event */
 	generate_clone_x_event(p1_t1_tid,
@@ -150,7 +150,7 @@ TEST_F(sinsp_with_test_input, CLONE_CALLER_keep_existing_child) {
 
 	p1_t1_tinfo = thread_manager->find_thread(p1_t1_tid, true).get();
 	ASSERT_TRUE(p1_t1_tinfo);
-	ASSERT_EQ(p1_t1_tinfo->m_comm, "old_bash");
+	ASSERT_EQ(*p1_t1_tinfo->m_comm.lock(), "old_bash");
 }
 
 TEST_F(sinsp_with_test_input, CLONE_CALLER_new_main_thread) {

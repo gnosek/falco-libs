@@ -807,19 +807,19 @@ const char *sinsp_evt::get_param_as_str(uint32_t id,
 		sinsp_threadinfo *atinfo =
 		        m_inspector->m_thread_manager->find_thread(param->as<int64_t>(), true).get();
 		if(atinfo != NULL) {
-			std::string &tcomm = atinfo->m_comm;
+			auto tcomm = atinfo->m_comm.lock();
 
 			//
 			// Make sure the string will fit
 			//
-			if(tcomm.size() >= m_resolved_paramstr_storage.size()) {
-				m_resolved_paramstr_storage.resize(tcomm.size() + 1);
+			if(tcomm->size() >= m_resolved_paramstr_storage.size()) {
+				m_resolved_paramstr_storage.resize(tcomm->size() + 1);
 			}
 
 			snprintf(&m_resolved_paramstr_storage[0],
 			         m_resolved_paramstr_storage.size(),
 			         "%s",
-			         tcomm.c_str());
+			         tcomm->c_str());
 		}
 	} break;
 	case PT_UINT8:

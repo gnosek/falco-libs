@@ -290,7 +290,7 @@ TEST_F(sys_call_test, poll_timeout) {
 
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		auto ti = evt->get_thread_info();
-		return evt->get_type() == PPME_SYSCALL_POLL_X && ti->m_comm == "test_helper";
+		return evt->get_type() == PPME_SYSCALL_POLL_X && *ti->m_comm.lock() == "test_helper";
 	};
 
 	std::string my_pipe[2];
@@ -1147,7 +1147,7 @@ TEST_F(sys_call_test, ppoll_timeout) {
 	int callnum = 0;
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		return evt->get_type() == PPME_SYSCALL_PPOLL_X &&
-		       evt->get_thread_info()->m_comm == "test_helper";
+		       *evt->get_thread_info()->m_comm.lock() == "test_helper";
 	};
 
 	run_callback_t test = [&](sinsp* inspector) {
@@ -1208,7 +1208,7 @@ TEST_F(sys_call_test, getsetresuid_and_gid) {
 			auto sinsp = evt->get_inspector();
 			tinfo = sinsp->m_thread_manager->get_thread(evt->get_tid()).get();
 		}
-		return tinfo->m_comm != "sudo" && tinfo->m_pid == self &&
+		return *tinfo->m_comm.lock() != "sudo" && tinfo->m_pid == self &&
 		       (type == PPME_USER_ADDED_E || type == PPME_USER_ADDED_X ||
 		        type == PPME_GROUP_ADDED_E || type == PPME_GROUP_ADDED_X ||
 		        type == PPME_SYSCALL_GETRESUID_X || type == PPME_SYSCALL_GETRESGID_X ||
@@ -1519,7 +1519,7 @@ TEST_F(sys_call_test32, mmap) {
 	//
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		auto tinfo = evt->get_thread_info();
-		return tinfo && tinfo->m_comm == "test_helper_32" && ps_filter(evt);
+		return tinfo && *tinfo->m_comm.lock() == "test_helper_32" && ps_filter(evt);
 	};
 
 	uint64_t p = -1;
@@ -1653,7 +1653,7 @@ TEST_F(sys_call_test32, ppoll_timeout) {
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		auto tinfo = evt->get_thread_info();
 		return evt->get_type() == PPME_SYSCALL_PPOLL_X && tinfo != nullptr &&
-		       tinfo->m_comm == "test_helper_32";
+		       *tinfo->m_comm.lock() == "test_helper_32";
 	};
 
 	std::string my_pipe[2];
@@ -1722,7 +1722,7 @@ TEST_F(sys_call_test32, fs_preadv) {
 	//
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		auto tinfo = evt->get_thread_info();
-		if(tinfo && tinfo->m_comm == "test_helper_32") {
+		if(tinfo && *tinfo->m_comm.lock() == "test_helper_32") {
 			auto type = evt->get_type();
 			return type == PPME_SYSCALL_PREADV_X || type == PPME_SYSCALL_PWRITEV_X;
 		}

@@ -56,7 +56,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_ptid, "ptid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_reaper_tid, "reaper_tid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_sid, "sid", SS_PLUGIN_ST_INT64);
-	DEFINE_STATIC_FIELD(ret, self, m_comm, "comm");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_comm, "comm", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_FIELD(ret, self, m_exe, "exe");
 	DEFINE_STATIC_FIELD(ret, self, m_exepath, "exe_path");
 	DEFINE_STATIC_FIELD(ret, self, m_exe_writable, "exe_writable");
@@ -347,7 +347,7 @@ void sinsp_threadinfo::init(const scap_threadinfo& pinfo, const bool can_load_en
 	m_vpgid = pinfo.vpgid;
 	m_pgid = pinfo.pgid;
 
-	m_comm = pinfo.comm;
+	*m_comm.lock() = pinfo.comm;
 	m_exe = pinfo.exe;
 	/* The exepath is extracted from `/proc/pid/exe`. */
 	set_exepath(std::string(pinfo.exepath));
@@ -407,7 +407,7 @@ const sinsp_threadinfo::cgroups_t& sinsp_threadinfo::cgroups() const {
 }
 
 std::string sinsp_threadinfo::get_comm() const {
-	return m_comm;
+	return *m_comm.lock();
 }
 
 std::string sinsp_threadinfo::get_exe() const {
@@ -445,7 +445,7 @@ void sinsp_threadinfo::set_env(const char* const env, size_t len, const bool can
 			libsinsp_logger()->format(sinsp_logger::SEV_DEBUG,
 			                          "Large environment for process %lu [%s], loaded from /proc",
 			                          m_pid.load(),
-			                          m_comm.c_str());
+			                          m_comm.lock()->c_str());
 			return;
 		}
 
@@ -453,7 +453,7 @@ void sinsp_threadinfo::set_env(const char* const env, size_t len, const bool can
 		                          "Failed to load environment for process %lu [%s] from /proc, "
 		                          "using first %d bytes",
 		                          m_pid.load(),
-		                          m_comm.c_str(),
+		                          m_comm.lock()->c_str(),
 		                          SCAP_MAX_ENV_SIZE);
 	}
 

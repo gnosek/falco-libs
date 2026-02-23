@@ -2023,9 +2023,11 @@ bool sinsp_thread_manager::remove_inactive_threads() {
 	std::unordered_set<int64_t> to_delete;
 	m_threadtable.loop([&](sinsp_threadinfo& tinfo) {
 		int64_t tid = tinfo.m_tid;
-		if(tinfo.is_invalid() ||
-		   (last_event_ts > tinfo.m_lastaccess_ts + m_thread_timeout_ns &&
-		    !scap_is_thread_alive(m_scap_platform, tinfo.m_pid, tid, tinfo.m_comm.c_str()))) {
+		if(tinfo.is_invalid() || (last_event_ts > tinfo.m_lastaccess_ts + m_thread_timeout_ns &&
+		                          !scap_is_thread_alive(m_scap_platform,
+		                                                tinfo.m_pid,
+		                                                tid,
+		                                                tinfo.m_comm.lock()->c_str()))) {
 			to_delete.insert(tid);
 		}
 		return true;

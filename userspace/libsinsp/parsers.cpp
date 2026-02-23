@@ -907,9 +907,9 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 	/* comm */
 	if(const auto comm_param = evt.get_param(13); !comm_param->empty()) {
-		child_tinfo->m_comm = comm_param->as<std::string>();
+		*child_tinfo->m_comm.lock() = comm_param->as<std::string>();
 	} else {
-		child_tinfo->m_comm = child_tinfo->m_exe;
+		*child_tinfo->m_comm.lock() = child_tinfo->m_exe;
 	}
 
 	/* fdlimit */
@@ -1001,7 +1001,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		caller_tinfo->m_exe = child_tinfo->m_exe;
 
 		/* comm */
-		caller_tinfo->m_comm = child_tinfo->m_comm;
+		*caller_tinfo->m_comm.lock() = *child_tinfo->m_comm.lock();
 
 		/* args */
 		caller_tinfo->set_args(evt.get_param(2)->as<std::vector<std::string>>());
@@ -1036,7 +1036,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		reset(evt);
 		DBG_SINSP_INFO("tid collision for %" PRIu64 "(%s)",
 		               tid_collision,
-		               new_child->m_comm.c_str());
+		               new_child->m_comm.lock()->c_str());
 	}
 	/*=============================== ADD THREAD TO THE TABLE ===========================*/
 }
@@ -1203,9 +1203,9 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 	/* comm */
 	if(const auto comm_param = evt.get_param(13); !comm_param->empty()) {
-		child_tinfo->m_comm = comm_param->as<std::string>();
+		*child_tinfo->m_comm.lock() = comm_param->as<std::string>();
 	} else {
-		child_tinfo->m_comm = child_tinfo->m_exe;
+		*child_tinfo->m_comm.lock() = child_tinfo->m_exe;
 	}
 
 	/* args */
@@ -1312,7 +1312,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 			lookup_tinfo->m_exe = child_tinfo->m_exe;
 
 			/* comm */
-			lookup_tinfo->m_comm = child_tinfo->m_comm;
+			*lookup_tinfo->m_comm.lock() = *child_tinfo->m_comm.lock();
 
 			/* args */
 			lookup_tinfo->set_args(evt.get_param(2)->as<std::vector<std::string>>());
@@ -1409,7 +1409,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 		/* Right now we have collisions only on the clone() caller */
 		DBG_SINSP_INFO("tid collision for %" PRIu64 "(%s)",
 		               tid_collision,
-		               new_child->m_comm.c_str());
+		               new_child->m_comm.lock()->c_str());
 	}
 
 	/*=============================== CREATE NEW THREAD-INFO ===========================*/
@@ -1476,10 +1476,10 @@ void sinsp_parser::parse_execve_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 
 	// Set the comm.
 	if(const auto comm_param = evt.get_param(13); !comm_param->empty()) {
-		evt.get_tinfo()->m_comm = comm_param->as<std::string>();
+		*evt.get_tinfo()->m_comm.lock() = comm_param->as<std::string>();
 	} else {
 		// Old trace files didn't have comm, so just set it to exe.
-		evt.get_tinfo()->m_comm = evt.get_tinfo()->m_exe;
+		*evt.get_tinfo()->m_comm.lock() = evt.get_tinfo()->m_exe;
 	}
 
 	// Set the command arguments.
@@ -2123,7 +2123,7 @@ inline void sinsp_parser::add_socket(sinsp_evt &evt,
 		                " domain=" + std::to_string(domain) + " type=" + std::to_string(type) +
 		                " protocol=" + std::to_string(protocol) +
 		                " pid=" + std::to_string(evt.get_tinfo()->m_pid) +
-		                " comm=" + evt.get_tinfo()->m_comm);
+		                " comm=" + *evt.get_tinfo()->m_comm.lock());
 	}
 
 	//

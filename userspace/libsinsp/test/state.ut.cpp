@@ -385,7 +385,7 @@ TEST(thread_manager, table_access) {
 
 	ASSERT_NE(newtinfo, nullptr);
 	newtinfo->m_tid = 999;
-	newtinfo->m_comm = "test";
+	*newtinfo->m_comm.lock() = "test";
 	ASSERT_EQ(newt->read_field(tid_acc), (int64_t)999);
 	ASSERT_EQ(newt->read_field(comm_acc), "test");
 	ASSERT_NE(newt->read_field(fdtable_acc), nullptr);

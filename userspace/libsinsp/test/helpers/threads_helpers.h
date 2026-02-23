@@ -130,7 +130,7 @@ limitations under the License.
 	{                                                                                         \
 		sinsp_threadinfo* tinfo = m_inspector.m_thread_manager->find_thread(tid, true).get(); \
 		ASSERT_TRUE(tinfo);                                                                   \
-		ASSERT_EQ(tinfo->m_comm, comm);                                                       \
+		ASSERT_EQ(*tinfo->m_comm.lock(), comm);                                               \
 	}
 
 #define DEFAULT_TREE_NUM_PROCS 12

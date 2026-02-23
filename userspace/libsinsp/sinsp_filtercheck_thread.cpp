@@ -1413,9 +1413,10 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		}
 
 		sinsp_thread_manager::visitor_func_t check_thread_for_shell = [&](sinsp_threadinfo* pt) {
-			size_t len = pt->m_comm.size();
+			auto comm = pt->m_comm.lock();
+			size_t len = comm->size();
 
-			if(len >= 2 && pt->m_comm[len - 2] == 's' && pt->m_comm[len - 1] == 'h') {
+			if(len >= 2 && (*comm)[len - 2] == 's' && (*comm)[len - 1] == 'h') {
 				m_val.s64 = pt->m_pid.load();
 			}
 
@@ -1797,11 +1798,8 @@ bool sinsp_filter_check_thread::compare_full_aname(sinsp_evt* evt) {
 	//
 	bool found = false;
 	sinsp_thread_manager::visitor_func_t visitor = [this, &found](sinsp_threadinfo* pt) {
-		bool res;
-
-		res = compare_rhs(m_cmpop, PT_CHARBUF, (void*)pt->m_comm.c_str());
-
-		if(res == true) {
+		auto comm = pt->m_comm.lock();
+		if(compare_rhs(m_cmpop, PT_CHARBUF, comm->c_str()) == true) {
 			found = true;
 
 			// Can stop traversing parent state
