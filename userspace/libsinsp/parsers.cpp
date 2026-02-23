@@ -864,7 +864,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		child_tinfo->m_pid.store(child_tinfo->m_tid.load());
 
 		/* The child parent is the calling process */
-		child_tinfo->m_ptid = caller_tinfo->m_tid;
+		child_tinfo->m_ptid.store(caller_tinfo->m_tid.load());
 	} else /* Simple thread case */
 	{
 		/* pid */
@@ -872,7 +872,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 		/* ptid */
 		/* The parent is the parent of the calling process */
-		child_tinfo->m_ptid = caller_tinfo->m_ptid;
+		child_tinfo->m_ptid.store(caller_tinfo->m_ptid.load());
 
 		/* Please note this is not the right behavior, it is something we do to be compliant with
 		 * `/proc` scan.
@@ -1179,7 +1179,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 			/* ptid */
 			/* the new thread ptid is the same of the main thread */
-			lookup_tinfo->m_ptid = child_tinfo->m_ptid;
+			lookup_tinfo->m_ptid.store(child_tinfo->m_ptid.load());
 
 			/* vpid */
 			/* we are in the same thread group, the vpid is the same of the child */

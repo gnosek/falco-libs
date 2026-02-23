@@ -53,7 +53,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	// todo(jasondellaluce): support missing fields that are vectors, maps, or sub-tables
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_tid, "tid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_pid, "pid", SS_PLUGIN_ST_INT64);
-	DEFINE_STATIC_FIELD(ret, self, m_ptid, "ptid");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_ptid, "ptid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_FIELD(ret, self, m_reaper_tid, "reaper_tid");
 	DEFINE_STATIC_FIELD(ret, self, m_sid, "sid");
 	DEFINE_STATIC_FIELD(ret, self, m_comm, "comm");

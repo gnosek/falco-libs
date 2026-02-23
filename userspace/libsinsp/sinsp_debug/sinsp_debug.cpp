@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 					printf("- move child, tid: %" PRId64 ", ptid: %" PRId64
 					       " (dead) to a new reaper.\n",
 					       child_shr->m_tid.load(),
-					       child_shr->m_ptid);
+					       child_shr->m_ptid.load());
 				}
 			}
 			display_thread_lineage(*inspector.m_thread_manager, tinfo);
