@@ -1096,27 +1096,28 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		}
 		RETURN_EXTRACT_VAR(m_val.s64);
 	case TYPE_SID:
-		RETURN_EXTRACT_VAR(tinfo->m_sid);
+		m_val.s64 = tinfo->m_sid.load();
+		RETURN_EXTRACT_VAR(m_val.s64);
 	case TYPE_VPGID:
 		RETURN_EXTRACT_VAR(tinfo->m_vpgid);
 	case TYPE_SID_NAME:
 		m_tstr = m_inspector->m_thread_manager->get_ancestor_field_as_string(
 		        tinfo,
-		        [](sinsp_threadinfo* t) { return t->m_sid; },
+		        [](sinsp_threadinfo* t) { return t->m_sid.load(); },
 		        [](sinsp_threadinfo* t) { return t->get_comm(); },
 		        true);
 		RETURN_EXTRACT_STRING(m_tstr);
 	case TYPE_SID_EXE:
 		m_tstr = m_inspector->m_thread_manager->get_ancestor_field_as_string(
 		        tinfo,
-		        [](sinsp_threadinfo* t) { return t->m_sid; },
+		        [](sinsp_threadinfo* t) { return t->m_sid.load(); },
 		        [](sinsp_threadinfo* t) { return t->get_exe(); },
 		        true);
 		RETURN_EXTRACT_STRING(m_tstr);
 	case TYPE_SID_EXEPATH:
 		m_tstr = m_inspector->m_thread_manager->get_ancestor_field_as_string(
 		        tinfo,
-		        [](sinsp_threadinfo* t) { return t->m_sid; },
+		        [](sinsp_threadinfo* t) { return t->m_sid.load(); },
 		        [](sinsp_threadinfo* t) { return t->get_exepath(); },
 		        true);
 		RETURN_EXTRACT_STRING(m_tstr);

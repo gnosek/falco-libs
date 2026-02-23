@@ -356,7 +356,7 @@ public:
 	                             ///< threads, this is equal to tid.
 	std::atomic<int64_t> m_ptid;        ///< The id of the process that started this thread.
 	std::atomic<int64_t> m_reaper_tid;  ///< The id of the reaper for this thread
-	int64_t m_sid;                      ///< The session id of the process containing this thread.
+	std::atomic<int64_t> m_sid;         ///< The session id of the process containing this thread.
 	std::string m_comm;                 ///< Command name (e.g. "top")
 	std::string m_exe;                  ///< argv[0] (e.g. "sshd: user@pts/4")
 	std::string m_exepath;              ///< full executable path
