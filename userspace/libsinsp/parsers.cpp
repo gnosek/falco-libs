@@ -964,7 +964,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 		child_tinfo->m_exe_writable.store(caller_tinfo->m_exe_writable.load());
 
-		child_tinfo->m_exe_upper_layer = caller_tinfo->m_exe_upper_layer;
+		child_tinfo->m_exe_upper_layer.store(caller_tinfo->m_exe_upper_layer.load());
 
 		child_tinfo->m_exe_lower_layer = caller_tinfo->m_exe_lower_layer;
 
@@ -1223,7 +1223,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 		child_tinfo->m_exe_writable.store(lookup_tinfo->m_exe_writable.load());
 
-		child_tinfo->m_exe_upper_layer = lookup_tinfo->m_exe_upper_layer;
+		child_tinfo->m_exe_upper_layer.store(lookup_tinfo->m_exe_upper_layer.load());
 
 		child_tinfo->m_exe_lower_layer = lookup_tinfo->m_exe_lower_layer;
 
