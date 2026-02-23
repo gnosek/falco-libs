@@ -19,6 +19,7 @@ limitations under the License.
 #pragma once
 
 #include <libsinsp/state/type_info.h>
+#include <libsinsp/mutex.h>
 #include <plugin/plugin_types.h>
 #include <atomic>
 
@@ -122,6 +123,14 @@ inline void borrowed_state_data::borrow_from<SS_PLUGIN_ST_STRING, std::string>(
 }
 
 template<>
+inline void borrowed_state_data::borrow_from<SS_PLUGIN_ST_STRING, libsinsp::Mutex<std::string>>(
+        const libsinsp::Mutex<std::string>& value) {
+	thread_local std::string copy;
+	copy = *value.lock();
+	m_data.str = copy.c_str();
+}
+
+template<>
 inline void borrowed_state_data::borrow_from<SS_PLUGIN_ST_TABLE, base_table*>(
         base_table* const& value) {
 	m_data.table = value;
@@ -139,6 +148,16 @@ inline void borrowed_state_data::borrow_to<SS_PLUGIN_ST_STRING, std::string>(
 		out = "";
 	} else {
 		out = m_data.str;
+	}
+}
+
+template<>
+inline void borrowed_state_data::borrow_to<SS_PLUGIN_ST_STRING, libsinsp::Mutex<std::string>>(
+        libsinsp::Mutex<std::string>& out) const {
+	if(m_data.str == nullptr) {
+		*out.lock() = "";
+	} else {
+		*out.lock() = m_data.str;
 	}
 }
 
