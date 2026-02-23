@@ -962,7 +962,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		/* We should trust the info we obtain from the caller, if it is valid */
 		child_tinfo->set_exepath(std::move(*caller_tinfo->m_exepath.lock()));
 
-		child_tinfo->m_exe_writable = caller_tinfo->m_exe_writable;
+		child_tinfo->m_exe_writable.store(caller_tinfo->m_exe_writable.load());
 
 		child_tinfo->m_exe_upper_layer = caller_tinfo->m_exe_upper_layer;
 
@@ -1221,7 +1221,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 		child_tinfo->set_exepath(std::move(*lookup_tinfo->m_exepath.lock()));
 
-		child_tinfo->m_exe_writable = lookup_tinfo->m_exe_writable;
+		child_tinfo->m_exe_writable.store(lookup_tinfo->m_exe_writable.load());
 
 		child_tinfo->m_exe_upper_layer = lookup_tinfo->m_exe_upper_layer;
 
