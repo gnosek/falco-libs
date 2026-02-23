@@ -61,7 +61,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exepath, "exe_path", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_writable, "exe_writable", SS_PLUGIN_ST_BOOL);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_upper_layer, "exe_upper_layer", SS_PLUGIN_ST_BOOL);
-	DEFINE_STATIC_FIELD(ret, self, m_exe_lower_layer, "exe_lower_layer");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_lower_layer, "exe_lower_layer", SS_PLUGIN_ST_BOOL);
 	DEFINE_STATIC_FIELD(ret, self, m_exe_from_memfd, "exe_from_memfd");
 	libsinsp::state::define_static_field(
 	        ret,

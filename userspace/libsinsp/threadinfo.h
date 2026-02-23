@@ -364,7 +364,8 @@ public:
 	std::atomic<bool> m_exe_writable;
 	std::atomic<bool>
 	        m_exe_upper_layer;  ///< True if the executable file belongs to upper layer in overlayfs
-	bool m_exe_lower_layer;     ///< True if the executable file belongs to lower layer in overlayfs
+	std::atomic<bool>
+	        m_exe_lower_layer;  ///< True if the executable file belongs to lower layer in overlayfs
 	bool m_exe_from_memfd;  ///< True if the executable is stored in fileless memory referenced by
 	                        ///< memfd
 	std::vector<std::string> m_args;  ///< Command line arguments (e.g. "-d1")
