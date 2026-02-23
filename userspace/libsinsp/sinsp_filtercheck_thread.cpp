@@ -1877,11 +1877,7 @@ bool sinsp_filter_check_thread::compare_full_aexepath(sinsp_evt* evt) {
 	//
 	bool found = false;
 	sinsp_thread_manager::visitor_func_t visitor = [this, &found](sinsp_threadinfo* pt) {
-		bool res;
-
-		res = compare_rhs(m_cmpop, PT_CHARBUF, (void*)pt->m_exepath.c_str());
-
-		if(res == true) {
+		if(compare_rhs(m_cmpop, PT_CHARBUF, pt->m_exepath.lock()->c_str()) == true) {
 			found = true;
 
 			// Can stop traversing parent state

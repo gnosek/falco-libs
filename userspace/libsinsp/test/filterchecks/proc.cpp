@@ -185,7 +185,7 @@ TEST_F(sinsp_with_test_input, PROC_FILTER_pgid_family) {
 	// Be sure we will obtain specific values not shared by other threads
 	*p1_t1_tinfo->m_comm.lock() = "p1_t1_comm";
 	*p1_t1_tinfo->m_exe.lock() = "p1_t1_exe";
-	p1_t1_tinfo->m_exepath = "p1_t1_exepath";
+	*p1_t1_tinfo->m_exepath.lock() = "p1_t1_exepath";
 
 	// Generate random event to call filter-checks
 	auto evt = generate_random_event(p3_t1_tid);
@@ -203,7 +203,7 @@ TEST_F(sinsp_with_test_input, PROC_FILTER_pgid_family) {
 	p3_t1_tinfo->m_pgid = p3_t1_pid;
 	*p3_t1_tinfo->m_comm.lock() = "p3_t1_comm";
 	*p3_t1_tinfo->m_exe.lock() = "p3_t1_exe";
-	p3_t1_tinfo->m_exepath = "p3_t1_exepath";
+	*p3_t1_tinfo->m_exepath.lock() = "p3_t1_exepath";
 	evt = generate_random_event(p3_t1_tid);
 	ASSERT_EQ(get_field_as_string(evt, "proc.pgid"), std::to_string(p3_t1_tid));
 	ASSERT_EQ(get_field_as_string(evt, "proc.pgid.name"), p3_t1_tinfo->get_comm());
@@ -224,7 +224,7 @@ TEST_F(sinsp_with_test_input, PROC_FILTER_pgid_family) {
 	p2_t1_tinfo->m_pgid = random_pgid;
 	*p2_t1_tinfo->m_comm.lock() = "p2_t1_comm";
 	*p2_t1_tinfo->m_exe.lock() = "p2_t1_exe";
-	p2_t1_tinfo->m_exepath = "p2_t1_exepath";
+	*p2_t1_tinfo->m_exepath.lock() = "p2_t1_exepath";
 	evt = generate_random_event(p3_t1_tid);
 	ASSERT_EQ(get_field_as_string(evt, "proc.pgid"), std::to_string(random_pgid));
 	ASSERT_EQ(get_field_as_string(evt, "proc.pgid.name"), p2_t1_tinfo->get_comm());

@@ -783,7 +783,7 @@ void sinsp_thread_manager::dump_threads_to_file(scap_dumper_t* dumper) {
 		                                  &entrylen,
 		                                  tinfo.m_comm.lock()->c_str(),
 		                                  tinfo.m_exe.lock()->c_str(),
-		                                  tinfo.m_exepath.c_str(),
+		                                  tinfo.m_exepath.lock()->c_str(),
 		                                  args_iov,
 		                                  argscnt,
 		                                  envs_iov,

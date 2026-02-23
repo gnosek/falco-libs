@@ -58,7 +58,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_sid, "sid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_comm, "comm", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe, "exe", SS_PLUGIN_ST_STRING);
-	DEFINE_STATIC_FIELD(ret, self, m_exepath, "exe_path");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exepath, "exe_path", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_FIELD(ret, self, m_exe_writable, "exe_writable");
 	DEFINE_STATIC_FIELD(ret, self, m_exe_upper_layer, "exe_upper_layer");
 	DEFINE_STATIC_FIELD(ret, self, m_exe_lower_layer, "exe_lower_layer");
@@ -415,7 +415,7 @@ std::string sinsp_threadinfo::get_exe() const {
 }
 
 std::string sinsp_threadinfo::get_exepath() const {
-	return m_exepath;
+	return *m_exepath.lock();
 }
 
 void sinsp_threadinfo::set_args(const char* args, size_t len) {
@@ -988,9 +988,11 @@ void sinsp_threadinfo::set_exepath(std::string&& exepath) {
 	constexpr char suffix[] = " (deleted)";
 	constexpr size_t suffix_len = sizeof(suffix) - 1;  // Exclude null terminator
 
-	m_exepath = exepath;
-	if(m_exepath.size() > suffix_len &&
-	   m_exepath.compare(m_exepath.size() - suffix_len, suffix_len, suffix) == 0) {
-		m_exepath.resize(m_exepath.size() - suffix_len);
+	auto exepath_lock = m_exepath.lock();
+
+	*exepath_lock = exepath;
+	if(exepath_lock->size() > suffix_len &&
+	   exepath_lock->compare(exepath_lock->size() - suffix_len, suffix_len, suffix) == 0) {
+		exepath_lock->resize(exepath_lock->size() - suffix_len);
 	}
 }

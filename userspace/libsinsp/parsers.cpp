@@ -960,7 +960,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 	/* Take some further info from the caller */
 	if(valid_caller) {
 		/* We should trust the info we obtain from the caller, if it is valid */
-		child_tinfo->set_exepath(std::string(caller_tinfo->m_exepath));
+		child_tinfo->set_exepath(std::move(*caller_tinfo->m_exepath.lock()));
 
 		child_tinfo->m_exe_writable = caller_tinfo->m_exe_writable;
 
@@ -1219,7 +1219,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 		 * enrichment...
 		 */
 
-		child_tinfo->set_exepath(std::string(lookup_tinfo->m_exepath));
+		child_tinfo->set_exepath(std::move(*lookup_tinfo->m_exepath.lock()));
 
 		child_tinfo->m_exe_writable = lookup_tinfo->m_exe_writable;
 
