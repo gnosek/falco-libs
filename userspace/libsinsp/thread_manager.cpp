@@ -782,7 +782,7 @@ void sinsp_thread_manager::dump_threads_to_file(scap_dumper_t* dumper) {
 		                                  &sctinfo,
 		                                  &entrylen,
 		                                  tinfo.m_comm.lock()->c_str(),
-		                                  tinfo.m_exe.c_str(),
+		                                  tinfo.m_exe.lock()->c_str(),
 		                                  tinfo.m_exepath.c_str(),
 		                                  args_iov,
 		                                  argscnt,
@@ -941,7 +941,7 @@ const threadinfo_map_t::ptr_t& sinsp_thread_manager::get_thread(const int64_t ti
 			fake_tinfo->m_reaper_tid = -1;
 			fake_tinfo->m_not_expired_children = 0;
 			*fake_tinfo->m_comm.lock() = "<NA>";
-			fake_tinfo->m_exe = "<NA>";
+			*fake_tinfo->m_exe.lock() = "<NA>";
 			fake_tinfo->m_uid = 0xffffffff;
 			fake_tinfo->m_gid = 0xffffffff;
 			fake_tinfo->m_loginuid = 0xffffffff;

@@ -57,7 +57,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_reaper_tid, "reaper_tid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_sid, "sid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_comm, "comm", SS_PLUGIN_ST_STRING);
-	DEFINE_STATIC_FIELD(ret, self, m_exe, "exe");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe, "exe", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_FIELD(ret, self, m_exepath, "exe_path");
 	DEFINE_STATIC_FIELD(ret, self, m_exe_writable, "exe_writable");
 	DEFINE_STATIC_FIELD(ret, self, m_exe_upper_layer, "exe_upper_layer");
@@ -348,7 +348,7 @@ void sinsp_threadinfo::init(const scap_threadinfo& pinfo, const bool can_load_en
 	m_pgid = pinfo.pgid;
 
 	*m_comm.lock() = pinfo.comm;
-	m_exe = pinfo.exe;
+	*m_exe.lock() = pinfo.exe;
 	/* The exepath is extracted from `/proc/pid/exe`. */
 	set_exepath(std::string(pinfo.exepath));
 	m_exe_writable = pinfo.exe_writable;
@@ -411,7 +411,7 @@ std::string sinsp_threadinfo::get_comm() const {
 }
 
 std::string sinsp_threadinfo::get_exe() const {
-	return m_exe;
+	return *m_exe.lock();
 }
 
 std::string sinsp_threadinfo::get_exepath() const {

@@ -900,7 +900,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 	child_tinfo->m_vpid = child_tinfo->m_pid;
 
 	/* exe */
-	child_tinfo->m_exe = evt.get_param(1)->as<std::string>();
+	*child_tinfo->m_exe.lock() = evt.get_param(1)->as<std::string>();
 
 	/* args */
 	child_tinfo->set_args(evt.get_param(2)->as<std::vector<std::string>>());
@@ -909,7 +909,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 	if(const auto comm_param = evt.get_param(13); !comm_param->empty()) {
 		*child_tinfo->m_comm.lock() = comm_param->as<std::string>();
 	} else {
-		*child_tinfo->m_comm.lock() = child_tinfo->m_exe;
+		*child_tinfo->m_comm.lock() = *child_tinfo->m_exe.lock();
 	}
 
 	/* fdlimit */
@@ -998,7 +998,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 		        caller_tinfo->m_exe_ino_ctime_duration_clone_ts;
 	} else {
 		/* exe */
-		caller_tinfo->m_exe = child_tinfo->m_exe;
+		*caller_tinfo->m_exe.lock() = *child_tinfo->m_exe.lock();
 
 		/* comm */
 		*caller_tinfo->m_comm.lock() = *child_tinfo->m_comm.lock();
@@ -1199,13 +1199,13 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 	 */
 
 	/* exe */
-	child_tinfo->m_exe = evt.get_param(1)->as<std::string>();
+	*child_tinfo->m_exe.lock() = evt.get_param(1)->as<std::string>();
 
 	/* comm */
 	if(const auto comm_param = evt.get_param(13); !comm_param->empty()) {
 		*child_tinfo->m_comm.lock() = comm_param->as<std::string>();
 	} else {
-		*child_tinfo->m_comm.lock() = child_tinfo->m_exe;
+		*child_tinfo->m_comm.lock() = *child_tinfo->m_exe.lock();
 	}
 
 	/* args */
@@ -1309,7 +1309,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 		 * an approximation */
 		if(!is_thread_leader) {
 			/* exe */
-			lookup_tinfo->m_exe = child_tinfo->m_exe;
+			*lookup_tinfo->m_exe.lock() = *child_tinfo->m_exe.lock();
 
 			/* comm */
 			*lookup_tinfo->m_comm.lock() = *child_tinfo->m_comm.lock();
@@ -1471,7 +1471,7 @@ void sinsp_parser::parse_execve_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 
 	// Set the exe.
 	auto parinfo = evt.get_param(1);
-	evt.get_tinfo()->m_exe = parinfo->as<std::string>();
+	*evt.get_tinfo()->m_exe.lock() = parinfo->as<std::string>();
 	evt.get_tinfo()->m_lastexec_ts = evt.get_ts();
 
 	// Set the comm.
@@ -1479,7 +1479,7 @@ void sinsp_parser::parse_execve_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 		*evt.get_tinfo()->m_comm.lock() = comm_param->as<std::string>();
 	} else {
 		// Old trace files didn't have comm, so just set it to exe.
-		*evt.get_tinfo()->m_comm.lock() = evt.get_tinfo()->m_exe;
+		*evt.get_tinfo()->m_comm.lock() = *evt.get_tinfo()->m_exe.lock();
 	}
 
 	// Set the command arguments.

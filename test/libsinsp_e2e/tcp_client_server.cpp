@@ -96,7 +96,7 @@ void runtest(iotype iot,
 	//
 	event_filter_t filter = [&](sinsp_evt* evt) {
 		auto tinfo = evt->get_thread_info();
-		if(tinfo && tinfo->m_exe == helper_exe) {
+		if(tinfo && *tinfo->m_exe.lock() == helper_exe) {
 			if(tinfo->m_pid == server_pid) {
 				return server_started_filter(evt);
 			}

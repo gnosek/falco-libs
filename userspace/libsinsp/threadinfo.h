@@ -359,7 +359,7 @@ public:
 	std::atomic<int64_t> m_reaper_tid;    ///< The id of the reaper for this thread
 	std::atomic<int64_t> m_sid;           ///< The session id of the process containing this thread.
 	libsinsp::Mutex<std::string> m_comm;  ///< Command name (e.g. "top")
-	std::string m_exe;                    ///< argv[0] (e.g. "sshd: user@pts/4")
+	libsinsp::Mutex<std::string> m_exe;   ///< argv[0] (e.g. "sshd: user@pts/4")
 	std::string m_exepath;                ///< full executable path
 	bool m_exe_writable;
 	bool m_exe_upper_layer;  ///< True if the executable file belongs to upper layer in overlayfs
