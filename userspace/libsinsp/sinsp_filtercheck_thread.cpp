@@ -1156,9 +1156,10 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 	case TYPE_ARGS: {
 		m_tstr.clear();
 
+		auto args = tinfo->m_args.lock();
 		if(m_argid >= 0) {
-			if(static_cast<uint32_t>(m_argid) < (uint32_t)tinfo->m_args.size()) {
-				m_tstr = tinfo->m_args[m_argid];
+			if(static_cast<uint32_t>(m_argid) < (uint32_t)args->size()) {
+				m_tstr = (*args)[m_argid];
 			}
 		} else {
 			sinsp_threadinfo::populate_args(m_tstr, tinfo);
@@ -1249,10 +1250,11 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		m_tstr = tinfo->get_exe() + " ";
 
 		uint32_t j;
-		uint32_t nargs = (uint32_t)tinfo->m_args.size();
+		auto args = tinfo->m_args.lock();
+		uint32_t nargs = (uint32_t)args->size();
 
 		for(j = 0; j < nargs; j++) {
-			m_tstr += tinfo->m_args[j];
+			m_tstr += (*args)[j];
 			if(j < nargs - 1) {
 				m_tstr += ' ';
 			}
@@ -1589,16 +1591,17 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		m_tstr = sinsp_utils::caps_to_string(tinfo->m_cap_effective);
 		RETURN_EXTRACT_STRING(m_tstr);
 	case TYPE_CMDNARGS: {
-		m_val.u64 = (uint32_t)tinfo->m_args.size();
+		m_val.u64 = (uint32_t)tinfo->m_args.lock()->size();
 		RETURN_EXTRACT_VAR(m_val.u64);
 	}
 	case TYPE_CMDLENARGS: {
 		m_val.u64 = 0;
 		uint32_t j;
-		uint32_t nargs = (uint32_t)tinfo->m_args.size();
+		auto args = tinfo->m_args.lock();
+		uint32_t nargs = (uint32_t)args->size();
 
 		for(j = 0; j < nargs; j++) {
-			m_val.u64 += tinfo->m_args[j].length();
+			m_val.u64 += (*args)[j].length();
 		}
 		RETURN_EXTRACT_VAR(m_val.u64);
 	}

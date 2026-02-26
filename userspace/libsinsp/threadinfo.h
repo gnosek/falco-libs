@@ -368,9 +368,10 @@ public:
 	        m_exe_lower_layer;  ///< True if the executable file belongs to lower layer in overlayfs
 	std::atomic<bool> m_exe_from_memfd;  ///< True if the executable is stored in fileless memory
 	                                     ///< referenced by memfd
-	std::vector<std::string> m_args;     ///< Command line arguments (e.g. "-d1")
-	std::vector<std::string> m_env;      ///< Environment variables
-	cgroups_t m_cgroups;                 ///< subsystem-cgroup pairs
+	libsinsp::RecursiveMutex<std::vector<std::string>>
+	        m_args;                  ///< Command line arguments (e.g. "-d1")
+	std::vector<std::string> m_env;  ///< Environment variables
+	cgroups_t m_cgroups;             ///< subsystem-cgroup pairs
 	uint32_t m_flags;   ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
 	int64_t m_fdlimit;  ///< The maximum number of FDs this thread can open
 	uint32_t m_uid;     ///< uid

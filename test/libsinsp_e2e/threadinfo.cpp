@@ -57,7 +57,7 @@ static void run_test(test_type ttype,
 	for(auto& val : vals) {
 		switch(ttype) {
 		case TEST_ARGS:
-			ti->m_args.push_back(val.c_str());
+			ti->m_args.lock()->push_back(val.c_str());
 			break;
 		case TEST_ENV:
 			ti->m_env.push_back(val.c_str());

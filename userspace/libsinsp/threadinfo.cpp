@@ -427,10 +427,11 @@ void sinsp_threadinfo::set_args(const char* args, size_t len) {
 }
 
 void sinsp_threadinfo::set_args(const std::vector<std::string>& args) {
-	m_args = args;
+	auto args_lock = m_args.lock();
+	*args_lock = args;
 	m_cmd_line = get_comm();
 	if(!m_cmd_line.empty()) {
-		for(const auto& arg : m_args) {
+		for(const auto& arg : *args_lock) {
 			m_cmd_line += " ";
 			m_cmd_line += arg;
 		}
@@ -824,7 +825,7 @@ void sinsp_threadinfo::assign_children_to_reaper(sinsp_threadinfo* reaper) {
 void sinsp_threadinfo::populate_cmdline(std::string& cmdline, const sinsp_threadinfo* tinfo) {
 	if(tinfo->m_cmd_line.empty()) {
 		cmdline = tinfo->get_comm();
-		for(const auto& arg : tinfo->m_args) {
+		for(const auto& arg : *tinfo->m_args.lock()) {
 			cmdline += " ";
 			cmdline += arg;
 		}
@@ -835,10 +836,11 @@ void sinsp_threadinfo::populate_cmdline(std::string& cmdline, const sinsp_thread
 
 void sinsp_threadinfo::populate_args(std::string& args, const sinsp_threadinfo* tinfo) {
 	uint32_t j;
-	uint32_t nargs = (uint32_t)tinfo->m_args.size();
+	auto args_lock = tinfo->m_args.lock();
+	uint32_t nargs = (uint32_t)args_lock->size();
 
 	for(j = 0; j < nargs; j++) {
-		args += tinfo->m_args[j];
+		args += (*args_lock)[j];
 		if(j < nargs - 1) {
 			args += ' ';
 		}
@@ -879,7 +881,7 @@ std::string sinsp_threadinfo::get_path_for_dir_fd(int64_t dir_fd) {
 }
 
 size_t sinsp_threadinfo::args_len() const {
-	return strvec_len(m_args);
+	return strvec_len(*m_args.lock());
 }
 
 size_t sinsp_threadinfo::env_len() const {
@@ -887,7 +889,7 @@ size_t sinsp_threadinfo::env_len() const {
 }
 
 void sinsp_threadinfo::args_to_iovec(struct iovec** iov, int* iovcnt, std::string& rem) const {
-	return strvec_to_iovec(m_args, iov, iovcnt, rem);
+	return strvec_to_iovec(*m_args.lock(), iov, iovcnt, rem);
 }
 
 void sinsp_threadinfo::env_to_iovec(struct iovec** iov, int* iovcnt, std::string& rem) const {

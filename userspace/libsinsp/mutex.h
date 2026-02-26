@@ -24,28 +24,32 @@ limitations under the License.
 #include <libsinsp/utils.h>
 
 namespace libsinsp {
-template<typename T>
+template<typename T, typename L = std::mutex>
 class ConstMutexGuard;
 
 /**
  * \brief A wrapper to allow synchronized access to a value owned by a Mutex<T>
  *
  * @tparam T type of the value protected by the mutex
+ * @tparam L type of the mutex (defaults to std::mutex)
  *
  * It works by simply holding a `std::unique_lock` object that keeps the mutex
  * locked while it exists and unlocks it upon destruction
  */
-template<typename T>
+template<typename T, typename L = std::mutex>
 class MutexGuard {
 public:
-	MutexGuard(std::unique_lock<std::mutex> lock, T *inner):
-	        m_lock(std::move(lock)),
-	        m_inner(inner) {}
+	MutexGuard(std::unique_lock<L> lock, T *inner): m_lock(std::move(lock)), m_inner(inner) {}
 
 	// we cannot copy a MutexGuard, only move
 	MutexGuard(MutexGuard &rhs) = delete;
 	MutexGuard &operator=(MutexGuard &rhs) = delete;
 	MutexGuard(MutexGuard &&rhs) noexcept: m_lock(std::move(rhs.m_lock)), m_inner(rhs.m_inner) {}
+	MutexGuard &operator=(MutexGuard &&rhs) noexcept {
+		m_lock = std::move(rhs.m_lock);
+		m_inner = rhs.m_inner;
+		return *this;
+	}
 
 	T *operator->() { return m_inner; }
 
@@ -56,25 +60,31 @@ public:
 	 */
 	bool valid() { return m_inner != nullptr; }
 
+	template<typename U>
+	MutexGuard<U, L> replace(U *new_inner) {
+		return MutexGuard<U, L>(std::move(m_lock), new_inner);
+	}
+
 private:
-	std::unique_lock<std::mutex> m_lock;
+	std::unique_lock<L> m_lock;
 	T *m_inner;
 
-	friend class ConstMutexGuard<T>;
+	friend class ConstMutexGuard<T, L>;
 };
 
 /**
  * \brief A wrapper to allow synchronized const access to a value owned by a Mutex<T>
  *
  * @tparam T type of the value protected by the mutex
+ * @tparam L type of the mutex (defaults to std::mutex)
  *
  * It works by simply holding a `std::unique_lock` object that keeps the mutex
  * locked while it exists and unlocks it upon destruction
  */
-template<typename T>
+template<typename T, typename L>
 class ConstMutexGuard {
 public:
-	ConstMutexGuard(std::unique_lock<std::mutex> lock, const T *inner):
+	ConstMutexGuard(std::unique_lock<L> lock, const T *inner):
 	        m_lock(std::move(lock)),
 	        m_inner(inner) {}
 
@@ -86,7 +96,7 @@ public:
 	        m_inner(rhs.m_inner) {}
 
 	// a writable guard can be demoted to a read-only one, but *not* the other way around
-	ConstMutexGuard(MutexGuard<T> &&rhs) noexcept:
+	ConstMutexGuard(MutexGuard<T, L> &&rhs) noexcept:
 	        m_lock(std::move(rhs.m_lock)),
 	        m_inner(rhs.m_inner)  // NOLINT(google-explicit-constructor)
 	{}
@@ -101,7 +111,7 @@ public:
 	bool valid() { return m_inner != nullptr; }
 
 private:
-	std::unique_lock<std::mutex> m_lock;
+	std::unique_lock<L> m_lock;
 	const T *m_inner;
 };
 
@@ -201,9 +211,11 @@ private:
  * size_t num_elts = locked->size();
  *
  */
-template<typename T>
+template<typename T, typename L = std::mutex>
 class Mutex {
 public:
+	using inner_type = T;
+
 	Mutex() = default;
 
 	Mutex(T inner): m_inner(std::move(inner)) {}
@@ -215,7 +227,7 @@ public:
 	 * via operator * or -> and ensures the lock is held as long as
 	 * the guard object exists
 	 */
-	MutexGuard<T> lock() { return MutexGuard<T>(std::unique_lock<std::mutex>(m_lock), &m_inner); }
+	MutexGuard<T, L> lock() { return MutexGuard<T, L>(std::unique_lock<L>(m_lock), &m_inner); }
 
 	/**
 	 * \brief Lock the mutex, allowing access to the stored object
@@ -226,14 +238,37 @@ public:
 	 *
 	 * `const Mutex<T>` only allows read-only access to the protected object
 	 */
-	ConstMutexGuard<T> lock() const {
-		return ConstMutexGuard<T>(std::unique_lock<std::mutex>(m_lock), &m_inner);
+	ConstMutexGuard<T, L> lock() const {
+		return ConstMutexGuard<T, L>(std::unique_lock<L>(m_lock), &m_inner);
 	}
 
 private:
-	mutable std::mutex m_lock;
+	mutable L m_lock;
 	T m_inner;
 };
+
+/**
+ * \brief A Mutex using std::recursive_mutex, allowing the same thread to lock it multiple times
+ *
+ * @tparam T type of the wrapped value
+ *
+ * This is identical to Mutex<T> but uses a recursive lock, so the same thread
+ * can call lock() multiple times without deadlocking.
+ */
+template<typename T>
+using RecursiveMutex = Mutex<T, std::recursive_mutex>;
+
+/**
+ * \brief A MutexGuard using std::recursive_mutex, allowing the same thread to lock it multiple
+ * times
+ *
+ * @tparam T type of the wrapped value
+ *
+ * This is identical to MutexGuard<T> but uses a recursive lock, so the same thread
+ * can call lock() multiple times without deadlocking.
+ */
+template<typename T>
+using RecursiveMutexGuard = MutexGuard<T, std::recursive_mutex>;
 
 /**
  * \brief Wrap a value of type T, enforcing synchronized access while allowing for simultaneous
@@ -267,6 +302,8 @@ private:
 template<typename T>
 class SharedMutex {
 public:
+	using inner_type = T;
+
 	using time_type = decltype(sinsp_utils::get_current_time_ns());
 	SharedMutex() = default;
 

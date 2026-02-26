@@ -16,8 +16,104 @@ limitations under the License.
 
 #include <libsinsp/state/table.h>
 
+#include <optional>
+
 namespace libsinsp {
 namespace state {
+
+template<typename T>
+class move_only_optional {
+	bool m_has_value = false;
+	union {
+		T m_value;
+		char m_dummy;
+	};
+
+public:
+	move_only_optional(): m_dummy{} {}
+	move_only_optional(T&& v): m_has_value(true), m_value(std::move(v)) {}
+	~move_only_optional() {
+		if(m_has_value)
+			m_value.~T();
+	}
+
+	move_only_optional(const move_only_optional&) = delete;
+	move_only_optional& operator=(const move_only_optional&) = delete;
+
+	move_only_optional(move_only_optional&& o) noexcept: m_has_value(o.m_has_value), m_dummy(0) {
+		if(m_has_value)
+			new(&m_value) T(std::move(o.m_value));
+	}
+	move_only_optional& operator=(move_only_optional&& o) noexcept {
+		if(this != &o) {
+			if(m_has_value)
+				m_value.~T();
+			m_has_value = o.m_has_value;
+			if(m_has_value)
+				new(&m_value) T(std::move(o.m_value));
+		}
+		return *this;
+	}
+
+	explicit operator bool() const { return m_has_value; }
+	T& operator*() { return m_value; }
+	T* operator->() { return &m_value; }
+	void reset() {
+		if(m_has_value) {
+			m_value.~T();
+			m_has_value = false;
+		}
+	}
+};
+
+template<typename T>
+struct stl_container_access {
+	using wrapper_type = T;
+	using container_type = T;
+	using container_ptr = T*;
+	using value_type = typename container_type::value_type;
+	using value_ptr = value_type*;
+
+	static container_ptr get(wrapper_type& container) { return &container; }
+	static value_ptr element_ptr(container_ptr, value_type* value) { return value; }
+	static value_ptr default_value() { return nullptr; }
+};
+
+template<typename T, typename L>
+struct stl_container_access<libsinsp::Mutex<T, L>> {
+	using wrapper_type = libsinsp::Mutex<T, L>;
+	using container_type = T;
+	using container_ptr = libsinsp::MutexGuard<T, L>;
+	using value_type = typename container_type::value_type;
+	using value_ptr = move_only_optional<libsinsp::MutexGuard<value_type, L>>;
+
+	static container_ptr get(wrapper_type& container) { return container.lock(); }
+
+	static value_ptr element_ptr(container_ptr container, value_type* value) {
+		return container.replace(value);
+	}
+
+	static value_ptr default_value() { return value_ptr(); }
+};
+
+/**
+ * @brief Traits for dereferencing and resetting a value pointer type.
+ *
+ * The primary template handles raw pointers.
+ * The optional<MutexGuard<...>> specialization handles Mutex-protected elements.
+ */
+template<typename ValueType, typename ValuePtr>
+struct value_ptr_ops {
+	static ValueType* deref(ValuePtr& ptr) { return ptr; }
+	static void reset(ValuePtr& ptr) { ptr = nullptr; }
+};
+
+template<typename ValueType, typename L>
+struct value_ptr_ops<ValueType, move_only_optional<libsinsp::MutexGuard<ValueType, L>>> {
+	using value_ptr = move_only_optional<libsinsp::MutexGuard<ValueType, L>>;
+	static ValueType* deref(value_ptr& ptr) { return ptr ? &(**ptr) : nullptr; }
+	static void reset(value_ptr& ptr) { ptr.reset(); }
+};
 
 /**
  * @brief An adapter for the libsinsp::state::table_entry interface
@@ -26,28 +122,32 @@ namespace state {
  * allocations. Instances of table_entry from this adapter have no static fields,
  * and make the wrapped value available as a single dynamic field. The dynamic
  * fields definitions of this wrapper are fixed and immutable.
+ *
+ * @tparam ValueType The element type (e.g. std::string)
+ * @tparam ValuePtr  The pointer/guard type used to hold a reference to the element.
+ *                   Defaults to ValueType* for plain containers.
+ *                   For Mutex-protected containers this is
+ *                   std::optional<MutexGuard<ValueType, L>>.
  */
-template<typename T>
+template<typename ValueType, typename ValuePtr = ValueType*>
 class value_table_entry_adapter : public libsinsp::state::table_entry {
 public:
-	inline explicit value_table_entry_adapter(): m_value(nullptr) {}
+	using ops = value_ptr_ops<ValueType, ValuePtr>;
 
-	virtual ~value_table_entry_adapter() = default;
+	inline explicit value_table_entry_adapter() = default;
 
-	inline T* value() { return m_value; }
+	inline ValueType* value() { return ops::deref(m_value); }
 
-	inline const T* value() const { return m_value; }
-
-	inline void set_value(T* v) { m_value = v; }
+	inline void set_value(ValuePtr&& v) { m_value = std::move(v); }
 
 	static void list_fields(std::vector<ss_plugin_table_fieldinfo>& out) {
-		ss_plugin_table_fieldinfo value = {"value", type_id_of<T>(), false};
+		ss_plugin_table_fieldinfo value = {"value", type_id_of<ValueType>(), false};
 		out.emplace_back(value);
 	}
 
 	static accessor::ptr get_field(const char* name, ss_plugin_state_type type_id) {
 		if(strcmp(name, "value") == 0) {
-			auto tinfo = type_id_of<T>();
+			auto tinfo = type_id_of<ValueType>();
 			if(type_id != tinfo) {
 				throw sinsp_exception("incompatible type for value_table_entry_adapter field: " +
 				                      std::string(name));
@@ -60,16 +160,17 @@ public:
 
 private:
 	[[nodiscard]] static borrowed_state_data read_value(const void* obj, size_t) {
-		const auto* v = static_cast<const value_table_entry_adapter*>(obj);
-		return borrowed_state_data::from<type_id_of<T>(), T>(*v->m_value);
+		auto* v = const_cast<value_table_entry_adapter*>(
+		        static_cast<const value_table_entry_adapter*>(obj));
+		return borrowed_state_data::from<type_id_of<ValueType>(), ValueType>(*v->value());
 	}
 
 	static void write_value(void* obj, size_t, const borrowed_state_data& in) {
 		auto* v = static_cast<value_table_entry_adapter*>(obj);
-		in.copy_to<type_id_of<T>(), T>(*v->m_value);
+		in.copy_to<type_id_of<ValueType>(), ValueType>(*v->value());
 	}
 
-	T* m_value;
+	ValuePtr m_value;
 };
 
 /**
@@ -80,14 +181,17 @@ private:
  * and make the wrapped value available as a single dynamic field. The dynamic
  * fields definitions of this wrapper are fixed and immutable.
  */
-template<typename Tfirst, typename Tsecond>
-class value_table_entry_adapter<std::pair<Tfirst, Tsecond>> : public libsinsp::state::table_entry {
+template<typename Tfirst, typename Tsecond, typename ValuePtr>
+class value_table_entry_adapter<std::pair<Tfirst, Tsecond>, ValuePtr>
+        : public libsinsp::state::table_entry {
 public:
-	inline explicit value_table_entry_adapter(): m_value(nullptr) {}
+	using value_type = std::pair<Tfirst, Tsecond>;
+	using ops = value_ptr_ops<value_type, ValuePtr>;
 
-	inline std::pair<Tfirst, Tsecond>* value() { return m_value; }
-	inline const std::pair<Tfirst, Tsecond>* value() const { return m_value; }
-	inline void set_value(std::pair<Tfirst, Tsecond>* v) { m_value = v; }
+	inline explicit value_table_entry_adapter() = default;
+
+	inline value_type* value() { return ops::deref(m_value); }
+	inline void set_value(ValuePtr&& v) { m_value = std::move(v); }
 
 	static void list_fields(std::vector<ss_plugin_table_fieldinfo>& out) {
 		ss_plugin_table_fieldinfo first = {"first", type_id_of<Tfirst>(), false};
@@ -119,25 +223,27 @@ public:
 
 private:
 	[[nodiscard]] static borrowed_state_data read_key(const void* obj, size_t) {
-		const auto* v = static_cast<const value_table_entry_adapter*>(obj);
-		return borrowed_state_data::from<type_id_of<Tfirst>(), Tfirst>(v->m_value->first);
+		auto* v = const_cast<value_table_entry_adapter*>(
+		        static_cast<const value_table_entry_adapter*>(obj));
+		return borrowed_state_data::from<type_id_of<Tfirst>(), Tfirst>(v->value()->first);
 	}
 
 	[[nodiscard]] static borrowed_state_data read_value(const void* obj, size_t) {
-		const auto* v = static_cast<const value_table_entry_adapter*>(obj);
-		return borrowed_state_data::from<type_id_of<Tsecond>(), Tfirst>(v->m_value->second);
+		auto* v = const_cast<value_table_entry_adapter*>(
+		        static_cast<const value_table_entry_adapter*>(obj));
+		return borrowed_state_data::from<type_id_of<Tsecond>(), Tsecond>(v->value()->second);
 	}
 
 	static void write_key(void* obj, size_t, const borrowed_state_data& in) {
 		auto* v = static_cast<value_table_entry_adapter*>(obj);
-		in.copy_to<type_id_of<Tfirst>(), Tfirst>(v->m_value->first);
+		in.copy_to<type_id_of<Tfirst>(), Tfirst>(v->value()->first);
 	}
 	static void write_value(void* obj, size_t, const borrowed_state_data& in) {
 		auto* v = static_cast<value_table_entry_adapter*>(obj);
-		in.copy_to<type_id_of<Tsecond>(), Tsecond>(v->m_value->second);
+		in.copy_to<type_id_of<Tsecond>(), Tsecond>(v->value()->second);
 	}
 
-	std::pair<Tfirst, Tsecond>* m_value;
+	ValuePtr m_value;
 };
 
 /**
@@ -153,7 +259,9 @@ private:
 template<typename T>
 class stl_container_table_adapter : public libsinsp::state::built_in_table<uint64_t> {
 public:
-	using wrapper_t = value_table_entry_adapter<typename T::value_type>;
+	using access_t = stl_container_access<T>;
+	using wrapper_t =
+	        value_table_entry_adapter<typename access_t::value_type, typename access_t::value_ptr>;
 
 	stl_container_table_adapter(const std::string& name, T& container):
 	        built_in_table(name),
@@ -171,9 +279,9 @@ public:
 		throw sinsp_exception("can't add dynamic fields to stl_container_table_adapter");
 	}
 
-	size_t entries_count() const override { return m_container.size(); }
+	size_t entries_count() const override { return access_t::get(m_container)->size(); }
 
-	void clear_entries() override { m_container.clear(); }
+	void clear_entries() override { access_t::get(m_container)->clear(); }
 
 	std::unique_ptr<libsinsp::state::table_entry> new_entry() const override {
 		auto ret = std::make_unique<wrapper_t>();
@@ -182,8 +290,11 @@ public:
 
 	bool foreach_entry(std::function<bool(libsinsp::state::table_entry& e)> pred) override {
 		wrapper_t w;
-		for(auto& v : m_container) {
-			w.set_value(&v);
+		auto container = access_t::get(m_container);
+		for(auto& v : *container) {
+			// relock :(
+			auto entry_ref = access_t::element_ptr(access_t::get(m_container), &v);
+			w.set_value(std::move(entry_ref));
 			if(!pred(w)) {
 				return false;
 			}
@@ -192,10 +303,13 @@ public:
 	}
 
 	std::shared_ptr<libsinsp::state::table_entry> get_entry(const uint64_t& key) override {
-		if(key >= m_container.size()) {
+		auto container = access_t::get(m_container);
+		if(key >= container->size()) {
 			return nullptr;
 		}
-		return wrap_value(&m_container[key]);
+		auto entry = &(*container)[key];
+		auto entry_ref = access_t::element_ptr(std::move(container), entry);
+		return wrap_value(std::move(entry_ref));
 	}
 
 	std::shared_ptr<libsinsp::state::table_entry> add_entry(
@@ -216,35 +330,43 @@ public:
 			                      std::string(this->name()));
 		}
 
-		m_container.resize(key + 1);
-		return wrap_value(&m_container[key]);
+		auto container = access_t::get(m_container);
+		container->resize(key + 1);
+		auto new_entry = &(*container)[key];
+		auto new_entry_ref = access_t::element_ptr(std::move(container), new_entry);
+		return wrap_value(std::move(new_entry_ref));
 	}
 
 	bool erase_entry(const uint64_t& key) override {
-		if(key >= m_container.size()) {
+		auto container = access_t::get(m_container);
+		if(key >= container->size()) {
 			return false;
 		}
-		m_container.erase(m_container.begin() + key);
+		container->erase(container->begin() + key);
 		return true;
 	}
 
 private:
-	static inline void wrap_deleter(wrapper_t* v) { v->set_value(nullptr); }
+	static inline void wrap_deleter(wrapper_t* v) {
+		typename access_t::value_ptr empty = access_t::default_value();
+		v->set_value(std::move(empty));
+	}
 
 	// helps us dynamically allocate a batch of wrappers, creating new ones
 	// only if we need them. Wrappers are reused for multiple entries, and
 	// we leverage shared_ptrs to automatically release them once not anymore used
-	inline std::shared_ptr<libsinsp::state::table_entry> wrap_value(typename T::value_type* v) {
+	inline std::shared_ptr<libsinsp::state::table_entry> wrap_value(
+	        typename access_t::value_ptr v) {
 		for(auto& w : m_wrappers) {
 			if(w.value() == nullptr) {
-				w.set_value(v);
+				w.set_value(std::move(v));
 				return std::shared_ptr<libsinsp::state::table_entry>(&w, wrap_deleter);
 			}
 		}
 
 		// no wrapper is free among the allocated ones so add an extra one
 		auto& w = m_wrappers.emplace_back();
-		w.set_value(v);
+		w.set_value(std::move(v));
 		return std::shared_ptr<libsinsp::state::table_entry>(&w, wrap_deleter);
 	}
 
