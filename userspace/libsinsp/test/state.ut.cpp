@@ -618,9 +618,8 @@ TEST(thread_manager, env_vars_access) {
 
 	// getting the "env" tables from the newly created threads
 	auto subtable_acc = field->second.into<libsinsp::state::base_table*>();
-	auto subtable =
-	        dynamic_cast<libsinsp::state::stl_container_table_adapter<std::vector<std::string>>*>(
-	                entry->read_field(subtable_acc));
+	auto subtable = dynamic_cast<libsinsp::state::stl_container_table_adapter<
+	        libsinsp::RecursiveMutex<std::vector<std::string>>>*>(entry->read_field(subtable_acc));
 	ASSERT_NE(subtable, nullptr);
 	EXPECT_EQ(subtable->name(), std::string("env"));
 	EXPECT_EQ(subtable->entries_count(), 0);
@@ -688,8 +687,9 @@ TEST(thread_manager, env_vars_access) {
 	auto tinfo = inspector.m_thread_manager->find_thread(1, true);
 	ASSERT_NE(tinfo, nullptr);
 
-	ASSERT_EQ(tinfo->m_env.size(), max_iterations - 1);
-	for(const auto& v : tinfo->m_env) {
+	auto env = tinfo->m_env.lock();
+	ASSERT_EQ(env->size(), max_iterations - 1);
+	for(const auto& v : *env) {
 		EXPECT_EQ(v, "hello");
 	}
 
@@ -720,5 +720,5 @@ TEST(thread_manager, env_vars_access) {
 	// clear all
 	ASSERT_NO_THROW(subtable->clear_entries());
 	EXPECT_EQ(subtable->entries_count(), 0);
-	EXPECT_EQ(tinfo->m_env.size(), 0);
+	EXPECT_EQ(tinfo->m_env.lock()->size(), 0);
 }

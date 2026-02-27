@@ -60,7 +60,7 @@ static void run_test(test_type ttype,
 			ti->m_args.lock()->push_back(val.c_str());
 			break;
 		case TEST_ENV:
-			ti->m_env.push_back(val.c_str());
+			ti->m_env.lock()->push_back(val.c_str());
 			break;
 		case TEST_CGROUPS:
 			size_t pos = val.find("=");

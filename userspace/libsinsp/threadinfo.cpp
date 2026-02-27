@@ -462,7 +462,7 @@ void sinsp_threadinfo::set_env(const char* const env, size_t len, const bool can
 		len--;
 	}
 
-	m_env = sinsp_split({env, len}, '\0');
+	*m_env.lock() = sinsp_split({env, len}, '\0');
 }
 
 bool sinsp_threadinfo::set_env_from_proc() {
@@ -475,19 +475,21 @@ bool sinsp_threadinfo::set_env_from_proc() {
 		return false;
 	}
 
-	m_env.clear();
+	auto env = m_env.lock();
+
+	env->clear();
 	while(environment) {
-		std::string env;
-		getline(environment, env, '\0');
-		if(!env.empty()) {
-			m_env.emplace_back(env);
+		std::string env_var;
+		getline(environment, env_var, '\0');
+		if(!env_var.empty()) {
+			env->emplace_back(env_var);
 		}
 	}
 
 	return true;
 }
 
-const std::vector<std::string>& sinsp_threadinfo::get_env() {
+const libsinsp::RecursiveMutex<std::vector<std::string>>& sinsp_threadinfo::get_env() {
 	if(is_main_thread()) {
 		return m_env;
 	} else {
@@ -505,7 +507,8 @@ const std::vector<std::string>& sinsp_threadinfo::get_env() {
 // Return value string for the exact environment variable name given
 std::string sinsp_threadinfo::get_env(const std::string& name) {
 	size_t nlen = name.length();
-	for(const auto& env_var : get_env()) {
+	const auto env = get_env().lock();
+	for(const auto& env_var : *env) {
 		if((env_var.length() > (nlen + 1)) && (env_var[nlen] == '=') &&
 		   !env_var.compare(0, nlen, name)) {
 			// Stripping spaces, not sure if we really should or need to
@@ -522,14 +525,14 @@ std::string sinsp_threadinfo::get_env(const std::string& name) {
 }
 
 std::string sinsp_threadinfo::concatenate_all_env() {
-	const auto& all_env = get_env();
-	if(all_env.size() == 0) {
+	const auto& all_env = get_env().lock();
+	if(all_env->size() == 0) {
 		return "";
 	}
 
 	// Here we have at least one env so we can pop the last character at the end of the loop.
 	std::string concatenate_env;
-	for(const auto& env_var : all_env) {
+	for(const auto& env_var : *all_env) {
 		concatenate_env += env_var;
 		concatenate_env += ' ';
 	}
@@ -885,7 +888,7 @@ size_t sinsp_threadinfo::args_len() const {
 }
 
 size_t sinsp_threadinfo::env_len() const {
-	return strvec_len(m_env);
+	return strvec_len(*m_env.lock());
 }
 
 void sinsp_threadinfo::args_to_iovec(struct iovec** iov, int* iovcnt, std::string& rem) const {
@@ -893,7 +896,7 @@ void sinsp_threadinfo::args_to_iovec(struct iovec** iov, int* iovcnt, std::strin
 }
 
 void sinsp_threadinfo::env_to_iovec(struct iovec** iov, int* iovcnt, std::string& rem) const {
-	return strvec_to_iovec(m_env, iov, iovcnt, rem);
+	return strvec_to_iovec(*m_env.lock(), iov, iovcnt, rem);
 }
 
 // Set the provided iovec to the string in str, if it will fit. If it
