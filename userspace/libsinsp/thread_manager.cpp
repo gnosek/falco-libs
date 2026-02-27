@@ -769,14 +769,14 @@ void sinsp_thread_manager::dump_threads_to_file(scap_dumper_t* dumper) {
 		int argscnt, envscnt, cgroupscnt;
 		std::string argsrem, envsrem, cgroupsrem;
 		uint32_t entrylen = 0;
-		const auto& cg = tinfo.cgroups();
+		auto cg = tinfo.cgroups().lock();
 
 		memset(&sctinfo, 0, sizeof(scap_threadinfo));
 
 		thread_to_scap(tinfo, &sctinfo);
 		tinfo.args_to_iovec(&args_iov, &argscnt, argsrem);
 		tinfo.env_to_iovec(&envs_iov, &envscnt, envsrem);
-		tinfo.cgroups_to_iovec(&cgroups_iov, &cgroupscnt, cgroupsrem, cg);
+		tinfo.cgroups_to_iovec(&cgroups_iov, &cgroupscnt, cgroupsrem, *cg);
 
 		if(scap_write_proclist_entry_bufs(proclist_dumper,
 		                                  &sctinfo,

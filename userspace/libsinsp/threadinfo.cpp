@@ -402,7 +402,11 @@ void sinsp_threadinfo::init(const scap_threadinfo& pinfo, const bool can_load_en
 	m_loginuid = pinfo.loginuid;
 }
 
-const sinsp_threadinfo::cgroups_t& sinsp_threadinfo::cgroups() const {
+libsinsp::RecursiveMutex<sinsp_threadinfo::cgroups_t>& sinsp_threadinfo::cgroups() {
+	return m_cgroups;
+}
+
+const libsinsp::RecursiveMutex<sinsp_threadinfo::cgroups_t>& sinsp_threadinfo::cgroups() const {
 	return m_cgroups;
 }
 
@@ -579,11 +583,11 @@ void sinsp_threadinfo::set_cgroups(const std::vector<std::string>& cgroups) {
 		tmp_cgroups.emplace_back(subsys, cgroup);
 	}
 
-	m_cgroups = tmp_cgroups;
+	*m_cgroups.lock() = tmp_cgroups;
 }
 
 void sinsp_threadinfo::set_cgroups(const cgroups_t& cgroups) {
-	m_cgroups = cgroups;
+	*m_cgroups.lock() = cgroups;
 }
 
 sinsp_fdinfo* sinsp_threadinfo::add_fd(int64_t fd, std::shared_ptr<sinsp_fdinfo>&& fdinfo) {
@@ -757,7 +761,8 @@ uint64_t sinsp_threadinfo::get_fd_limit() {
 const std::string& sinsp_threadinfo::get_cgroup(const std::string& subsys) const {
 	static const std::string notfound = "/";
 
-	for(const auto& it : cgroups()) {
+	auto cgroups_lock = cgroups().lock();
+	for(const auto& it : *cgroups_lock) {
 		if(it.first == subsys) {
 			return it.second;
 		}
@@ -767,7 +772,8 @@ const std::string& sinsp_threadinfo::get_cgroup(const std::string& subsys) const
 }
 
 bool sinsp_threadinfo::get_cgroup(const std::string& subsys, std::string& cgroup) const {
-	for(const auto& it : cgroups()) {
+	auto cgroups_lock = cgroups().lock();
+	for(const auto& it : *cgroups_lock) {
 		if(it.first == subsys) {
 			cgroup = it.second;
 			return true;

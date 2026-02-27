@@ -1133,7 +1133,8 @@ TEST_F(sinsp_with_test_input, plugin_subtables_array_pair) {
 	// obtain a pointer to the subtable (check typing too)
 	auto subtable_acc = field->second.into<libsinsp::state::base_table*>();
 	auto subtable = dynamic_cast<libsinsp::state::stl_container_table_adapter<
-	        std::vector<std::pair<std::string, std::string>>>*>(entry->read_field(subtable_acc));
+	        libsinsp::RecursiveMutex<std::vector<std::pair<std::string, std::string>>>>*>(
+	        entry->read_field(subtable_acc));
 	ASSERT_NE(subtable, nullptr);
 	ASSERT_EQ(subtable->name(), std::string("cgroups"));
 	ASSERT_EQ(subtable->entries_count(), 0);

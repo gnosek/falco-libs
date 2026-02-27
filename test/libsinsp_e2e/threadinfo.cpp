@@ -52,7 +52,6 @@ static void run_test(test_type ttype,
 	struct iovec* iov;
 	int iovcnt;
 	std::string rem;
-	sinsp_threadinfo::cgroups_t cg;
 
 	for(auto& val : vals) {
 		switch(ttype) {
@@ -65,9 +64,9 @@ static void run_test(test_type ttype,
 		case TEST_CGROUPS:
 			size_t pos = val.find("=");
 			ASSERT_NE(pos, std::string::npos);
-			auto cgroups = ti->cgroups();
-			cgroups.emplace_back(val.substr(0, pos), val.substr(pos + 1));
-			ti->set_cgroups(cgroups);
+			auto cgroups = ti->cgroups().lock();
+			cgroups->emplace_back(val.substr(0, pos), val.substr(pos + 1));
+			ti->set_cgroups(*cgroups);
 			break;
 		}
 	}
@@ -79,10 +78,11 @@ static void run_test(test_type ttype,
 	case TEST_ENV:
 		ti->env_to_iovec(&iov, &iovcnt, rem);
 		break;
-	case TEST_CGROUPS:
-		cg = ti->cgroups();
-		ti->cgroups_to_iovec(&iov, &iovcnt, rem, cg);
+	case TEST_CGROUPS: {
+		auto cg = ti->cgroups().lock();
+		ti->cgroups_to_iovec(&iov, &iovcnt, rem, *cg);
 		break;
+	}
 	};
 
 	std::vector<struct iovec> expected_iov;

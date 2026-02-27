@@ -347,7 +347,8 @@ public:
 	std::string get_path_for_dir_fd(int64_t dir_fd);
 
 	using cgroups_t = std::vector<std::pair<std::string, std::string>>;
-	const cgroups_t& cgroups() const;
+	libsinsp::RecursiveMutex<cgroups_t>& cgroups();
+	const libsinsp::RecursiveMutex<cgroups_t>& cgroups() const;
 
 	//
 	// Core state
@@ -371,7 +372,7 @@ public:
 	libsinsp::RecursiveMutex<std::vector<std::string>>
 	        m_args;  ///< Command line arguments (e.g. "-d1")
 	libsinsp::RecursiveMutex<std::vector<std::string>> m_env;  ///< Environment variables
-	cgroups_t m_cgroups;                                       ///< subsystem-cgroup pairs
+	libsinsp::RecursiveMutex<cgroups_t> m_cgroups;             ///< subsystem-cgroup pairs
 	uint32_t m_flags;   ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
 	int64_t m_fdlimit;  ///< The maximum number of FDs this thread can open
 	uint32_t m_uid;     ///< uid

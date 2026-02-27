@@ -1512,19 +1512,19 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		RETURN_EXTRACT_VAR(m_val.u64);
 	case TYPE_CGROUPS: {
 		m_tstr.clear();
-		auto cgroups = tinfo->cgroups();
+		auto cgroups = tinfo->cgroups().lock();
 
 		uint32_t j;
-		uint32_t nargs = (uint32_t)cgroups.size();
+		uint32_t nargs = (uint32_t)cgroups->size();
 
 		if(nargs == 0) {
 			return NULL;
 		}
 
 		for(j = 0; j < nargs; j++) {
-			m_tstr += cgroups[j].first;
+			m_tstr += (*cgroups)[j].first;
 			m_tstr += "=";
-			m_tstr += cgroups[j].second;
+			m_tstr += (*cgroups)[j].second;
 			if(j < nargs - 1) {
 				m_tstr += ' ';
 			}
