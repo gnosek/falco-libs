@@ -139,7 +139,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	// m_lastexec_ts
 	// m_latency
 	DEFINE_STATIC_FIELD_READONLY(ret, self, m_main_fdtable, "file_descriptors");
-	DEFINE_STATIC_FIELD_READONLY(ret, self, m_cwd, "cwd");
+	DEFINE_STATIC_TYPED_FIELD_READONLY(ret, self, m_cwd, "cwd", SS_PLUGIN_ST_STRING);
 	// m_parent_loop_detected
 	return ret;
 }
@@ -694,7 +694,7 @@ std::string sinsp_threadinfo::get_cwd() {
 	sinsp_threadinfo* tinfo = get_main_thread();
 
 	if(tinfo) {
-		return tinfo->m_cwd;
+		return *tinfo->m_cwd.lock();
 	} else {
 		/// todo(@Andreagit97) not sure we want to return "./" it seems like a valid path
 		return "./";
@@ -708,10 +708,18 @@ void sinsp_threadinfo::update_cwd(std::string_view cwd) {
 		return;
 	}
 
-	tinfo->m_cwd = sinsp_utils::concatenate_paths(m_cwd, cwd);
-
-	if(tinfo->m_cwd.empty() || tinfo->m_cwd.back() != '/') {
-		tinfo->m_cwd += '/';
+	if(tinfo == this) {
+		auto my_cwd = m_cwd.lock();
+		*my_cwd = sinsp_utils::concatenate_paths(*my_cwd, cwd);
+		if(my_cwd->empty() || my_cwd->back() != '/') {
+			*my_cwd += '/';
+		}
+	} else {
+		auto tinfo_cwd = tinfo->m_cwd.lock();
+		*tinfo_cwd = sinsp_utils::concatenate_paths(*m_cwd.lock(), cwd);
+		if(tinfo_cwd->empty() || tinfo_cwd->back() != '/') {
+			*tinfo_cwd += '/';
+		}
 	}
 }
 

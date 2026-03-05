@@ -104,7 +104,7 @@ public:
 	*/
 	std::string get_cwd();
 
-	inline void set_cwd(const std::string& v) { m_cwd = v; }
+	inline void set_cwd(const std::string& v) { *m_cwd.lock() = v; }
 
 	/*!
 	  \brief Return the values of all environment variables for the process
@@ -541,9 +541,9 @@ private:
 	//
 	sinsp_fdtable m_fdtable;  // The fd table of this thread
 	const libsinsp::state::base_table*
-	        m_main_fdtable;     // Points to the base fd table of the current main thread
-	std::string m_cwd;          // current working directory
-	uint8_t* m_lastevent_data;  // Used by some event parsers to store the last enter event
+	        m_main_fdtable;              // Points to the base fd table of the current main thread
+	libsinsp::Mutex<std::string> m_cwd;  // current working directory
+	uint8_t* m_lastevent_data;           // Used by some event parsers to store the last enter event
 
 	uint16_t m_lastevent_type;
 	uint16_t m_lastevent_cpuid;
