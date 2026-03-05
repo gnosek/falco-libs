@@ -217,7 +217,7 @@ public:
 		return (dev & 0xff) | ((dev >> 12) & 0xfff00);
 	}
 
-	inline uint64_t get_ino() const { return m_ino; }
+	inline uint64_t get_ino() const { return m_ino.load(); }
 
 	inline int64_t get_pid() const { return m_pid; }
 
@@ -386,7 +386,7 @@ public:
 	std::atomic<uint32_t> m_flags{FLAGS_NONE};
 	std::atomic<uint32_t> m_dev{0};
 	std::atomic<uint32_t> m_mount_id{0};
-	uint64_t m_ino = 0;
+	std::atomic<uint64_t> m_ino{0};
 	int64_t m_pid = 0;  // only if fd is a pidfd
 	int64_t m_fd = -1;
 };

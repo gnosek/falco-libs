@@ -154,7 +154,7 @@ sinsp_fdinfo::sinsp_fdinfo(const sinsp_fdinfo& o):
         m_flags(o.m_flags.load()),
         m_dev(o.m_dev.load()),
         m_mount_id(o.m_mount_id.load()),
-        m_ino(o.m_ino),
+        m_ino(o.m_ino.load()),
         m_pid(o.m_pid),
         m_fd(o.m_fd) {}
 
@@ -170,7 +170,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
 		m_flags.store(o.m_flags.load());
 		m_dev.store(o.m_dev.load());
 		m_mount_id.store(o.m_mount_id.load());
-		m_ino = o.m_ino;
+		m_ino.store(o.m_ino.load());
 		m_pid = o.m_pid;
 		m_fd = o.m_fd;
 	}
@@ -188,7 +188,7 @@ sinsp_fdinfo::sinsp_fdinfo(sinsp_fdinfo&& o):
         m_flags(o.m_flags.load()),
         m_dev(o.m_dev.load()),
         m_mount_id(o.m_mount_id.load()),
-        m_ino(o.m_ino),
+        m_ino(o.m_ino.load()),
         m_pid(o.m_pid),
         m_fd(o.m_fd) {}
 
@@ -204,7 +204,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
 		m_flags.store(o.m_flags.load());
 		m_dev.store(o.m_dev.load());
 		m_mount_id.store(o.m_mount_id.load());
-		m_ino = o.m_ino;
+		m_ino.store(o.m_ino.load());
 		m_pid = o.m_pid;
 		m_fd = o.m_fd;
 	}
@@ -240,7 +240,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_flags, "flags", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_dev, "dev", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_mount_id, "mount_id", SS_PLUGIN_ST_UINT32);
-	DEFINE_STATIC_FIELD(ret, self, m_ino, "ino");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_ino, "ino", SS_PLUGIN_ST_UINT64);
 	DEFINE_STATIC_FIELD(ret, self, m_pid, "pid");
 	DEFINE_STATIC_FIELD(ret, self, m_fd, "fd");
 

@@ -40,7 +40,7 @@ static void copy_ipv6_address(uint32_t (&dest)[4], const uint32_t (&src)[4]) {
 
 static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
 	dst.type = src.m_type.load();
-	dst.ino = src.m_ino;
+	dst.ino = src.m_ino.load();
 	dst.fd = src.m_fd;
 
 	switch(dst.type) {
