@@ -219,7 +219,7 @@ public:
 
 	inline uint64_t get_ino() const { return m_ino.load(); }
 
-	inline int64_t get_pid() const { return m_pid; }
+	inline int64_t get_pid() const { return m_pid.load(); }
 
 	inline void set_unix_info(const uint8_t* packed_data) {
 		const auto* source = packed::un_socktuple::source(packed_data);
@@ -387,6 +387,6 @@ public:
 	std::atomic<uint32_t> m_dev{0};
 	std::atomic<uint32_t> m_mount_id{0};
 	std::atomic<uint64_t> m_ino{0};
-	int64_t m_pid = 0;  // only if fd is a pidfd
+	std::atomic<int64_t> m_pid{0};  // only if fd is a pidfd
 	int64_t m_fd = -1;
 };
