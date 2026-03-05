@@ -1225,7 +1225,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 				return NULL;
 			}
 		} else {
-			m_tstr = m_fdinfo->m_name_raw;
+			m_tstr = *m_fdinfo->m_name_raw.lock();
 		}
 		remove_duplicate_path_separators(m_tstr);
 		RETURN_EXTRACT_STRING(m_tstr);

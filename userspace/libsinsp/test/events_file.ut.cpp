@@ -35,20 +35,20 @@ limitations under the License.
 	ASSERT_EQ(get_field_as_string(evt, "fd.dev.minor"), "0");        \
 	ASSERT_EQ(get_field_as_string(evt, "fd.nameraw"), "");
 
-#define ASSERT_FD_GETTERS_NOT_FILE(x)    \
-	ASSERT_EQ(*x->m_name.lock(), "");    \
-	ASSERT_EQ(x->m_name_raw, "");        \
-	ASSERT_EQ(x->m_oldname, "");         \
-	ASSERT_EQ(x->get_device(), 0);       \
-	ASSERT_EQ(x->tostring_clean(), "");  \
-	ASSERT_EQ(x->get_device_major(), 0); \
-	ASSERT_EQ(x->get_device_minor(), 0); \
-	ASSERT_FALSE(x->is_unix_socket());   \
-	ASSERT_FALSE(x->is_ipv4_socket());   \
-	ASSERT_FALSE(x->is_ipv6_socket());   \
-	ASSERT_FALSE(x->is_udp_socket());    \
-	ASSERT_FALSE(x->is_tcp_socket());    \
-	ASSERT_FALSE(x->is_file());          \
+#define ASSERT_FD_GETTERS_NOT_FILE(x)     \
+	ASSERT_EQ(*x->m_name.lock(), "");     \
+	ASSERT_EQ(*x->m_name_raw.lock(), ""); \
+	ASSERT_EQ(x->m_oldname, "");          \
+	ASSERT_EQ(x->get_device(), 0);        \
+	ASSERT_EQ(x->tostring_clean(), "");   \
+	ASSERT_EQ(x->get_device_major(), 0);  \
+	ASSERT_EQ(x->get_device_minor(), 0);  \
+	ASSERT_FALSE(x->is_unix_socket());    \
+	ASSERT_FALSE(x->is_ipv4_socket());    \
+	ASSERT_FALSE(x->is_ipv6_socket());    \
+	ASSERT_FALSE(x->is_udp_socket());     \
+	ASSERT_FALSE(x->is_tcp_socket());     \
+	ASSERT_FALSE(x->is_file());           \
 	ASSERT_FALSE(x->is_directory());
 
 TEST_F(sinsp_with_test_input, file_open) {

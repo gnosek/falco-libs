@@ -89,7 +89,7 @@ TEST_F(sinsp_with_test_input, CONNECT_parse_unix_socket) {
 
 	ASSERT_EQ(fdinfo->m_name, expected_unix_tuple);
 	// we don't have code to populate this `m_name_raw` for sockets.
-	ASSERT_EQ(fdinfo->m_name_raw, "");
+	ASSERT_EQ(*fdinfo->m_name_raw.lock(), "");
 
 	/* FDINFO associated with the thread */
 	fdinfo = init_tinfo->get_fd(sinsp_test_input::socket_params::default_fd);
@@ -99,7 +99,7 @@ TEST_F(sinsp_with_test_input, CONNECT_parse_unix_socket) {
 	ASSERT_TRUE(fdinfo->is_role_client());
 	ASSERT_TRUE(fdinfo->is_socket_connected());
 	ASSERT_EQ(fdinfo->m_name, expected_unix_tuple);
-	ASSERT_EQ(fdinfo->m_name_raw, "");
+	ASSERT_EQ(*fdinfo->m_name_raw.lock(), "");
 }
 
 TEST_F(sinsp_with_test_input, BIND_parse_unix_socket) {

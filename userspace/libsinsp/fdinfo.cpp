@@ -149,7 +149,7 @@ sinsp_fdinfo::sinsp_fdinfo(const sinsp_fdinfo& o):
         m_openflags(o.m_openflags.load()),
         m_sockinfo(o.m_sockinfo),
         m_name(*o.m_name.lock()),
-        m_name_raw(o.m_name_raw),
+        m_name_raw(*o.m_name_raw.lock()),
         m_oldname(o.m_oldname),
         m_flags(o.m_flags),
         m_dev(o.m_dev),
@@ -165,7 +165,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
 		m_openflags.store(o.m_openflags.load());
 		m_sockinfo = o.m_sockinfo;
 		*m_name.lock() = *o.m_name.lock();
-		m_name_raw = o.m_name_raw;
+		*m_name_raw.lock() = *o.m_name_raw.lock();
 		m_oldname = o.m_oldname;
 		m_flags = o.m_flags;
 		m_dev = o.m_dev;
@@ -183,7 +183,7 @@ sinsp_fdinfo::sinsp_fdinfo(sinsp_fdinfo&& o):
         m_openflags(o.m_openflags.load()),
         m_sockinfo(o.m_sockinfo),
         m_name(std::move(*o.m_name.lock())),
-        m_name_raw(std::move(o.m_name_raw)),
+        m_name_raw(std::move(*o.m_name_raw.lock())),
         m_oldname(std::move(o.m_oldname)),
         m_flags(o.m_flags),
         m_dev(o.m_dev),
@@ -199,7 +199,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
 		m_openflags.store(o.m_openflags.load());
 		m_sockinfo = o.m_sockinfo;
 		*m_name.lock() = std::move(*o.m_name.lock());
-		m_name_raw = std::move(o.m_name_raw);
+		*m_name_raw.lock() = std::move(*o.m_name_raw.lock());
 		m_oldname = std::move(o.m_oldname);
 		m_flags = o.m_flags;
 		m_dev = o.m_dev;
@@ -235,7 +235,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	// the rest fo the fields are more trivial to expose
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_openflags, "open_flags", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_name, "name", SS_PLUGIN_ST_STRING);
-	DEFINE_STATIC_FIELD(ret, self, m_name_raw, "name_raw");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_name_raw, "name_raw", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_FIELD(ret, self, m_oldname, "old_name");
 	DEFINE_STATIC_FIELD(ret, self, m_flags, "flags");
 	DEFINE_STATIC_FIELD(ret, self, m_dev, "dev");
@@ -357,7 +357,7 @@ std::string sinsp_fdinfo::tostring_clean() const {
 }
 
 void sinsp_fdinfo::add_filename_raw(std::string_view rawpath) {
-	m_name_raw = std::string(rawpath);
+	*m_name_raw.lock() = std::string(rawpath);
 }
 
 void sinsp_fdinfo::add_filename(std::string_view fullpath) {
