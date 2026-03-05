@@ -161,14 +161,14 @@ public:
 	  thread and the main thread is already dead
 	*/
 	inline void resurrect_thread() {
-		/* If the thread is not dead we do nothing.
-		 * It should never happen
+		/* Atomically clear PPM_CL_CLOSED and check whether it was set.
+		 * If the thread was not dead we do nothing.
 		 */
-		if(!is_dead()) {
+		uint32_t old_flags = m_flags.fetch_and(~PPM_CL_CLOSED);
+		if(!(old_flags & PPM_CL_CLOSED)) {
 			return;
 		}
 
-		m_flags &= ~PPM_CL_CLOSED;
 		if(!m_tginfo) {
 			return;
 		}
@@ -373,7 +373,8 @@ public:
 	        m_args;  ///< Command line arguments (e.g. "-d1")
 	libsinsp::RecursiveMutex<std::vector<std::string>> m_env;  ///< Environment variables
 	libsinsp::RecursiveMutex<cgroups_t> m_cgroups;             ///< subsystem-cgroup pairs
-	uint32_t m_flags;   ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
+	std::atomic<uint32_t>
+	        m_flags;    ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
 	int64_t m_fdlimit;  ///< The maximum number of FDs this thread can open
 	uint32_t m_uid;     ///< uid
 	uint32_t m_gid;     ///< gid

@@ -105,7 +105,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 		        throw sinsp_exception("attempt to write to read-only static struct field: cgroups");
 	        },
 	        true);
-	DEFINE_STATIC_FIELD(ret, self, m_flags, "flags");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_flags, "flags", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_FIELD(ret, self, m_fdlimit, "fd_limit");
 	DEFINE_STATIC_FIELD(ret, self, m_uid, "uid");
 	DEFINE_STATIC_FIELD(ret, self, m_gid, "gid");
@@ -365,9 +365,8 @@ void sinsp_threadinfo::init(const scap_threadinfo& pinfo, const bool can_load_en
 		set_env(pinfo.env, pinfo.env_len, can_load_env_from_proc);
 		update_cwd({pinfo.cwd});
 	}
-	m_flags |= pinfo.flags;
-	m_flags |= PPM_CL_ACTIVE;  // Assume that all the threads coming from /proc are real, active
-	                           // threads
+	m_flags |= pinfo.flags | PPM_CL_ACTIVE;  // Assume that all the threads coming from /proc are
+	                                         // real, active threads
 	m_fdtable.clear();
 	m_fdtable.set_tid(m_tid);
 	m_fdlimit = pinfo.fdlimit;

@@ -1737,21 +1737,18 @@ void sinsp_parser::parse_execve_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 	// and shell pipe flags
 	//
 
-	auto spf =
-	        evt.get_tinfo()->m_flags & (PPM_CL_PIPE_SRC | PPM_CL_PIPE_DST | PPM_CL_IS_MAIN_THREAD);
-	bool inverted = ((evt.get_tinfo()->m_flags & PPM_CL_CLONE_INVERTED) != 0);
-
-	evt.get_tinfo()->m_flags = PPM_CL_ACTIVE;
-
-	evt.get_tinfo()->m_flags |= spf;
-	if(inverted) {
-		evt.get_tinfo()->m_flags |= PPM_CL_CLONE_INVERTED;
+	{
+		static constexpr uint32_t preserve_mask =
+		        PPM_CL_PIPE_SRC | PPM_CL_PIPE_DST | PPM_CL_IS_MAIN_THREAD | PPM_CL_CLONE_INVERTED;
+		uint32_t old_flags = evt.get_tinfo()->m_flags.load(std::memory_order_relaxed);
+		uint32_t new_flags;
+		do {
+			new_flags = PPM_CL_ACTIVE | PPM_CL_NAME_CHANGED | (old_flags & preserve_mask);
+		} while(!evt.get_tinfo()->m_flags.compare_exchange_weak(old_flags,
+		                                                        new_flags,
+		                                                        std::memory_order_relaxed,
+		                                                        std::memory_order_relaxed));
 	}
-
-	//
-	// This process' name changed, so we need to include it in the protocol again
-	//
-	evt.get_tinfo()->m_flags |= PPM_CL_NAME_CHANGED;
 
 	//
 	// If there's a listener, add a callback to later invoke it.
