@@ -385,7 +385,7 @@ public:
 	                    // name changes that result from parsing an event.
 	std::atomic<uint32_t> m_flags{FLAGS_NONE};
 	std::atomic<uint32_t> m_dev{0};
-	uint32_t m_mount_id = 0;
+	std::atomic<uint32_t> m_mount_id{0};
 	uint64_t m_ino = 0;
 	int64_t m_pid = 0;  // only if fd is a pidfd
 	int64_t m_fd = -1;
