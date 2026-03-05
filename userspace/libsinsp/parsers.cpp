@@ -970,7 +970,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 		child_tinfo->m_exe_from_memfd.store(caller_tinfo->m_exe_from_memfd.load());
 
-		child_tinfo->m_root = caller_tinfo->m_root;
+		*child_tinfo->m_root.lock() = *caller_tinfo->m_root.lock();
 
 		child_tinfo->m_sid.store(caller_tinfo->m_sid.load());
 
@@ -1229,7 +1229,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 		child_tinfo->m_exe_from_memfd.store(lookup_tinfo->m_exe_from_memfd.load());
 
-		child_tinfo->m_root = lookup_tinfo->m_root;
+		*child_tinfo->m_root.lock() = *lookup_tinfo->m_root.lock();
 
 		child_tinfo->m_sid.store(lookup_tinfo->m_sid.load());
 
@@ -3909,9 +3909,9 @@ void sinsp_parser::parse_chroot_exit(sinsp_evt &evt) {
 	const char *resolved_path;
 	const auto path = evt.get_param_as_str(1, &resolved_path);
 	if(resolved_path[0] == 0) {
-		evt.get_tinfo()->m_root = path;
+		*evt.get_tinfo()->m_root.lock() = path;
 	} else {
-		evt.get_tinfo()->m_root = resolved_path;
+		*evt.get_tinfo()->m_root.lock() = resolved_path;
 	}
 }
 

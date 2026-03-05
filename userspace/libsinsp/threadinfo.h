@@ -402,7 +402,7 @@ public:
 	std::atomic<int64_t> m_pgid;   // Process group id, as seen from the host pid namespace
 	std::atomic<uint64_t>
 	        m_pidns_init_start_ts;  ///< The pid_namespace init task (child_reaper) start_time ts.
-	std::string m_root;
+	libsinsp::Mutex<std::string> m_root;
 
 	std::atomic<uint32_t> m_tty;  ///< Number of controlling terminal
 	std::shared_ptr<thread_group_info> m_tginfo;

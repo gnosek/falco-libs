@@ -132,7 +132,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	                          m_pidns_init_start_ts,
 	                          "pidns_init_start_ts",
 	                          SS_PLUGIN_ST_UINT64);
-	DEFINE_STATIC_FIELD(ret, self, m_root, "root");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_root, "root", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_tty, "tty", SS_PLUGIN_ST_UINT32);
 	// m_category
 	// m_clone_ts
@@ -398,7 +398,7 @@ void sinsp_threadinfo::init(const scap_threadinfo& pinfo, const bool can_load_en
 	m_tty = pinfo.tty;
 
 	set_cgroups(pinfo.cgroups.path, pinfo.cgroups.len);
-	m_root = pinfo.root;
+	*m_root.lock() = pinfo.root;
 
 	m_gid = pinfo.gid;
 	m_uid = pinfo.uid;
