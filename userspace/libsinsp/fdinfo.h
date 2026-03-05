@@ -206,13 +206,16 @@ public:
 		}
 	}
 
-	inline uint32_t get_device() const { return m_dev; }
+	inline uint32_t get_device() const { return m_dev.load(); }
 
 	// see new_encode_dev in include/linux/kdev_t.h
-	inline uint32_t get_device_major() const { return (m_dev & 0xfff00) >> 8; }
+	inline uint32_t get_device_major() const { return (m_dev.load() & 0xfff00) >> 8; }
 
 	// see new_encode_dev in include/linux/kdev_t.h
-	inline uint32_t get_device_minor() const { return (m_dev & 0xff) | ((m_dev >> 12) & 0xfff00); }
+	inline uint32_t get_device_minor() const {
+		auto dev = m_dev.load();
+		return (dev & 0xff) | ((dev >> 12) & 0xfff00);
+	}
 
 	inline uint64_t get_ino() const { return m_ino; }
 
@@ -381,7 +384,7 @@ public:
 	        m_oldname;  // The name of this fd at the beginning of event parsing. Used to detect
 	                    // name changes that result from parsing an event.
 	std::atomic<uint32_t> m_flags{FLAGS_NONE};
-	uint32_t m_dev = 0;
+	std::atomic<uint32_t> m_dev{0};
 	uint32_t m_mount_id = 0;
 	uint64_t m_ino = 0;
 	int64_t m_pid = 0;  // only if fd is a pidfd

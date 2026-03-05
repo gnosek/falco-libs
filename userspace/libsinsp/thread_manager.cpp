@@ -80,7 +80,7 @@ static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
 		strlcpy(dst.info.regularinfo.fname,
 		        src.m_name.lock()->c_str(),
 		        sizeof(dst.info.regularinfo.fname));
-		dst.info.regularinfo.dev = src.m_dev;
+		dst.info.regularinfo.dev = src.m_dev.load();
 		dst.info.regularinfo.mount_id = src.m_mount_id;
 		break;
 	case SCAP_FD_FIFO:
