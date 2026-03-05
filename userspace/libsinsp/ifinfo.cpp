@@ -125,12 +125,12 @@ void sinsp_network_interfaces::update_fd(sinsp_fdinfo& fd) const {
 	ipv6tuple* pipv6info = &fd.m_sockinfo.m_ipv6info;
 
 	// Only handle ipv4/ipv6 sockets.
-	if(fd.m_type != SCAP_FD_IPV4_SOCK && fd.m_type != SCAP_FD_IPV6_SOCK) {
+	if(fd.m_type.load() != SCAP_FD_IPV4_SOCK && fd.m_type.load() != SCAP_FD_IPV6_SOCK) {
 		return;
 	}
 
 	// Handle IPv4 sockets.
-	if(fd.m_type == SCAP_FD_IPV4_SOCK) {
+	if(fd.m_type.load() == SCAP_FD_IPV4_SOCK) {
 		if(pipv4info->m_fields.m_sip != 0 && pipv4info->m_fields.m_dip != 0) {
 			return;
 		}

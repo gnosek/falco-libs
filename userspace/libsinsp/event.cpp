@@ -514,8 +514,10 @@ int sinsp_evt::render_fd_json(Json::Value *ret,
 			char tch = fdinfo->get_typechar();
 			char ipprotoch = 0;
 
-			if(fdinfo->m_type == SCAP_FD_IPV4_SOCK || fdinfo->m_type == SCAP_FD_IPV6_SOCK ||
-			   fdinfo->m_type == SCAP_FD_IPV4_SERVSOCK || fdinfo->m_type == SCAP_FD_IPV6_SERVSOCK) {
+			if(fdinfo->m_type.load() == SCAP_FD_IPV4_SOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV6_SOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV4_SERVSOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV6_SERVSOCK) {
 				scap_l4_proto l4p = fdinfo->get_l4proto();
 
 				switch(l4p) {
@@ -587,8 +589,10 @@ char *sinsp_evt::render_fd(int64_t fd, const char **resolved_str, sinsp_evt::par
 			char tch = fdinfo->get_typechar();
 			char ipprotoch = 0;
 
-			if(fdinfo->m_type == SCAP_FD_IPV4_SOCK || fdinfo->m_type == SCAP_FD_IPV6_SOCK ||
-			   fdinfo->m_type == SCAP_FD_IPV4_SERVSOCK || fdinfo->m_type == SCAP_FD_IPV6_SERVSOCK) {
+			if(fdinfo->m_type.load() == SCAP_FD_IPV4_SOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV6_SOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV4_SERVSOCK ||
+			   fdinfo->m_type.load() == SCAP_FD_IPV6_SERVSOCK) {
 				scap_l4_proto l4p = fdinfo->get_l4proto();
 
 				switch(l4p) {
@@ -1601,7 +1605,7 @@ void sinsp_evt::get_category(sinsp_evt::category *cat) const {
 			cat->m_subcategory = SC_UNKNOWN;
 			return;
 		} else {
-			switch(m_fdinfo->m_type) {
+			switch(m_fdinfo->m_type.load()) {
 			case SCAP_FD_FILE:
 			case SCAP_FD_FILE_V2:
 			case SCAP_FD_DIRECTORY:
@@ -1696,13 +1700,14 @@ bool sinsp_evt::is_file_open_error() const {
 
 bool sinsp_evt::is_file_error() const {
 	return is_file_open_error() ||
-	       ((m_fdinfo != nullptr) &&
-	        ((m_fdinfo->m_type == SCAP_FD_FILE) || (m_fdinfo->m_type == SCAP_FD_FILE_V2)));
+	       ((m_fdinfo != nullptr) && ((m_fdinfo->m_type.load() == SCAP_FD_FILE) ||
+	                                  (m_fdinfo->m_type.load() == SCAP_FD_FILE_V2)));
 }
 
 bool sinsp_evt::is_network_error() const {
 	if(m_fdinfo != nullptr) {
-		return m_fdinfo->m_type == SCAP_FD_IPV4_SOCK || m_fdinfo->m_type == SCAP_FD_IPV6_SOCK;
+		return m_fdinfo->m_type.load() == SCAP_FD_IPV4_SOCK ||
+		       m_fdinfo->m_type.load() == SCAP_FD_IPV6_SOCK;
 	}
 	return m_pevt->type == PPME_SOCKET_ACCEPT_5_X || m_pevt->type == PPME_SOCKET_ACCEPT4_6_X ||
 	       m_pevt->type == PPME_SOCKET_CONNECT_X || m_pevt->type == PPME_SOCKET_BIND_X;

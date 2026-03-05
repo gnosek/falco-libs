@@ -201,7 +201,7 @@ sinsp_threadinfo::~sinsp_threadinfo() {
 void sinsp_threadinfo::fix_sockets_coming_from_proc(const std::set<uint16_t>& ipv4_server_ports,
                                                     const bool resolve_hostname_and_port) {
 	m_fdtable.loop([resolve_hostname_and_port, &ipv4_server_ports](int64_t fd, sinsp_fdinfo& fdi) {
-		if(fdi.m_type != SCAP_FD_IPV4_SOCK) {
+		if(fdi.m_type.load() != SCAP_FD_IPV4_SOCK) {
 			return true;
 		}
 
@@ -236,7 +236,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 	newfdi->m_ino = fdi.ino;
 	newfdi->m_fd = fdi.fd;
 
-	switch(newfdi->m_type) {
+	switch(newfdi->m_type.load()) {
 	case SCAP_FD_IPV4_SOCK:
 		newfdi->m_sockinfo.m_ipv4info.m_fields.m_sip = fdi.info.ipv4info.sip;
 		newfdi->m_sockinfo.m_ipv4info.m_fields.m_dip = fdi.info.ipv4info.dip;
@@ -633,13 +633,13 @@ bool sinsp_threadinfo::is_bound_to_port(uint16_t number) const {
 
 	bool ret = false;
 	fdt->const_loop([&](int64_t fd, const sinsp_fdinfo& fdi) {
-		if(fdi.m_type == SCAP_FD_IPV4_SOCK) {
+		if(fdi.m_type.load() == SCAP_FD_IPV4_SOCK) {
 			if(fdi.m_sockinfo.m_ipv4info.m_fields.m_dport == number) {
 				// set result and break out of the loop
 				ret = true;
 				return false;
 			}
-		} else if(fdi.m_type == SCAP_FD_IPV4_SERVSOCK) {
+		} else if(fdi.m_type.load() == SCAP_FD_IPV4_SERVSOCK) {
 			if(fdi.m_sockinfo.m_ipv4serverinfo.m_port == number) {
 				// set result and break out of the loop
 				ret = true;
@@ -660,7 +660,7 @@ bool sinsp_threadinfo::uses_client_port(uint16_t number) const {
 
 	bool ret = false;
 	fdt->const_loop([&](int64_t fd, const sinsp_fdinfo& fdi) {
-		if(fdi.m_type == SCAP_FD_IPV4_SOCK) {
+		if(fdi.m_type.load() == SCAP_FD_IPV4_SOCK) {
 			if(fdi.m_sockinfo.m_ipv4info.m_fields.m_sport == number) {
 				// set result and break out of the loop
 				ret = true;

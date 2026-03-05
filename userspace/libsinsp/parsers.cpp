@@ -2115,7 +2115,7 @@ inline void sinsp_parser::add_socket(sinsp_evt &evt,
 		}
 	}
 
-	if(fdi->m_type == SCAP_FD_UNKNOWN) {
+	if(fdi->m_type.load() == SCAP_FD_UNKNOWN) {
 		SINSP_STR_DEBUG("Unknown fd fd=" + std::to_string(fd) +
 		                " domain=" + std::to_string(domain) + " type=" + std::to_string(type) +
 		                " protocol=" + std::to_string(protocol) +
@@ -2495,7 +2495,7 @@ inline void sinsp_parser::fill_client_socket_info(sinsp_evt &evt,
 
 		// Add the friendly name to the fd info.
 		sinsp_utils::sockinfo_to_str(&evt.get_fd_info()->m_sockinfo,
-		                             evt.get_fd_info()->m_type,
+		                             evt.get_fd_info()->m_type.load(),
 		                             &evt.get_paramstr_storage()[0],
 		                             evt.get_paramstr_storage().size(),
 		                             can_resolve_hostname_and_port);
@@ -2846,7 +2846,7 @@ inline bool sinsp_parser::update_ipv4_addresses_and_ports(sinsp_fdinfo &fdinfo,
                                                           const uint32_t tdip,
                                                           const uint16_t tdport,
                                                           const bool overwrite_dest) {
-	if(fdinfo.m_type == SCAP_FD_IPV4_SOCK) {
+	if(fdinfo.m_type.load() == SCAP_FD_IPV4_SOCK) {
 		if((tsip == fdinfo.m_sockinfo.m_ipv4info.m_fields.m_sip &&
 		    tsport == fdinfo.m_sockinfo.m_ipv4info.m_fields.m_sport &&
 		    tdip == fdinfo.m_sockinfo.m_ipv4info.m_fields.m_dip &&
@@ -2946,7 +2946,7 @@ bool sinsp_parser::set_ipv6_addresses_and_ports(sinsp_fdinfo &fdinfo,
 
 	auto &ipv6_info_fields = fdinfo.m_sockinfo.m_ipv6info.m_fields;
 
-	if(fdinfo.m_type == SCAP_FD_IPV6_SOCK) {
+	if(fdinfo.m_type.load() == SCAP_FD_IPV6_SOCK) {
 		if((tmp_sip == ipv6_info_fields.m_sip && tmp_sport == ipv6_info_fields.m_sport &&
 		    tmp_dip == ipv6_info_fields.m_dip && tmp_dport == ipv6_info_fields.m_dport) ||
 		   (tmp_dip == ipv6_info_fields.m_sip && tmp_dport == ipv6_info_fields.m_sport &&
@@ -2991,7 +2991,7 @@ bool sinsp_parser::update_fd(sinsp_evt &evt, const sinsp_evt_param &parinfo) con
 	const auto family = *packed::generic_tuple::family(packed_data);
 
 	if(family == PPM_AF_INET) {
-		if(evt.get_fd_info()->m_type == SCAP_FD_IPV4_SERVSOCK) {
+		if(evt.get_fd_info()->m_type.load() == SCAP_FD_IPV4_SERVSOCK) {
 			//
 			// If this was previously a server socket, propagate the L4 protocol
 			//
@@ -3046,11 +3046,11 @@ bool sinsp_parser::update_fd(sinsp_evt &evt, const sinsp_evt_param &parinfo) con
 	// connection is UDP, because TCP would fail if the address is changed in
 	// the middle of a connection.
 	//
-	if(evt.get_fd_info()->m_type == SCAP_FD_IPV4_SOCK) {
+	if(evt.get_fd_info()->m_type.load() == SCAP_FD_IPV4_SOCK) {
 		if(evt.get_fd_info()->m_sockinfo.m_ipv4info.m_fields.m_l4proto == SCAP_L4_UNKNOWN) {
 			evt.get_fd_info()->m_sockinfo.m_ipv4info.m_fields.m_l4proto = SCAP_L4_UDP;
 		}
-	} else if(evt.get_fd_info()->m_type == SCAP_FD_IPV6_SOCK) {
+	} else if(evt.get_fd_info()->m_type.load() == SCAP_FD_IPV6_SOCK) {
 		if(evt.get_fd_info()->m_sockinfo.m_ipv6info.m_fields.m_l4proto == SCAP_L4_UNKNOWN) {
 			evt.get_fd_info()->m_sockinfo.m_ipv6info.m_fields.m_l4proto = SCAP_L4_UDP;
 		}
@@ -3065,7 +3065,7 @@ bool sinsp_parser::update_fd(sinsp_evt &evt, const sinsp_evt_param &parinfo) con
 }
 
 void sinsp_parser::swap_addresses(sinsp_fdinfo &fdinfo) {
-	if(fdinfo.m_type == SCAP_FD_IPV4_SOCK) {
+	if(fdinfo.m_type.load() == SCAP_FD_IPV4_SOCK) {
 		const uint32_t tip = fdinfo.m_sockinfo.m_ipv4info.m_fields.m_sip;
 		const uint16_t tport = fdinfo.m_sockinfo.m_ipv4info.m_fields.m_sport;
 		fdinfo.m_sockinfo.m_ipv4info.m_fields.m_sip = fdinfo.m_sockinfo.m_ipv4info.m_fields.m_dip;
@@ -3218,7 +3218,7 @@ void sinsp_parser::parse_read_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict
 
 	// Fd info and type can change during event parsing.
 	auto &fdinfo = *evt.get_fd_info();
-	auto fd_type = evt.get_fd_info()->m_type;
+	auto fd_type = evt.get_fd_info()->m_type.load();
 
 	if(evt.get_syscall_return_value() < 0) {
 		if(!m_track_connection_status) {
@@ -3260,7 +3260,7 @@ void sinsp_parser::parse_read_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict
 		// socket is a datagram one or because some event was lost), add it here.
 		if(update_fd(evt, *evt.get_param(tupleparam))) {
 			// update_fd() can change the event's fd type.
-			fd_type = evt.get_fd_info()->m_type;
+			fd_type = evt.get_fd_info()->m_type.load();
 			if(fd_type == SCAP_FD_IPV4_SOCK || fd_type == SCAP_FD_IPV6_SOCK) {
 				if(fdinfo.is_role_none()) {
 					fdinfo.set_net_role_by_guessing(*evt.get_tinfo(), true);
@@ -3354,7 +3354,7 @@ void sinsp_parser::parse_write_exit(sinsp_evt &evt, sinsp_parser_verdict &verdic
 
 	// Fd info and type can change during event parsing.
 	auto &fdinfo = *evt.get_fd_info();
-	auto fd_type = evt.get_fd_info()->m_type;
+	auto fd_type = evt.get_fd_info()->m_type.load();
 
 	if(evt.get_syscall_return_value() < 0) {
 		if(!m_track_connection_status) {
@@ -3392,7 +3392,7 @@ void sinsp_parser::parse_write_exit(sinsp_evt &evt, sinsp_parser_verdict &verdic
 		if(constexpr uint32_t SOCKET_TUPLE_PARAM_ID = 4;
 		   update_fd(evt, *evt.get_param(SOCKET_TUPLE_PARAM_ID))) {
 			// update_fd() can change the event's fd type.
-			fd_type = evt.get_fd_info()->m_type;
+			fd_type = evt.get_fd_info()->m_type.load();
 			if(fd_type == SCAP_FD_IPV4_SOCK || fd_type == SCAP_FD_IPV6_SOCK) {
 				if(fdinfo.is_role_none()) {
 					fdinfo.set_net_role_by_guessing(*evt.get_tinfo(), false);

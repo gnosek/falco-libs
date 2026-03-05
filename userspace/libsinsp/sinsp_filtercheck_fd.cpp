@@ -636,7 +636,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			RETURN_EXTRACT_VAR(m_fdinfo->m_sockinfo.m_ipv4info.m_fields.m_sip);
 		} else if(evt_type == SCAP_FD_IPV6_SOCK) {
@@ -653,7 +653,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 		}
 
 		m_tstr.clear();
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			m_tstr = sinsp_dns_manager::get().name_of(
 			        AF_INET,
@@ -680,7 +680,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			RETURN_EXTRACT_VAR(m_fdinfo->m_sockinfo.m_ipv4info.m_fields.m_dip);
 		} else if(evt_type == SCAP_FD_IPV4_SERVSOCK) {
@@ -701,7 +701,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 		}
 
 		m_tstr.clear();
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			m_tstr = sinsp_dns_manager::get().name_of(
 			        AF_INET,
@@ -737,7 +737,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type != SCAP_FD_IPV4_SOCK && evt_type != SCAP_FD_IPV6_SOCK) {
 			return NULL;
 		}
@@ -859,7 +859,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 
 		if(m_fdinfo->is_role_none()) {
 			return NULL;
@@ -876,7 +876,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 
 		if(m_fdinfo->is_role_none()) {
 			return NULL;
@@ -900,7 +900,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			if(m_fdinfo->is_role_none()) {
@@ -929,7 +929,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 
 		uint16_t nport = 0;
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			if(m_fdinfo->is_role_none()) {
@@ -968,7 +968,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type != SCAP_FD_IPV4_SOCK && evt_type != SCAP_FD_IPV6_SOCK) {
 			return NULL;
 		}
@@ -1028,7 +1028,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type != SCAP_FD_IPV4_SOCK && evt_type != SCAP_FD_IPV6_SOCK) {
 			return NULL;
 		}
@@ -1121,14 +1121,15 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		if(m_fdinfo->m_type == SCAP_FD_IPV4_SERVSOCK || m_fdinfo->m_type == SCAP_FD_IPV6_SERVSOCK) {
+		if(m_fdinfo->m_type.load() == SCAP_FD_IPV4_SERVSOCK ||
+		   m_fdinfo->m_type.load() == SCAP_FD_IPV6_SERVSOCK) {
 			m_val.u32 = true;
-		} else if(m_fdinfo->m_type == SCAP_FD_IPV4_SOCK) {
+		} else if(m_fdinfo->m_type.load() == SCAP_FD_IPV4_SOCK) {
 			m_val.u32 = m_inspector->get_ifaddr_list().is_ipv4addr_in_local_machine(
 			        m_fdinfo->m_sockinfo.m_ipv4info.m_fields.m_dip,
 			        m_inspector->m_plugin_tables,
 			        m_tinfo);
-		} else if(m_fdinfo->m_type == SCAP_FD_IPV6_SOCK) {
+		} else if(m_fdinfo->m_type.load() == SCAP_FD_IPV6_SOCK) {
 			m_val.u32 = m_inspector->get_ifaddr_list().is_ipv6addr_in_local_machine(
 			        m_fdinfo->m_sockinfo.m_ipv6info.m_fields.m_dip,
 			        m_inspector->m_plugin_tables,
@@ -1144,11 +1145,13 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		if(m_fdinfo->m_type == SCAP_FD_IPV4_SOCK || m_fdinfo->m_type == SCAP_FD_IPV6_SOCK ||
-		   m_fdinfo->m_type == SCAP_FD_IPV4_SERVSOCK || m_fdinfo->m_type == SCAP_FD_IPV6_SERVSOCK) {
+		if(m_fdinfo->m_type.load() == SCAP_FD_IPV4_SOCK ||
+		   m_fdinfo->m_type.load() == SCAP_FD_IPV6_SOCK ||
+		   m_fdinfo->m_type.load() == SCAP_FD_IPV4_SERVSOCK ||
+		   m_fdinfo->m_type.load() == SCAP_FD_IPV6_SERVSOCK) {
 			m_tstr = "ip";
 			RETURN_EXTRACT_STRING(m_tstr);
-		} else if(m_fdinfo->m_type == SCAP_FD_UNIX_SOCK) {
+		} else if(m_fdinfo->m_type.load() == SCAP_FD_UNIX_SOCK) {
 			m_tstr = "unix";
 			RETURN_EXTRACT_STRING(m_tstr);
 		} else {
@@ -1260,7 +1263,7 @@ bool sinsp_filter_check_fd::compare_ip(sinsp_evt *evt) {
 			return true;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			if(m_cmpop == CO_EQ || m_cmpop == CO_IN) {
 				if(compare_rhs(m_cmpop,
@@ -1343,7 +1346,7 @@ bool sinsp_filter_check_fd::compare_net(sinsp_evt *evt) {
 	bool sip_cmp = false;
 	bool dip_cmp = false;
 
-	switch(m_fdinfo->m_type) {
+	switch(m_fdinfo->m_type.load()) {
 	case SCAP_FD_IPV4_SERVSOCK:
 		if(filter_value_len() != sizeof(ipv4net)) {
 			return m_cmpop == CO_NE;
@@ -1411,7 +1414,7 @@ bool sinsp_filter_check_fd::compare_port(sinsp_evt *evt) {
 
 		uint16_t *sport;
 		uint16_t *dport;
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 
 		if(evt_type == SCAP_FD_IPV4_SOCK) {
 			sport = &m_fdinfo->m_sockinfo.m_ipv4info.m_fields.m_sport;
@@ -1485,7 +1488,7 @@ bool sinsp_filter_check_fd::compare_domain(sinsp_evt *evt) {
 			return true;
 		}
 
-		scap_fd_type evt_type = m_fdinfo->m_type;
+		scap_fd_type evt_type = m_fdinfo->m_type.load();
 		if(evt_type != SCAP_FD_IPV4_SOCK && evt_type != SCAP_FD_IPV6_SOCK) {
 			return false;
 		}

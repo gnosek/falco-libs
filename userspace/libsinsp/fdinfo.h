@@ -23,6 +23,7 @@ limitations under the License.
 #include <libsinsp/sinsp_public.h>
 #include <libsinsp/state/table.h>
 
+#include <atomic>
 #include <unordered_map>
 #include <memory>
 #include <libsinsp/packed_data.h>
@@ -103,10 +104,10 @@ public:
 	};
 
 	sinsp_fdinfo(const std::shared_ptr<libsinsp::state::dynamic_field_infos>& dyn_fields = nullptr);
-	sinsp_fdinfo(sinsp_fdinfo&& o) = default;
-	sinsp_fdinfo& operator=(sinsp_fdinfo&& o) = default;
-	sinsp_fdinfo(const sinsp_fdinfo& o) = default;
-	sinsp_fdinfo& operator=(const sinsp_fdinfo& o) = default;
+	sinsp_fdinfo(sinsp_fdinfo&& o);
+	sinsp_fdinfo& operator=(sinsp_fdinfo&& o);
+	sinsp_fdinfo(const sinsp_fdinfo& o);
+	sinsp_fdinfo& operator=(const sinsp_fdinfo& o);
 
 	virtual ~sinsp_fdinfo() = default;
 
@@ -142,23 +143,23 @@ public:
 	/*!
 	  \brief Returns true if this is a unix socket.
 	*/
-	inline bool is_unix_socket() const { return m_type == SCAP_FD_UNIX_SOCK; }
+	inline bool is_unix_socket() const { return m_type.load() == SCAP_FD_UNIX_SOCK; }
 
 	/*!
 	  \brief Returns true if this is an IPv4 socket.
 	*/
-	inline bool is_ipv4_socket() const { return m_type == SCAP_FD_IPV4_SOCK; }
+	inline bool is_ipv4_socket() const { return m_type.load() == SCAP_FD_IPV4_SOCK; }
 
 	/*!
 	  \brief Returns true if this is an IPv4 socket.
 	*/
-	inline bool is_ipv6_socket() const { return m_type == SCAP_FD_IPV6_SOCK; }
+	inline bool is_ipv6_socket() const { return m_type.load() == SCAP_FD_IPV6_SOCK; }
 
 	/*!
 	  \brief Returns true if this is a UDP socket.
 	*/
 	inline bool is_udp_socket() const {
-		return m_type == SCAP_FD_IPV4_SOCK &&
+		return m_type.load() == SCAP_FD_IPV4_SOCK &&
 		       m_sockinfo.m_ipv4info.m_fields.m_l4proto == SCAP_L4_UDP;
 	}
 
@@ -166,34 +167,38 @@ public:
 	  \brief Returns true if this is a unix TCP.
 	*/
 	inline bool is_tcp_socket() const {
-		return m_type == SCAP_FD_IPV4_SOCK &&
+		return m_type.load() == SCAP_FD_IPV4_SOCK &&
 		       m_sockinfo.m_ipv4info.m_fields.m_l4proto == SCAP_L4_TCP;
 	}
 
 	/*!
 	  \brief Returns true if this is a pipe.
 	*/
-	inline bool is_pipe() const { return m_type == SCAP_FD_FIFO; }
+	inline bool is_pipe() const { return m_type.load() == SCAP_FD_FIFO; }
 
 	/*!
 	  \brief Returns true if this is a file.
 	*/
-	inline bool is_file() const { return m_type == SCAP_FD_FILE || m_type == SCAP_FD_FILE_V2; }
+	inline bool is_file() const {
+		auto type = m_type.load();
+		return type == SCAP_FD_FILE || type == SCAP_FD_FILE_V2;
+	}
 
 	/*!
 	  \brief Returns true if this is a directory.
 	*/
-	inline bool is_directory() const { return m_type == SCAP_FD_DIRECTORY; }
+	inline bool is_directory() const { return m_type.load() == SCAP_FD_DIRECTORY; }
 
 	/*!
 	  \brief Returns true if this is a pidfd, created through pidfd_open.
 	*/
-	inline bool is_pidfd() const { return m_type == SCAP_FD_PIDFD; }
+	inline bool is_pidfd() const { return m_type.load() == SCAP_FD_PIDFD; }
 
 	inline uint16_t get_serverport() const {
-		if(m_type == SCAP_FD_IPV4_SOCK) {
+		auto type = m_type.load();
+		if(type == SCAP_FD_IPV4_SOCK) {
 			return m_sockinfo.m_ipv4info.m_fields.m_dport;
-		} else if(m_type == SCAP_FD_IPV6_SOCK) {
+		} else if(type == SCAP_FD_IPV6_SOCK) {
 			return m_sockinfo.m_ipv6info.m_fields.m_dport;
 		} else {
 			return 0;
@@ -338,8 +343,8 @@ public:
 	 */
 	static libsinsp::state::static_field_infos get_static_fields();
 
-	scap_fd_type m_type =
-	        SCAP_FD_UNINITIALIZED;  ///< The fd type, e.g. file, directory, IPv4 socket...
+	std::atomic<scap_fd_type> m_type{
+	        SCAP_FD_UNINITIALIZED};  ///< The fd type, e.g. file, directory, IPv4 socket...
 	uint32_t m_openflags = 0;  ///< If this FD is a file, the flags that were used when opening it.
 	                           ///< See the PPM_O_* definitions in driver/ppm_events_public.h.
 	sinsp_sockinfo m_sockinfo =

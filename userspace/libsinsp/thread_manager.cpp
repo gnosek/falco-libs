@@ -39,7 +39,7 @@ static void copy_ipv6_address(uint32_t (&dest)[4], const uint32_t (&src)[4]) {
 }
 
 static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
-	dst.type = src.m_type;
+	dst.type = src.m_type.load();
 	dst.ino = src.m_ino;
 	dst.fd = src.m_fd;
 
@@ -612,7 +612,7 @@ sinsp_fdinfo* sinsp_thread_manager::add_thread_fd_from_scap(sinsp_threadinfo& ti
 	// We keep note of all the host bound server ports. We'll need them later when patching
 	// connections direction.
 	uint16_t server_port;
-	switch(newfdinfo->m_type) {
+	switch(newfdinfo->m_type.load()) {
 	case SCAP_FD_IPV4_SERVSOCK:
 		server_port = newfdinfo->m_sockinfo.m_ipv4serverinfo.m_port;
 		break;

@@ -46,7 +46,7 @@ static void set_ipv6_addr_high(ipv6addr& a,
 };
 
 char sinsp_fdinfo::get_typechar() const {
-	switch(m_type) {
+	switch(m_type.load()) {
 	case SCAP_FD_FILE_V2:
 	case SCAP_FD_FILE:
 		return CHAR_FD_FILE;
@@ -97,7 +97,7 @@ char sinsp_fdinfo::get_typechar() const {
 }
 
 const char* sinsp_fdinfo::get_typestring() const {
-	switch(m_type) {
+	switch(m_type.load()) {
 	case SCAP_FD_FILE_V2:
 	case SCAP_FD_FILE:
 		return "file";
@@ -143,6 +143,74 @@ const char* sinsp_fdinfo::get_typestring() const {
 sinsp_fdinfo::sinsp_fdinfo(const std::shared_ptr<libsinsp::state::dynamic_field_infos>& dyn_fields):
         extensible_struct(dyn_fields) {}
 
+sinsp_fdinfo::sinsp_fdinfo(const sinsp_fdinfo& o):
+        extensible_struct(o),
+        m_type(o.m_type.load()),
+        m_openflags(o.m_openflags),
+        m_sockinfo(o.m_sockinfo),
+        m_name(o.m_name),
+        m_name_raw(o.m_name_raw),
+        m_oldname(o.m_oldname),
+        m_flags(o.m_flags),
+        m_dev(o.m_dev),
+        m_mount_id(o.m_mount_id),
+        m_ino(o.m_ino),
+        m_pid(o.m_pid),
+        m_fd(o.m_fd) {}
+
+sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
+	if(this != &o) {
+		extensible_struct::operator=(o);
+		m_type.store(o.m_type.load());
+		m_openflags = o.m_openflags;
+		m_sockinfo = o.m_sockinfo;
+		m_name = o.m_name;
+		m_name_raw = o.m_name_raw;
+		m_oldname = o.m_oldname;
+		m_flags = o.m_flags;
+		m_dev = o.m_dev;
+		m_mount_id = o.m_mount_id;
+		m_ino = o.m_ino;
+		m_pid = o.m_pid;
+		m_fd = o.m_fd;
+	}
+	return *this;
+}
+
+sinsp_fdinfo::sinsp_fdinfo(sinsp_fdinfo&& o):
+        extensible_struct(std::move(o)),
+        m_type(o.m_type.load()),
+        m_openflags(o.m_openflags),
+        m_sockinfo(o.m_sockinfo),
+        m_name(std::move(o.m_name)),
+        m_name_raw(std::move(o.m_name_raw)),
+        m_oldname(std::move(o.m_oldname)),
+        m_flags(o.m_flags),
+        m_dev(o.m_dev),
+        m_mount_id(o.m_mount_id),
+        m_ino(o.m_ino),
+        m_pid(o.m_pid),
+        m_fd(o.m_fd) {}
+
+sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
+	if(this != &o) {
+		extensible_struct::operator=(std::move(o));
+		m_type.store(o.m_type.load());
+		m_openflags = o.m_openflags;
+		m_sockinfo = o.m_sockinfo;
+		m_name = std::move(o.m_name);
+		m_name_raw = std::move(o.m_name_raw);
+		m_oldname = std::move(o.m_oldname);
+		m_flags = o.m_flags;
+		m_dev = o.m_dev;
+		m_mount_id = o.m_mount_id;
+		m_ino = o.m_ino;
+		m_pid = o.m_pid;
+		m_fd = o.m_fd;
+	}
+	return *this;
+}
+
 libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	using self = sinsp_fdinfo;
 
@@ -153,7 +221,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	        SS_PLUGIN_ST_UINT8,
 	        [](const void* in, size_t) -> libsinsp::state::borrowed_state_data {
 		        auto c = static_cast<const self*>(in);
-		        auto type = static_cast<uint8_t>(c->m_type);
+		        auto type = static_cast<uint8_t>(c->m_type.load());
 		        return libsinsp::state::borrowed_state_data::from<SS_PLUGIN_ST_UINT8, uint8_t>(
 		                type);
 	        },
@@ -161,7 +229,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 		        uint8_t type;
 		        auto c = static_cast<self*>(in);
 		        in_data.copy_to<SS_PLUGIN_ST_UINT8, uint8_t>(type);
-		        c->m_type = static_cast<scap_fd_type>(type);
+		        c->m_type.store(static_cast<scap_fd_type>(type));
 	        });
 
 	// the rest fo the fields are more trivial to expose
@@ -321,7 +389,7 @@ void sinsp_fdinfo::set_net_role_by_guessing(const sinsp_threadinfo& ptinfo, cons
 }
 
 scap_l4_proto sinsp_fdinfo::get_l4proto() const {
-	scap_fd_type evt_type = m_type;
+	scap_fd_type evt_type = m_type.load();
 
 	if(evt_type == SCAP_FD_IPV4_SOCK) {
 		if((scap_l4_proto)m_sockinfo.m_ipv4info.m_fields.m_l4proto == SCAP_L4_RAW) {
