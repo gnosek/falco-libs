@@ -253,7 +253,7 @@ public:
 				// Its current name is now its old
 				// name. The name might change as a
 				// result of parsing.
-				fdinfo->m_oldname = *fdinfo->m_name.lock();
+				*fdinfo->m_oldname.lock() = *fdinfo->m_name.lock();
 				return fdinfo;
 			}
 		}

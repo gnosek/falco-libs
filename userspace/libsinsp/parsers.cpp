@@ -308,7 +308,7 @@ void sinsp_parser::process_event(sinsp_evt &evt, sinsp_parser_verdict &verdict) 
 	// overhead of a string compare for every event.
 	if(evt.get_fd_info()) {
 		evt.set_fdinfo_name_changed(*evt.get_fd_info()->m_name.lock() !=
-		                            evt.get_fd_info()->m_oldname);
+		                            *evt.get_fd_info()->m_oldname.lock());
 	}
 }
 

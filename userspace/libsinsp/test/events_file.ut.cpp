@@ -38,7 +38,7 @@ limitations under the License.
 #define ASSERT_FD_GETTERS_NOT_FILE(x)     \
 	ASSERT_EQ(*x->m_name.lock(), "");     \
 	ASSERT_EQ(*x->m_name_raw.lock(), ""); \
-	ASSERT_EQ(x->m_oldname, "");          \
+	ASSERT_EQ(*x->m_oldname.lock(), "");  \
 	ASSERT_EQ(x->get_device(), 0);        \
 	ASSERT_EQ(x->tostring_clean(), "");   \
 	ASSERT_EQ(x->get_device_major(), 0);  \
