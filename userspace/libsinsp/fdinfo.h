@@ -234,109 +234,128 @@ public:
 	  \brief Return true if this FD is a socket server
 	*/
 	inline bool is_role_server() const {
-		return (m_flags & FLAGS_ROLE_SERVER) == FLAGS_ROLE_SERVER;
+		return (m_flags.load() & FLAGS_ROLE_SERVER) == FLAGS_ROLE_SERVER;
 	}
 
 	/*!
 	  \brief Return true if this FD is a socket client
 	*/
 	inline bool is_role_client() const {
-		return (m_flags & FLAGS_ROLE_CLIENT) == FLAGS_ROLE_CLIENT;
+		return (m_flags.load() & FLAGS_ROLE_CLIENT) == FLAGS_ROLE_CLIENT;
 	}
 
 	/*!
 	  \brief Return true if this FD is neither a client nor a server
 	*/
 	inline bool is_role_none() const {
-		return (m_flags & (FLAGS_ROLE_CLIENT | FLAGS_ROLE_SERVER)) == 0;
+		return (m_flags.load() & (FLAGS_ROLE_CLIENT | FLAGS_ROLE_SERVER)) == 0;
 	}
 
 	inline bool is_socket_connected() const {
-		return (m_flags & FLAGS_SOCKET_CONNECTED) == FLAGS_SOCKET_CONNECTED;
+		return (m_flags.load() & FLAGS_SOCKET_CONNECTED) == FLAGS_SOCKET_CONNECTED;
 	}
 
 	inline bool is_socket_pending() const {
-		return (m_flags & FLAGS_CONNECTION_PENDING) == FLAGS_CONNECTION_PENDING;
+		return (m_flags.load() & FLAGS_CONNECTION_PENDING) == FLAGS_CONNECTION_PENDING;
 	}
 
 	inline bool is_socket_failed() const {
-		return (m_flags & FLAGS_CONNECTION_FAILED) == FLAGS_CONNECTION_FAILED;
+		return (m_flags.load() & FLAGS_CONNECTION_FAILED) == FLAGS_CONNECTION_FAILED;
 	}
 
-	inline bool is_cloned() const { return (m_flags & FLAGS_IS_CLONED) == FLAGS_IS_CLONED; }
+	inline bool is_cloned() const { return (m_flags.load() & FLAGS_IS_CLONED) == FLAGS_IS_CLONED; }
 
 	inline bool is_overlay_upper() const {
-		return (m_flags & FLAGS_OVERLAY_UPPER) == FLAGS_OVERLAY_UPPER;
+		return (m_flags.load() & FLAGS_OVERLAY_UPPER) == FLAGS_OVERLAY_UPPER;
 	}
 
 	inline bool is_overlay_lower() const {
-		return (m_flags & FLAGS_OVERLAY_LOWER) == FLAGS_OVERLAY_LOWER;
+		return (m_flags.load() & FLAGS_OVERLAY_LOWER) == FLAGS_OVERLAY_LOWER;
 	}
 
 	void add_filename_raw(std::string_view rawpath);
 
 	void add_filename(std::string_view fullpath);
 
-	inline void set_role_server() { m_flags |= FLAGS_ROLE_SERVER; }
+	inline void set_role_server() { m_flags.fetch_or(FLAGS_ROLE_SERVER); }
 
-	inline void set_role_client() { m_flags |= FLAGS_ROLE_CLIENT; }
+	inline void set_role_client() { m_flags.fetch_or(FLAGS_ROLE_CLIENT); }
 
 	void set_net_role_by_guessing(const sinsp_threadinfo& ptinfo, bool incoming);
 
-	inline void reset_flags() { m_flags = FLAGS_NONE; }
+	inline void reset_flags() { m_flags.store(FLAGS_NONE); }
 
-	inline void set_socketpipe() { m_flags |= FLAGS_IS_SOCKET_PIPE; }
+	inline void set_socketpipe() { m_flags.fetch_or(FLAGS_IS_SOCKET_PIPE); }
 
 	inline bool is_socketpipe() const {
-		return (m_flags & FLAGS_IS_SOCKET_PIPE) == FLAGS_IS_SOCKET_PIPE;
+		return (m_flags.load() & FLAGS_IS_SOCKET_PIPE) == FLAGS_IS_SOCKET_PIPE;
 	}
 
-	inline bool has_no_role() const { return !is_role_client() && !is_role_server(); }
+	inline bool has_no_role() const { return is_role_none(); }
 
-	inline void set_inpipeline_r() { m_flags |= FLAGS_IN_BASELINE_R; }
+	inline void set_inpipeline_r() { m_flags.fetch_or(FLAGS_IN_BASELINE_R); }
 
-	inline void set_inpipeline_rw() { m_flags |= FLAGS_IN_BASELINE_RW; }
+	inline void set_inpipeline_rw() { m_flags.fetch_or(FLAGS_IN_BASELINE_RW); }
 
-	inline void set_inpipeline_other() { m_flags |= FLAGS_IN_BASELINE_OTHER; }
+	inline void set_inpipeline_other() { m_flags.fetch_or(FLAGS_IN_BASELINE_OTHER); }
 
 	inline void reset_inpipeline() {
-		m_flags &= ~FLAGS_IN_BASELINE_R;
-		m_flags &= ~FLAGS_IN_BASELINE_RW;
-		m_flags &= ~FLAGS_IN_BASELINE_OTHER;
+		m_flags.fetch_and(~(FLAGS_IN_BASELINE_R | FLAGS_IN_BASELINE_RW | FLAGS_IN_BASELINE_OTHER));
 	}
 
 	inline bool is_inpipeline_r() const {
-		return (m_flags & FLAGS_IN_BASELINE_R) == FLAGS_IN_BASELINE_R;
+		return (m_flags.load() & FLAGS_IN_BASELINE_R) == FLAGS_IN_BASELINE_R;
 	}
 
 	inline bool is_inpipeline_rw() const {
-		return (m_flags & FLAGS_IN_BASELINE_RW) == FLAGS_IN_BASELINE_RW;
+		return (m_flags.load() & FLAGS_IN_BASELINE_RW) == FLAGS_IN_BASELINE_RW;
 	}
 
 	inline bool is_inpipeline_other() const {
-		return (m_flags & FLAGS_IN_BASELINE_OTHER) == FLAGS_IN_BASELINE_OTHER;
+		return (m_flags.load() & FLAGS_IN_BASELINE_OTHER) == FLAGS_IN_BASELINE_OTHER;
 	}
 
 	inline void set_socket_connected() {
-		m_flags &= ~(FLAGS_CONNECTION_PENDING | FLAGS_CONNECTION_FAILED);
-		m_flags |= FLAGS_SOCKET_CONNECTED;
+		uint32_t old_flags = m_flags.load(std::memory_order_relaxed);
+		uint32_t new_flags;
+		do {
+			new_flags = (old_flags & ~(FLAGS_CONNECTION_PENDING | FLAGS_CONNECTION_FAILED)) |
+			            FLAGS_SOCKET_CONNECTED;
+		} while(!m_flags.compare_exchange_weak(old_flags,
+		                                       new_flags,
+		                                       std::memory_order_relaxed,
+		                                       std::memory_order_relaxed));
 	}
 
 	inline void set_socket_pending() {
-		m_flags &= ~(FLAGS_SOCKET_CONNECTED | FLAGS_CONNECTION_FAILED);
-		m_flags |= FLAGS_CONNECTION_PENDING;
+		uint32_t old_flags = m_flags.load(std::memory_order_relaxed);
+		uint32_t new_flags;
+		do {
+			new_flags = (old_flags & ~(FLAGS_SOCKET_CONNECTED | FLAGS_CONNECTION_FAILED)) |
+			            FLAGS_CONNECTION_PENDING;
+		} while(!m_flags.compare_exchange_weak(old_flags,
+		                                       new_flags,
+		                                       std::memory_order_relaxed,
+		                                       std::memory_order_relaxed));
 	}
 
 	inline void set_socket_failed() {
-		m_flags &= ~(FLAGS_SOCKET_CONNECTED | FLAGS_CONNECTION_PENDING);
-		m_flags |= FLAGS_CONNECTION_FAILED;
+		uint32_t old_flags = m_flags.load(std::memory_order_relaxed);
+		uint32_t new_flags;
+		do {
+			new_flags = (old_flags & ~(FLAGS_SOCKET_CONNECTED | FLAGS_CONNECTION_PENDING)) |
+			            FLAGS_CONNECTION_FAILED;
+		} while(!m_flags.compare_exchange_weak(old_flags,
+		                                       new_flags,
+		                                       std::memory_order_relaxed,
+		                                       std::memory_order_relaxed));
 	}
 
-	inline void set_is_cloned() { m_flags |= FLAGS_IS_CLONED; }
+	inline void set_is_cloned() { m_flags.fetch_or(FLAGS_IS_CLONED); }
 
-	inline void set_overlay_upper() { m_flags |= FLAGS_OVERLAY_UPPER; }
+	inline void set_overlay_upper() { m_flags.fetch_or(FLAGS_OVERLAY_UPPER); }
 
-	inline void set_overlay_lower() { m_flags |= FLAGS_OVERLAY_LOWER; }
+	inline void set_overlay_lower() { m_flags.fetch_or(FLAGS_OVERLAY_LOWER); }
 
 	/*!
 	  \brief A static version of static_fields()
@@ -361,7 +380,7 @@ public:
 	libsinsp::Mutex<std::string>
 	        m_oldname;  // The name of this fd at the beginning of event parsing. Used to detect
 	                    // name changes that result from parsing an event.
-	uint32_t m_flags = FLAGS_NONE;
+	std::atomic<uint32_t> m_flags{FLAGS_NONE};
 	uint32_t m_dev = 0;
 	uint32_t m_mount_id = 0;
 	uint64_t m_ino = 0;

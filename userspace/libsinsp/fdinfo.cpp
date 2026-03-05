@@ -151,7 +151,7 @@ sinsp_fdinfo::sinsp_fdinfo(const sinsp_fdinfo& o):
         m_name(*o.m_name.lock()),
         m_name_raw(*o.m_name_raw.lock()),
         m_oldname(*o.m_oldname.lock()),
-        m_flags(o.m_flags),
+        m_flags(o.m_flags.load()),
         m_dev(o.m_dev),
         m_mount_id(o.m_mount_id),
         m_ino(o.m_ino),
@@ -167,7 +167,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
 		*m_name.lock() = *o.m_name.lock();
 		*m_name_raw.lock() = *o.m_name_raw.lock();
 		*m_oldname.lock() = *o.m_oldname.lock();
-		m_flags = o.m_flags;
+		m_flags.store(o.m_flags.load());
 		m_dev = o.m_dev;
 		m_mount_id = o.m_mount_id;
 		m_ino = o.m_ino;
@@ -185,7 +185,7 @@ sinsp_fdinfo::sinsp_fdinfo(sinsp_fdinfo&& o):
         m_name(std::move(*o.m_name.lock())),
         m_name_raw(std::move(*o.m_name_raw.lock())),
         m_oldname(std::move(*o.m_oldname.lock())),
-        m_flags(o.m_flags),
+        m_flags(o.m_flags.load()),
         m_dev(o.m_dev),
         m_mount_id(o.m_mount_id),
         m_ino(o.m_ino),
@@ -201,7 +201,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
 		*m_name.lock() = std::move(*o.m_name.lock());
 		*m_name_raw.lock() = std::move(*o.m_name_raw.lock());
 		*m_oldname.lock() = std::move(*o.m_oldname.lock());
-		m_flags = o.m_flags;
+		m_flags.store(o.m_flags.load());
 		m_dev = o.m_dev;
 		m_mount_id = o.m_mount_id;
 		m_ino = o.m_ino;
@@ -237,7 +237,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_name, "name", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_name_raw, "name_raw", SS_PLUGIN_ST_STRING);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_oldname, "old_name", SS_PLUGIN_ST_STRING);
-	DEFINE_STATIC_FIELD(ret, self, m_flags, "flags");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_flags, "flags", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_FIELD(ret, self, m_dev, "dev");
 	DEFINE_STATIC_FIELD(ret, self, m_mount_id, "mount_id");
 	DEFINE_STATIC_FIELD(ret, self, m_ino, "ino");
@@ -378,7 +378,7 @@ void sinsp_fdinfo::set_net_role_by_guessing(const sinsp_threadinfo& ptinfo, cons
 		return;
 	}
 
-	if(!(m_flags & (sinsp_fdinfo::FLAGS_ROLE_CLIENT | sinsp_fdinfo::FLAGS_ROLE_SERVER))) {
+	if(!(m_flags.load() & (sinsp_fdinfo::FLAGS_ROLE_CLIENT | sinsp_fdinfo::FLAGS_ROLE_SERVER))) {
 		// We just assume that a server usually starts with a read and a client with a write.
 		if(incoming) {
 			set_role_server();

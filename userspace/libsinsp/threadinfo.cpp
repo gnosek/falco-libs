@@ -230,7 +230,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 	auto newfdi = m_params->fdinfo_factory.create();
 
 	newfdi->m_type = fdi.type;
-	newfdi->m_openflags = 0;
+	newfdi->m_openflags.store(0);
 	newfdi->m_type = fdi.type;
 	newfdi->m_flags = sinsp_fdinfo::FLAGS_FROM_PROC;
 	newfdi->m_ino = fdi.ino;
@@ -244,7 +244,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 		newfdi->m_sockinfo.m_ipv4info.m_fields.m_dport = fdi.info.ipv4info.dport;
 		newfdi->m_sockinfo.m_ipv4info.m_fields.m_l4proto = fdi.info.ipv4info.l4proto;
 		if(fdi.info.ipv4info.l4proto == SCAP_L4_TCP) {
-			newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
+			newfdi->m_flags.fetch_or(sinsp_fdinfo::FLAGS_SOCKET_CONNECTED);
 		}
 		m_params->network_interfaces.update_fd(*newfdi);
 		*newfdi->m_name.lock() =
@@ -272,7 +272,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 			newfdi->m_sockinfo.m_ipv4info.m_fields.m_dport = fdi.info.ipv6info.dport;
 			newfdi->m_sockinfo.m_ipv4info.m_fields.m_l4proto = fdi.info.ipv6info.l4proto;
 			if(fdi.info.ipv6info.l4proto == SCAP_L4_TCP) {
-				newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
+				newfdi->m_flags.fetch_or(sinsp_fdinfo::FLAGS_SOCKET_CONNECTED);
 			}
 			m_params->network_interfaces.update_fd(*newfdi);
 			*newfdi->m_name.lock() =
@@ -286,7 +286,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 			newfdi->m_sockinfo.m_ipv6info.m_fields.m_dport = fdi.info.ipv6info.dport;
 			newfdi->m_sockinfo.m_ipv6info.m_fields.m_l4proto = fdi.info.ipv6info.l4proto;
 			if(fdi.info.ipv6info.l4proto == SCAP_L4_TCP) {
-				newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
+				newfdi->m_flags.fetch_or(sinsp_fdinfo::FLAGS_SOCKET_CONNECTED);
 			}
 			*newfdi->m_name.lock() =
 			        ipv6tuple_to_string(newfdi->m_sockinfo.m_ipv6info, resolve_hostname_and_port);
