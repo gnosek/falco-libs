@@ -156,7 +156,7 @@ sinsp_fdinfo::sinsp_fdinfo(const sinsp_fdinfo& o):
         m_mount_id(o.m_mount_id.load()),
         m_ino(o.m_ino.load()),
         m_pid(o.m_pid.load()),
-        m_fd(o.m_fd) {}
+        m_fd(o.m_fd.load()) {}
 
 sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
 	if(this != &o) {
@@ -172,7 +172,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(const sinsp_fdinfo& o) {
 		m_mount_id.store(o.m_mount_id.load());
 		m_ino.store(o.m_ino.load());
 		m_pid.store(o.m_pid.load());
-		m_fd = o.m_fd;
+		m_fd.store(o.m_fd.load());
 	}
 	return *this;
 }
@@ -190,7 +190,7 @@ sinsp_fdinfo::sinsp_fdinfo(sinsp_fdinfo&& o):
         m_mount_id(o.m_mount_id.load()),
         m_ino(o.m_ino.load()),
         m_pid(o.m_pid.load()),
-        m_fd(o.m_fd) {}
+        m_fd(o.m_fd.load()) {}
 
 sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
 	if(this != &o) {
@@ -206,7 +206,7 @@ sinsp_fdinfo& sinsp_fdinfo::operator=(sinsp_fdinfo&& o) {
 		m_mount_id.store(o.m_mount_id.load());
 		m_ino.store(o.m_ino.load());
 		m_pid.store(o.m_pid.load());
-		m_fd = o.m_fd;
+		m_fd.store(o.m_fd.load());
 	}
 	return *this;
 }
@@ -242,7 +242,7 @@ libsinsp::state::static_field_infos sinsp_fdinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_mount_id, "mount_id", SS_PLUGIN_ST_UINT32);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_ino, "ino", SS_PLUGIN_ST_UINT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_pid, "pid", SS_PLUGIN_ST_INT64);
-	DEFINE_STATIC_FIELD(ret, self, m_fd, "fd");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_fd, "fd", SS_PLUGIN_ST_INT64);
 
 	// in this case we have a union, so many of the following exposed fields
 	// will point to the same memory areas, but this should not be an issue

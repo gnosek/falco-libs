@@ -388,5 +388,5 @@ public:
 	std::atomic<uint32_t> m_mount_id{0};
 	std::atomic<uint64_t> m_ino{0};
 	std::atomic<int64_t> m_pid{0};  // only if fd is a pidfd
-	int64_t m_fd = -1;
+	std::atomic<int64_t> m_fd{-1};
 };

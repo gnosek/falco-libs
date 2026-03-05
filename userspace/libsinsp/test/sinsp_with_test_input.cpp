@@ -1118,7 +1118,7 @@ void sinsp_with_test_input::assert_fd_fields(sinsp_evt* evt,
 
 	if(fdinfo) {
 		if(fields.fd_num.has_value()) {
-			ASSERT_EQ(fdinfo->m_fd, fields.fd_num.value());
+			ASSERT_EQ(fdinfo->m_fd.load(), fields.fd_num.value());
 		}
 
 		if(fields.fd_name.has_value()) {
