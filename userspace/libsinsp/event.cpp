@@ -543,7 +543,7 @@ int sinsp_evt::render_fd_json(Json::Value *ret,
 			//
 			// Make sure we remove invalid characters from the resolved name
 			//
-			std::string sanitized_str = fdinfo->m_name;
+			std::string sanitized_str = *fdinfo->m_name.lock();
 
 			sanitize_string(sanitized_str);
 
@@ -618,7 +618,7 @@ char *sinsp_evt::render_fd(int64_t fd, const char **resolved_str, sinsp_evt::par
 			//
 			// Make sure we remove invalid characters from the resolved name
 			//
-			std::string sanitized_str = fdinfo->m_name;
+			std::string sanitized_str = *fdinfo->m_name.lock();
 
 			sanitize_string(sanitized_str);
 

@@ -529,7 +529,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 				return NULL;
 			}
 		} else {
-			m_tstr = m_fdinfo->m_name;
+			m_tstr = *m_fdinfo->m_name.lock();
 		}
 
 		if(m_field_id == TYPE_CONTAINERNAME) {
@@ -560,7 +560,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 		} else if(!(m_fdinfo->is_file() || m_fdinfo->is_directory())) {
 			return NULL;
 		} else {
-			m_tstr = m_fdinfo->m_name;
+			m_tstr = *m_fdinfo->m_name.lock();
 		}
 
 		if(sanitize_strings) {
@@ -601,7 +601,7 @@ uint8_t *sinsp_filter_check_fd::extract_single(sinsp_evt *evt,
 			return NULL;
 		}
 
-		m_tstr = m_fdinfo->m_name;
+		m_tstr = *m_fdinfo->m_name.lock();
 		if(sanitize_strings) {
 			sanitize_string(m_tstr);
 		}

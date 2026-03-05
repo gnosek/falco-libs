@@ -22,6 +22,7 @@ limitations under the License.
 #include <libsinsp/tuples.h>
 #include <libsinsp/sinsp_public.h>
 #include <libsinsp/state/table.h>
+#include <libsinsp/mutex.h>
 
 #include <atomic>
 #include <unordered_map>
@@ -138,7 +139,7 @@ public:
 	/*!
 	  \brief Return true if this is a log device.
 	*/
-	inline bool is_syslog() const { return m_name.find("/dev/log") != std::string::npos; }
+	inline bool is_syslog() const { return m_name.lock()->find("/dev/log") != std::string::npos; }
 
 	/*!
 	  \brief Returns true if this is a unix socket.
@@ -350,8 +351,9 @@ public:
 	             ///< See the PPM_O_* definitions in driver/ppm_events_public.h.
 	sinsp_sockinfo m_sockinfo =
 	        {};  ///< Socket-specific state. This is uninitialized (zero) for non-socket FDs.
-	std::string m_name;  ///< Human readable rendering of this FD. For files, this is the full file
-	                     ///< name. For sockets, this is the tuple. And so on.
+	libsinsp::Mutex<std::string>
+	        m_name;  ///< Human readable rendering of this FD. For files, this is the full file
+	                 ///< name. For sockets, this is the tuple. And so on.
 	std::string m_name_raw;  // Human readable rendering of this FD. See m_name, only used if fd is
 	                         // a file path. Path is kept "raw" with limited sanitization and
 	                         // without absolute path derivation.

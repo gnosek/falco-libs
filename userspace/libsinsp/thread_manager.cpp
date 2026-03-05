@@ -72,12 +72,14 @@ static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
 		dst.info.unix_socket_info.source = src.m_sockinfo.m_unixinfo.m_fields.m_source;
 		dst.info.unix_socket_info.destination = src.m_sockinfo.m_unixinfo.m_fields.m_dest;
 		strlcpy(dst.info.unix_socket_info.fname,
-		        src.m_name.c_str(),
+		        src.m_name.lock()->c_str(),
 		        sizeof(dst.info.unix_socket_info.fname));
 		break;
 	case SCAP_FD_FILE_V2:
 		dst.info.regularinfo.open_flags = src.m_openflags.load();
-		strlcpy(dst.info.regularinfo.fname, src.m_name.c_str(), sizeof(dst.info.regularinfo.fname));
+		strlcpy(dst.info.regularinfo.fname,
+		        src.m_name.lock()->c_str(),
+		        sizeof(dst.info.regularinfo.fname));
 		dst.info.regularinfo.dev = src.m_dev;
 		dst.info.regularinfo.mount_id = src.m_mount_id;
 		break;
@@ -96,7 +98,7 @@ static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
 	case SCAP_FD_IOURING:
 	case SCAP_FD_MEMFD:
 	case SCAP_FD_PIDFD:
-		strlcpy(dst.info.fname, src.m_name.c_str(), sizeof(dst.info.fname));
+		strlcpy(dst.info.fname, src.m_name.lock()->c_str(), sizeof(dst.info.fname));
 		break;
 	default:
 		ASSERT(false);

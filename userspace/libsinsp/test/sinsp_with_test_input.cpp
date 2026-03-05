@@ -1074,7 +1074,7 @@ void sinsp_with_test_input::assert_return_value(sinsp_evt* evt, int64_t expected
 			// prefixed by `<f>`
 			auto fdinfo = evt->get_fd_info();
 			ASSERT_TRUE(fdinfo);
-			arg0 = std::string("<f>") + fdinfo->m_name;
+			arg0 = std::string("<f>") + *fdinfo->m_name.lock();
 
 			// raw_arg0 is ok!
 		}
@@ -1122,7 +1122,7 @@ void sinsp_with_test_input::assert_fd_fields(sinsp_evt* evt,
 		}
 
 		if(fields.fd_name.has_value()) {
-			ASSERT_EQ(fdinfo->m_name, fields.fd_name.value());
+			ASSERT_EQ(*fdinfo->m_name.lock(), fields.fd_name.value());
 		}
 
 		if(fields.fd_name_raw.has_value()) {

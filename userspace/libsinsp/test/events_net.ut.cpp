@@ -108,7 +108,7 @@ TEST_F(sinsp_with_test_input, net_ipv4_connect) {
 
 	/* Since the role of the fd is none, all these fields are null. The fdinfo state is updated but
 	 * we cannot use these info in the filterchecks */
-	ASSERT_EQ(fdinfo->m_name, "");
+	ASSERT_EQ(*fdinfo->m_name.lock(), "");
 	ASSERT_FALSE(fdinfo->is_socket_connected());
 	ASSERT_FALSE(fdinfo->m_sockinfo.m_ipv4serverinfo.m_ip);
 
@@ -494,7 +494,7 @@ TEST_F(sinsp_with_test_input, net_connect_exit_event_fails) {
 
 	fdinfo = evt->get_fd_info();
 	ASSERT_NE(fdinfo, nullptr);
-	ASSERT_STREQ(fdinfo->m_name.c_str(), DEFAULT_IPV4_FDNAME);
+	ASSERT_STREQ(fdinfo->m_name.lock()->c_str(), DEFAULT_IPV4_FDNAME);
 	ASSERT_EQ(get_field_as_string(evt, "fd.name"), DEFAULT_IPV4_FDNAME);
 
 	/* Second connection with another server but in this case, the connect exit event fails */
@@ -547,7 +547,7 @@ TEST_F(sinsp_with_test_input, net_connect_exit_event_fails) {
 	 * flow is truncated */
 	fdinfo = evt->get_fd_info();
 	ASSERT_NE(fdinfo, nullptr);
-	ASSERT_STREQ(fdinfo->m_name.c_str(), DEFAULT_IPV4_FDNAME);
+	ASSERT_STREQ(fdinfo->m_name.lock()->c_str(), DEFAULT_IPV4_FDNAME);
 
 	/* Addresses and ports are not updated. */
 	char ipv4_string[DEFAULT_IP_STRING_SIZE];
@@ -636,7 +636,7 @@ TEST_F(sinsp_with_test_input, net_connect_enter_event_is_empty) {
 	 * flow is truncated */
 	auto* fdinfo = evt->get_fd_info();
 	ASSERT_NE(fdinfo, nullptr);
-	ASSERT_STREQ(fdinfo->m_name.c_str(), DEFAULT_IPV4_FDNAME);
+	ASSERT_STREQ(fdinfo->m_name.lock()->c_str(), DEFAULT_IPV4_FDNAME);
 
 	char ipv4_string[DEFAULT_IP_STRING_SIZE];
 	inet_ntop(AF_INET, &fdinfo->m_sockinfo.m_ipv4info.m_fields.m_dip, ipv4_string, 100);

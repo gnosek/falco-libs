@@ -36,7 +36,7 @@ limitations under the License.
 	ASSERT_EQ(get_field_as_string(evt, "fd.nameraw"), "");
 
 #define ASSERT_FD_GETTERS_NOT_FILE(x)    \
-	ASSERT_EQ(x->m_name, "");            \
+	ASSERT_EQ(*x->m_name.lock(), "");    \
 	ASSERT_EQ(x->m_name_raw, "");        \
 	ASSERT_EQ(x->m_oldname, "");         \
 	ASSERT_EQ(x->get_device(), 0);       \

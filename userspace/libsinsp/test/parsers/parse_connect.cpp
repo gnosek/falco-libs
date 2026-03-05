@@ -38,7 +38,7 @@ TEST_F(sinsp_with_test_input, CONNECT_parse_unix_socket) {
 	ASSERT_TRUE(fdinfo->is_role_none());
 	ASSERT_FALSE(fdinfo->is_socket_connected());
 	// The socket syscall doesn't populate the name of the socket
-	ASSERT_EQ(fdinfo->m_name, "");
+	ASSERT_EQ(*fdinfo->m_name.lock(), "");
 
 	/* FDINFO associated with the thread */
 	auto init_tinfo = m_inspector.m_thread_manager->find_thread(INIT_TID, true).get();
@@ -49,7 +49,7 @@ TEST_F(sinsp_with_test_input, CONNECT_parse_unix_socket) {
 	ASSERT_EQ(fdinfo->get_l4proto(), scap_l4_proto::SCAP_L4_NA);
 	ASSERT_TRUE(fdinfo->is_role_none());
 	ASSERT_FALSE(fdinfo->is_socket_connected());
-	ASSERT_EQ(fdinfo->m_name, "");
+	ASSERT_EQ(*fdinfo->m_name.lock(), "");
 
 	// We don't need the enter event!
 	const std::string sun_path{"/tmp/stream.sock"};

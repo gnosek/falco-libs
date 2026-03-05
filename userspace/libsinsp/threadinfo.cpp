@@ -219,7 +219,7 @@ void sinsp_threadinfo::fix_sockets_coming_from_proc(const std::set<uint16_t>& ip
 		ipv4_tuple_fields.m_dip = tip;
 		ipv4_tuple_fields.m_sport = ipv4_tuple_fields.m_dport;
 		ipv4_tuple_fields.m_dport = tport;
-		fdi.m_name = ipv4tuple_to_string(ipv4_tuple, resolve_hostname_and_port);
+		*fdi.m_name.lock() = ipv4tuple_to_string(ipv4_tuple, resolve_hostname_and_port);
 		fdi.set_role_server();
 		return true;
 	});
@@ -247,15 +247,15 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 			newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
 		}
 		m_params->network_interfaces.update_fd(*newfdi);
-		newfdi->m_name =
+		*newfdi->m_name.lock() =
 		        ipv4tuple_to_string(newfdi->m_sockinfo.m_ipv4info, resolve_hostname_and_port);
 		break;
 	case SCAP_FD_IPV4_SERVSOCK:
 		newfdi->m_sockinfo.m_ipv4serverinfo.m_ip = fdi.info.ipv4serverinfo.ip;
 		newfdi->m_sockinfo.m_ipv4serverinfo.m_port = fdi.info.ipv4serverinfo.port;
 		newfdi->m_sockinfo.m_ipv4serverinfo.m_l4proto = fdi.info.ipv4serverinfo.l4proto;
-		newfdi->m_name = ipv4serveraddr_to_string(newfdi->m_sockinfo.m_ipv4serverinfo,
-		                                          resolve_hostname_and_port);
+		*newfdi->m_name.lock() = ipv4serveraddr_to_string(newfdi->m_sockinfo.m_ipv4serverinfo,
+		                                                  resolve_hostname_and_port);
 		break;
 	case SCAP_FD_IPV6_SOCK:
 		if(sinsp_utils::is_ipv4_mapped_ipv6((uint8_t*)&fdi.info.ipv6info.sip) &&
@@ -275,7 +275,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 				newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
 			}
 			m_params->network_interfaces.update_fd(*newfdi);
-			newfdi->m_name =
+			*newfdi->m_name.lock() =
 			        ipv4tuple_to_string(newfdi->m_sockinfo.m_ipv4info, resolve_hostname_and_port);
 		} else {
 			copy_ipv6_address(newfdi->m_sockinfo.m_ipv6info.m_fields.m_sip.m_b,
@@ -288,7 +288,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 			if(fdi.info.ipv6info.l4proto == SCAP_L4_TCP) {
 				newfdi->m_flags |= sinsp_fdinfo::FLAGS_SOCKET_CONNECTED;
 			}
-			newfdi->m_name =
+			*newfdi->m_name.lock() =
 			        ipv6tuple_to_string(newfdi->m_sockinfo.m_ipv6info, resolve_hostname_and_port);
 		}
 		break;
@@ -296,14 +296,14 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 		copy_ipv6_address(newfdi->m_sockinfo.m_ipv6serverinfo.m_ip.m_b, fdi.info.ipv6serverinfo.ip);
 		newfdi->m_sockinfo.m_ipv6serverinfo.m_port = fdi.info.ipv6serverinfo.port;
 		newfdi->m_sockinfo.m_ipv6serverinfo.m_l4proto = fdi.info.ipv6serverinfo.l4proto;
-		newfdi->m_name = ipv6serveraddr_to_string(newfdi->m_sockinfo.m_ipv6serverinfo,
-		                                          resolve_hostname_and_port);
+		*newfdi->m_name.lock() = ipv6serveraddr_to_string(newfdi->m_sockinfo.m_ipv6serverinfo,
+		                                                  resolve_hostname_and_port);
 		break;
 	case SCAP_FD_UNIX_SOCK:
 		newfdi->m_sockinfo.m_unixinfo.m_fields.m_source = fdi.info.unix_socket_info.source;
 		newfdi->m_sockinfo.m_unixinfo.m_fields.m_dest = fdi.info.unix_socket_info.destination;
-		newfdi->m_name = fdi.info.unix_socket_info.fname;
-		if(newfdi->m_name.empty()) {
+		*newfdi->m_name.lock() = fdi.info.unix_socket_info.fname;
+		if(newfdi->m_name.lock()->empty()) {
 			newfdi->set_role_client();
 		} else {
 			newfdi->set_role_server();
@@ -311,7 +311,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 		break;
 	case SCAP_FD_FILE_V2:
 		newfdi->m_openflags = fdi.info.regularinfo.open_flags;
-		newfdi->m_name = fdi.info.regularinfo.fname;
+		*newfdi->m_name.lock() = fdi.info.regularinfo.fname;
 		newfdi->m_dev = fdi.info.regularinfo.dev;
 		newfdi->m_mount_id = fdi.info.regularinfo.mount_id;
 		break;
@@ -330,7 +330,7 @@ sinsp_fdinfo* sinsp_threadinfo::add_fd_from_scap(const scap_fdinfo& fdi,
 	case SCAP_FD_IOURING:
 	case SCAP_FD_MEMFD:
 	case SCAP_FD_PIDFD:
-		newfdi->m_name = fdi.info.fname;
+		*newfdi->m_name.lock() = fdi.info.fname;
 		break;
 	default:
 		ASSERT(false);
@@ -869,7 +869,7 @@ void sinsp_threadinfo::populate_args(std::string& args, const sinsp_threadinfo* 
 
 std::string sinsp_threadinfo::get_path_for_dir_fd(int64_t dir_fd) {
 	sinsp_fdinfo* dir_fdinfo = get_fd(dir_fd);
-	if(!dir_fdinfo || dir_fdinfo->m_name.empty()) {
+	if(!dir_fdinfo || dir_fdinfo->m_name.lock()->empty()) {
 #ifndef _WIN32  // we will have to implement this for Windows
 		// Sad day; we don't have the directory in the tinfo's fd cache.
 		// Must manually look it up so we can resolve filenames correctly.
@@ -897,7 +897,7 @@ std::string sinsp_threadinfo::get_path_for_dir_fd(int64_t dir_fd) {
 		return rel_path_base;
 #endif  // _WIN32
 	}
-	return dir_fdinfo->m_name;
+	return *dir_fdinfo->m_name.lock();
 }
 
 size_t sinsp_threadinfo::args_len() const {

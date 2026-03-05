@@ -307,7 +307,8 @@ void sinsp_parser::process_event(sinsp_evt &evt, sinsp_parser_verdict &verdict) 
 	// Check to see if the name changed as a side effect of parsing this event. Try to avoid the
 	// overhead of a string compare for every event.
 	if(evt.get_fd_info()) {
-		evt.set_fdinfo_name_changed(evt.get_fd_info()->m_name != evt.get_fd_info()->m_oldname);
+		evt.set_fdinfo_name_changed(*evt.get_fd_info()->m_name.lock() !=
+		                            evt.get_fd_info()->m_oldname);
 	}
 }
 
@@ -1832,10 +1833,11 @@ std::string sinsp_parser::parse_dirfd(sinsp_evt &evt,
 		return "<UNKNOWN>";
 	}
 
-	if(fdinfo->m_name.empty() || fdinfo->m_name.back() == '/') {
-		return fdinfo->m_name;
+	auto name_guard = fdinfo->m_name.lock();
+	if(name_guard->empty() || name_guard->back() == '/') {
+		return *name_guard;
 	}
-	return fdinfo->m_name + '/';
+	return *name_guard + '/';
 }
 
 void sinsp_parser::parse_open_openat_creat_exit(sinsp_evt &evt) const {
@@ -2269,7 +2271,7 @@ void sinsp_parser::parse_bind_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict
 	}
 	// Update the name of this socket.
 	const char *parstr;
-	evt.get_fd_info()->m_name = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
+	*evt.get_fd_info()->m_name.lock() = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
 
 	// If there's a listener, add a callback to later invoke it.
 	if(m_observer) {
@@ -2309,7 +2311,7 @@ void sinsp_parser::fill_client_socket_info_from_addr(sinsp_evt &evt, const uint8
 	default: {
 		// Add the friendly name to the fd info.
 		const char *parstr;
-		fdinfo->m_name = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
+		*fdinfo->m_name.lock() = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
 		break;
 	}
 	}
@@ -2500,7 +2502,7 @@ inline void sinsp_parser::fill_client_socket_info(sinsp_evt &evt,
 		                             evt.get_paramstr_storage().size(),
 		                             can_resolve_hostname_and_port);
 
-		evt.get_fd_info()->m_name = &evt.get_paramstr_storage()[0];
+		*evt.get_fd_info()->m_name.lock() = &evt.get_paramstr_storage()[0];
 	} else {
 		if(!evt.get_fd_info()->is_unix_socket()) {
 			// This should happen only in case of a bug in our code, because I'm assuming that the
@@ -2517,7 +2519,7 @@ inline void sinsp_parser::fill_client_socket_info(sinsp_evt &evt,
 		evt.get_fd_info()->set_unix_info(exit_tuple_data);
 		const auto source = evt.get_fd_info()->m_sockinfo.m_unixinfo.m_fields.m_source;
 		const auto dest = evt.get_fd_info()->m_sockinfo.m_unixinfo.m_fields.m_dest;
-		evt.get_fd_info()->m_name = encode_unix_tuple_fd_name(evt, source, dest, dpath);
+		*evt.get_fd_info()->m_name.lock() = encode_unix_tuple_fd_name(evt, source, dest, dpath);
 	}
 
 	if(evt.get_fd_info()->is_role_none()) {
@@ -2672,7 +2674,7 @@ void sinsp_parser::parse_accept_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 	}
 
 	const char *parstr;
-	fdi->m_name = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
+	*fdi->m_name.lock() = evt.get_param_as_str(1, &parstr, sinsp_evt::PF_SIMPLE);
 	fdi->m_flags = 0;
 
 	// If there's a listener, add a callback to later invoke it.
@@ -3036,7 +3038,7 @@ bool sinsp_parser::update_fd(sinsp_evt &evt, const sinsp_evt_param &parinfo) con
 	} else if(family == PPM_AF_UNIX) {
 		evt.get_fd_info()->m_type = SCAP_FD_UNIX_SOCK;
 		evt.get_fd_info()->set_unix_info(packed_data);
-		evt.get_fd_info()->m_name =
+		*evt.get_fd_info()->m_name.lock() =
 		        reinterpret_cast<const char *>(packed::un_socktuple::dpath(packed_data));
 		return true;
 	}
@@ -3255,7 +3257,7 @@ void sinsp_parser::parse_read_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict
 	} else if(etype == PPME_SOCKET_RECVMMSG_X || etype == PPME_SOCKET_RECV_X) {
 		tupleparam = 4;
 	}
-	if(tupleparam != -1 && (fdinfo.m_name.length() == 0 || !fdinfo.is_tcp_socket())) {
+	if(tupleparam != -1 && (fdinfo.m_name.lock()->length() == 0 || !fdinfo.is_tcp_socket())) {
 		// recvfrom contains tuple info. If the fd still doesn't contain tuple info (because the
 		// socket is a datagram one or because some event was lost), add it here.
 		if(update_fd(evt, *evt.get_param(tupleparam))) {
@@ -3277,10 +3279,11 @@ void sinsp_parser::parse_read_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict
 				                             str_storage_ptr,
 				                             str_storage_len,
 				                             m_hostname_and_port_resolution_enabled);
-				fdinfo.m_name = str_storage_ptr;
+				*fdinfo.m_name.lock() = str_storage_ptr;
 			} else {
 				const char *parstr;
-				fdinfo.m_name = evt.get_param_as_str(tupleparam, &parstr, sinsp_evt::PF_SIMPLE);
+				*fdinfo.m_name.lock() =
+				        evt.get_param_as_str(tupleparam, &parstr, sinsp_evt::PF_SIMPLE);
 			}
 		}
 	}
@@ -3385,7 +3388,7 @@ void sinsp_parser::parse_write_exit(sinsp_evt &evt, sinsp_parser_verdict &verdic
 
 	if((etype == PPME_SOCKET_SEND_X || etype == PPME_SOCKET_SENDTO_X ||
 	    etype == PPME_SOCKET_SENDMSG_X || etype == PPME_SOCKET_SENDMMSG_X) &&
-	   (fdinfo.m_name.length() == 0 || !fdinfo.is_tcp_socket())) {
+	   (fdinfo.m_name.lock()->length() == 0 || !fdinfo.is_tcp_socket())) {
 		// send, sendto, sendmsg and sendmmsg contain tuple info in the exit event. If the fd
 		// still doesn't contain tuple info (because the socket is a datagram one or because
 		// some event was lost), add it here.
@@ -3410,10 +3413,10 @@ void sinsp_parser::parse_write_exit(sinsp_evt &evt, sinsp_parser_verdict &verdic
 				                             str_storage_len,
 				                             m_hostname_and_port_resolution_enabled);
 
-				fdinfo.m_name = str_storage_ptr;
+				*fdinfo.m_name.lock() = str_storage_ptr;
 			} else {
 				const char *parstr;
-				fdinfo.m_name =
+				*fdinfo.m_name.lock() =
 				        evt.get_param_as_str(SOCKET_TUPLE_PARAM_ID, &parstr, sinsp_evt::PF_SIMPLE);
 			}
 		}
@@ -3498,7 +3501,7 @@ void sinsp_parser::parse_fchdir_exit(sinsp_evt &evt) {
 	// In case of success, if the event has thread and fd info, update the thread working directory.
 	if(evt.get_syscall_return_value() >= 0 && evt.get_fd_info() != nullptr &&
 	   evt.get_tinfo() != nullptr) {
-		evt.get_tinfo()->update_cwd(evt.get_fd_info()->m_name);
+		evt.get_tinfo()->update_cwd(*evt.get_fd_info()->m_name.lock());
 	}
 }
 

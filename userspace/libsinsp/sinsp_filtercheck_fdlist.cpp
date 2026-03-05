@@ -127,8 +127,8 @@ uint8_t *sinsp_filter_check_fdlist::extract_single(sinsp_evt *evt,
 		} break;
 		case TYPE_FDNAMES: {
 			if(fdinfo != NULL) {
-				if(fdinfo->m_name != "") {
-					m_strval += fdinfo->m_name;
+				if(!fdinfo->m_name.lock()->empty()) {
+					m_strval += *fdinfo->m_name.lock();
 				} else {
 					m_strval += "<NA>";
 				}
