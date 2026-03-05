@@ -345,8 +345,9 @@ public:
 
 	std::atomic<scap_fd_type> m_type{
 	        SCAP_FD_UNINITIALIZED};  ///< The fd type, e.g. file, directory, IPv4 socket...
-	uint32_t m_openflags = 0;  ///< If this FD is a file, the flags that were used when opening it.
-	                           ///< See the PPM_O_* definitions in driver/ppm_events_public.h.
+	std::atomic<uint32_t> m_openflags{
+	        0};  ///< If this FD is a file, the flags that were used when opening it.
+	             ///< See the PPM_O_* definitions in driver/ppm_events_public.h.
 	sinsp_sockinfo m_sockinfo =
 	        {};  ///< Socket-specific state. This is uninitialized (zero) for non-socket FDs.
 	std::string m_name;  ///< Human readable rendering of this FD. For files, this is the full file

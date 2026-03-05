@@ -76,7 +76,7 @@ static void fd_to_scap(scap_fdinfo& dst, const sinsp_fdinfo& src) {
 		        sizeof(dst.info.unix_socket_info.fname));
 		break;
 	case SCAP_FD_FILE_V2:
-		dst.info.regularinfo.open_flags = src.m_openflags;
+		dst.info.regularinfo.open_flags = src.m_openflags.load();
 		strlcpy(dst.info.regularinfo.fname, src.m_name.c_str(), sizeof(dst.info.regularinfo.fname));
 		dst.info.regularinfo.dev = src.m_dev;
 		dst.info.regularinfo.mount_id = src.m_mount_id;

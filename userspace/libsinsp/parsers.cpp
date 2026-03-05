@@ -3594,10 +3594,10 @@ void sinsp_parser::parse_dup_exit(sinsp_evt &evt, sinsp_parser_verdict &verdict)
 		// set/reset O_CLOEXEC flag base on the value received by dup3() syscall.
 		if(const auto flags = evt.get_param(3)->as<uint32_t>()) {
 			// Set the O_CLOEXEC flag.
-			evt.get_fd_info()->m_openflags |= flags;
+			evt.get_fd_info()->m_openflags.fetch_or(flags);
 		} else {
 			// Reset the O_CLOEXEC flag.
-			evt.get_fd_info()->m_openflags &= ~PPM_O_CLOEXEC;
+			evt.get_fd_info()->m_openflags.fetch_and(~PPM_O_CLOEXEC);
 		}
 	}
 
