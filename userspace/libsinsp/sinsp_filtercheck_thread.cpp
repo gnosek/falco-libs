@@ -1620,17 +1620,20 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		if(tinfo->m_exe_ino == 0) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(tinfo->m_exe_ino);
+		m_val.u64 = tinfo->m_exe_ino.load();
+		RETURN_EXTRACT_VAR(m_val.u64);
 	case TYPE_EXE_INO_CTIME:
 		if(tinfo->m_exe_ino_ctime == 0) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(tinfo->m_exe_ino_ctime);
+		m_val.u64 = tinfo->m_exe_ino_ctime.load();
+		RETURN_EXTRACT_VAR(m_val.u64);
 	case TYPE_EXE_INO_MTIME:
 		if(tinfo->m_exe_ino_mtime == 0) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(tinfo->m_exe_ino_mtime);
+		m_val.u64 = tinfo->m_exe_ino_mtime.load();
+		RETURN_EXTRACT_VAR(m_val.u64);
 	case TYPE_EXE_INO_CTIME_DURATION_CLONE_TS:
 		if(tinfo->m_exe_ino_ctime_duration_clone_ts == 0) {
 			return NULL;

@@ -988,11 +988,11 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 		child_tinfo->m_cap_effective = caller_tinfo->m_cap_effective;
 
-		child_tinfo->m_exe_ino = caller_tinfo->m_exe_ino;
+		child_tinfo->m_exe_ino.store(caller_tinfo->m_exe_ino.load());
 
-		child_tinfo->m_exe_ino_ctime = caller_tinfo->m_exe_ino_ctime;
+		child_tinfo->m_exe_ino_ctime.store(caller_tinfo->m_exe_ino_ctime.load());
 
-		child_tinfo->m_exe_ino_mtime = caller_tinfo->m_exe_ino_mtime;
+		child_tinfo->m_exe_ino_mtime.store(caller_tinfo->m_exe_ino_mtime.load());
 
 		child_tinfo->m_exe_ino_ctime_duration_clone_ts =
 		        caller_tinfo->m_exe_ino_ctime_duration_clone_ts;
@@ -1247,11 +1247,11 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 		child_tinfo->m_cap_effective = lookup_tinfo->m_cap_effective;
 
-		child_tinfo->m_exe_ino = lookup_tinfo->m_exe_ino;
+		child_tinfo->m_exe_ino.store(lookup_tinfo->m_exe_ino.load());
 
-		child_tinfo->m_exe_ino_ctime = lookup_tinfo->m_exe_ino_ctime;
+		child_tinfo->m_exe_ino_ctime.store(lookup_tinfo->m_exe_ino_ctime.load());
 
-		child_tinfo->m_exe_ino_mtime = lookup_tinfo->m_exe_ino_mtime;
+		child_tinfo->m_exe_ino_mtime.store(lookup_tinfo->m_exe_ino_mtime.load());
 
 		child_tinfo->m_exe_ino_ctime_duration_clone_ts =
 		        lookup_tinfo->m_exe_ino_ctime_duration_clone_ts;

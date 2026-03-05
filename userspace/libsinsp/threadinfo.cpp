@@ -113,9 +113,9 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	// m_cap_permitted
 	// m_cap_effective
 	// m_cap_inheritable
-	DEFINE_STATIC_FIELD(ret, self, m_exe_ino, "exe_ino");
-	DEFINE_STATIC_FIELD(ret, self, m_exe_ino_ctime, "exe_ino_ctime");
-	DEFINE_STATIC_FIELD(ret, self, m_exe_ino_mtime, "exe_ino_mtime");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_ino, "exe_ino", SS_PLUGIN_ST_UINT64);
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_ino_ctime, "exe_ino_ctime", SS_PLUGIN_ST_UINT64);
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_exe_ino_mtime, "exe_ino_mtime", SS_PLUGIN_ST_UINT64);
 	// m_exe_ino_ctime_duration_clone_ts
 	// m_exe_ino_ctime_duration_pidns_start
 	// m_vmsize_kb
