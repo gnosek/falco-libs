@@ -106,7 +106,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	        },
 	        true);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_flags, "flags", SS_PLUGIN_ST_UINT32);
-	DEFINE_STATIC_FIELD(ret, self, m_fdlimit, "fd_limit");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_fdlimit, "fd_limit", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_FIELD(ret, self, m_uid, "uid");
 	DEFINE_STATIC_FIELD(ret, self, m_gid, "gid");
 	DEFINE_STATIC_FIELD(ret, self, m_loginuid, "loginuid");

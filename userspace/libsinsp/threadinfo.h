@@ -374,17 +374,17 @@ public:
 	libsinsp::RecursiveMutex<std::vector<std::string>> m_env;  ///< Environment variables
 	libsinsp::RecursiveMutex<cgroups_t> m_cgroups;             ///< subsystem-cgroup pairs
 	std::atomic<uint32_t>
-	        m_flags;    ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
-	int64_t m_fdlimit;  ///< The maximum number of FDs this thread can open
-	uint32_t m_uid;     ///< uid
-	uint32_t m_gid;     ///< gid
-	uint32_t m_loginuid;         ///< loginuid
-	uint64_t m_cap_permitted;    ///< permitted capabilities
-	uint64_t m_cap_effective;    ///< effective capabilities
-	uint64_t m_cap_inheritable;  ///< inheritable capabilities
-	uint64_t m_exe_ino;          ///< executable inode ino
-	uint64_t m_exe_ino_ctime;    ///< executable inode ctime (last status change time)
-	uint64_t m_exe_ino_mtime;    ///< executable inode mtime (last modification time)
+	        m_flags;  ///< The thread flags. See the PPM_CL_* declarations in ppm_events_public.h.
+	std::atomic<int64_t> m_fdlimit;  ///< The maximum number of FDs this thread can open
+	uint32_t m_uid;                  ///< uid
+	uint32_t m_gid;                  ///< gid
+	uint32_t m_loginuid;             ///< loginuid
+	uint64_t m_cap_permitted;        ///< permitted capabilities
+	uint64_t m_cap_effective;        ///< effective capabilities
+	uint64_t m_cap_inheritable;      ///< inheritable capabilities
+	uint64_t m_exe_ino;              ///< executable inode ino
+	uint64_t m_exe_ino_ctime;        ///< executable inode ctime (last status change time)
+	uint64_t m_exe_ino_mtime;        ///< executable inode mtime (last modification time)
 	uint64_t m_exe_ino_ctime_duration_clone_ts;  ///< duration in ns between executable inode ctime
 	                                             ///< (last status change time) and clone_ts
 	uint64_t m_exe_ino_ctime_duration_pidns_start;  ///< duration in ns between pidns start ts and
