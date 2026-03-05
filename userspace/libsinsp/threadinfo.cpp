@@ -127,7 +127,11 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_vpid, "vpid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_vpgid, "vpgid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_TYPED_FIELD(ret, self, m_pgid, "pgid", SS_PLUGIN_ST_INT64);
-	DEFINE_STATIC_FIELD(ret, self, m_pidns_init_start_ts, "pidns_init_start_ts");
+	DEFINE_STATIC_TYPED_FIELD(ret,
+	                          self,
+	                          m_pidns_init_start_ts,
+	                          "pidns_init_start_ts",
+	                          SS_PLUGIN_ST_UINT64);
 	DEFINE_STATIC_FIELD(ret, self, m_root, "root");
 	DEFINE_STATIC_FIELD(ret, self, m_tty, "tty");
 	// m_category

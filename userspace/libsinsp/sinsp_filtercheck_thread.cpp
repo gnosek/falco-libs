@@ -1649,7 +1649,8 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		if(tinfo->m_pidns_init_start_ts == 0) {
 			return NULL;
 		}
-		RETURN_EXTRACT_VAR(tinfo->m_pidns_init_start_ts);
+		m_val.u64 = tinfo->m_pidns_init_start_ts.load();
+		RETURN_EXTRACT_VAR(m_val.u64);
 	case TYPE_PID_CLONE_TS:
 		if(tinfo->m_clone_ts == 0) {
 			return NULL;
