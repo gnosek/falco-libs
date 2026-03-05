@@ -123,8 +123,8 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	// m_vmswap_kb
 	// m_pfmajor
 	// m_pfminor
-	DEFINE_STATIC_FIELD(ret, self, m_vtid, "vtid");
-	DEFINE_STATIC_FIELD(ret, self, m_vpid, "vpid");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_vtid, "vtid", SS_PLUGIN_ST_INT64);
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_vpid, "vpid", SS_PLUGIN_ST_INT64);
 	DEFINE_STATIC_FIELD(ret, self, m_vpgid, "vpgid");
 	DEFINE_STATIC_FIELD(ret, self, m_pgid, "pgid");
 	DEFINE_STATIC_FIELD(ret, self, m_pidns_init_start_ts, "pidns_init_start_ts");

@@ -395,11 +395,11 @@ public:
 	uint32_t m_vmswap_kb;                           ///< swapped memory (as kb).
 	uint64_t m_pfmajor;                             ///< number of major page faults since start.
 	uint64_t m_pfminor;                             ///< number of minor page faults since start.
-	int64_t m_vtid;                                 ///< The virtual id of this thread.
-	int64_t m_vpid;   ///< The virtual id of the process containing this thread. In single thread
-	                  ///< threads, this is equal to vtid.
-	int64_t m_vpgid;  // The virtual process group id, as seen from its pid namespace
-	int64_t m_pgid;   // Process group id, as seen from the host pid namespace
+	std::atomic<int64_t> m_vtid;                    ///< The virtual id of this thread.
+	std::atomic<int64_t> m_vpid;     ///< The virtual id of the process containing this thread. In
+	                                 ///< single thread threads, this is equal to vtid.
+	int64_t m_vpgid;                 // The virtual process group id, as seen from its pid namespace
+	int64_t m_pgid;                  // Process group id, as seen from the host pid namespace
 	uint64_t m_pidns_init_start_ts;  ///< The pid_namespace init task (child_reaper) start_time ts.
 	std::string m_root;
 

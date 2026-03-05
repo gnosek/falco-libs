@@ -894,10 +894,10 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 	 */
 
 	/* vtid */
-	child_tinfo->m_vtid = child_tinfo->m_tid;
+	child_tinfo->m_vtid.store(child_tinfo->m_tid.load());
 
 	/* vpid */
-	child_tinfo->m_vpid = child_tinfo->m_pid;
+	child_tinfo->m_vpid.store(child_tinfo->m_pid.load());
 
 	/* exe */
 	*child_tinfo->m_exe.lock() = evt.get_param(1)->as<std::string>();
@@ -1114,7 +1114,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 		child_tinfo->m_vtid = vtid_param->as<int64_t>();
 		child_tinfo->m_vpid = vpid_param->as<int64_t>();
 	} else {
-		child_tinfo->m_vtid = child_tinfo->m_tid;
+		child_tinfo->m_vtid.store(child_tinfo->m_tid.load());
 		child_tinfo->m_vpid = -1;
 	}
 
@@ -1183,11 +1183,11 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 			/* vpid */
 			/* we are in the same thread group, the vpid is the same of the child */
-			lookup_tinfo->m_vpid = child_tinfo->m_vpid;
+			lookup_tinfo->m_vpid.store(child_tinfo->m_vpid.load());
 
 			/* vtid */
 			/* we are a main thread so vtid==vpid */
-			lookup_tinfo->m_vtid = lookup_tinfo->m_vpid;
+			lookup_tinfo->m_vtid.store(lookup_tinfo->m_vpid.load());
 
 			/* Create thread groups and parenting relationships */
 			m_thread_manager->create_thread_dependencies(lookup_tinfo);
@@ -1498,8 +1498,8 @@ void sinsp_parser::parse_execve_exit(sinsp_evt &evt, sinsp_parser_verdict &verdi
 
 		/* We are not in a namespace we recover also vtid and vpid */
 		if((evt.get_tinfo()->m_flags & PPM_CL_CHILD_IN_PIDNS) == 0) {
-			evt.get_tinfo()->m_vtid = evt.get_tinfo()->m_tid;
-			evt.get_tinfo()->m_vpid = evt.get_tinfo()->m_pid;
+			evt.get_tinfo()->m_vtid.store(evt.get_tinfo()->m_tid.load());
+			evt.get_tinfo()->m_vpid.store(evt.get_tinfo()->m_pid.load());
 		}
 
 		auto tinfo = m_thread_manager->find_thread(evt.get_tinfo()->m_tid, true);
