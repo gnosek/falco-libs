@@ -404,7 +404,7 @@ public:
 	        m_pidns_init_start_ts;  ///< The pid_namespace init task (child_reaper) start_time ts.
 	std::string m_root;
 
-	uint32_t m_tty;  ///< Number of controlling terminal
+	std::atomic<uint32_t> m_tty;  ///< Number of controlling terminal
 	std::shared_ptr<thread_group_info> m_tginfo;
 	std::list<std::weak_ptr<sinsp_threadinfo>> m_children;
 	uint64_t m_not_expired_children;

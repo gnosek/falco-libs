@@ -978,7 +978,7 @@ void sinsp_parser::parse_clone_exit_caller(sinsp_evt &evt,
 
 		child_tinfo->m_pgid.store(caller_tinfo->m_pgid.load());
 
-		child_tinfo->m_tty = caller_tinfo->m_tty;
+		child_tinfo->m_tty.store(caller_tinfo->m_tty.load());
 
 		child_tinfo->m_loginuid.store(caller_tinfo->m_loginuid.load());
 
@@ -1237,7 +1237,7 @@ void sinsp_parser::parse_clone_exit_child(sinsp_evt &evt, sinsp_parser_verdict &
 
 		child_tinfo->m_pgid.store(lookup_tinfo->m_pgid.load());
 
-		child_tinfo->m_tty = lookup_tinfo->m_tty;
+		child_tinfo->m_tty.store(lookup_tinfo->m_tty.load());
 
 		child_tinfo->m_loginuid.store(lookup_tinfo->m_loginuid.load());
 

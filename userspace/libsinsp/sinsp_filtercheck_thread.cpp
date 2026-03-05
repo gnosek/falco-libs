@@ -1144,7 +1144,8 @@ uint8_t* sinsp_filter_check_thread::extract_single(sinsp_evt* evt,
 		        true);
 		RETURN_EXTRACT_STRING(m_tstr);
 	case TYPE_TTY:
-		RETURN_EXTRACT_VAR(tinfo->m_tty);
+		m_val.u32 = tinfo->m_tty.load();
+		RETURN_EXTRACT_VAR(m_val.u32);
 	case TYPE_NAME:
 		m_tstr = tinfo->get_comm();
 		RETURN_EXTRACT_STRING(m_tstr);

@@ -133,7 +133,7 @@ libsinsp::state::static_field_infos sinsp_threadinfo::get_static_fields() {
 	                          "pidns_init_start_ts",
 	                          SS_PLUGIN_ST_UINT64);
 	DEFINE_STATIC_FIELD(ret, self, m_root, "root");
-	DEFINE_STATIC_FIELD(ret, self, m_tty, "tty");
+	DEFINE_STATIC_TYPED_FIELD(ret, self, m_tty, "tty", SS_PLUGIN_ST_UINT32);
 	// m_category
 	// m_clone_ts
 	// m_lastexec_ts
