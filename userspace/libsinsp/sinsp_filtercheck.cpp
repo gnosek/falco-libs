@@ -781,7 +781,7 @@ void sinsp_filter_check::resolve_rhs_path(comparator cmp) {
 }
 bool sinsp_filter_check::compare_rhs(comparator cmp,
                                      ppm_param_type type,
-                                     std::vector<extract_value_t>& values) {
+                                     const std::vector<extract_value_t>& values) {
 	// The three questions this used to ask on every event -- is the operator `exists`, is the field
 	// a list, does the operator carry a modifier -- are all answered by the compiled filter, so
 	// they are asked once. The common answer, "none of them", comes back here as one test against
@@ -810,7 +810,7 @@ bool sinsp_filter_check::compare_rhs(comparator cmp,
 }
 bool sinsp_filter_check::compare_rhs_multi(comparator cmp,
                                            ppm_param_type type,
-                                           std::vector<extract_value_t>& values) {
+                                           const std::vector<extract_value_t>& values) {
 	if(m_rhs_path == rhs_path::exists) {
 		return true;
 	}
@@ -1491,7 +1491,7 @@ bool sinsp_filter_check::matches_all_rhs(const filter_value_t& item,
 
 bool sinsp_filter_check::compare_rhs_with_mod(comparator cmp,
                                               ppm_param_type type,
-                                              std::vector<extract_value_t>& values) {
+                                              const std::vector<extract_value_t>& values) {
 	// Certain types only support equality-based comparison in flt_compare (e.g. network
 	// and socket types); for all others the full operator is used. This mirrors the
 	// special-casing in compare_rhs for CO_IN/CO_INTERSECTS with those types. CO_NE
@@ -1545,8 +1545,54 @@ uint8_t* sinsp_filter_check::extract_single(sinsp_evt* evt, uint32_t* len) {
 	return NULL;
 }
 
+bool sinsp_filter_check::extract_in_place(sinsp_evt* evt) {
+	if(m_cache_metrics != NULL) {
+		m_cache_metrics->m_num_extract++;
+	}
+
+	// no cache is installed, so just default to non-cached extraction
+	if(!m_extract_cache) {
+		m_values_in_place = &m_extracted_values;
+		// extract values and apply transformers on top of them
+		return extract_nocache(evt, m_extracted_values, nullptr) &&
+		       apply_transformers(m_extracted_values);
+	}
+
+	// cache is not valid for this event, so we perform a non-cached extraction
+	// and update it for the next time. We cache both failed and succeeded extractions
+	if(!m_extract_cache->is_valid(evt)) {
+		// The cached values are shallow copies: this check keeps owning what they point at across
+		// extractions, which is what lets a hit be read in place.
+		m_values_in_place = &m_extracted_values;
+		auto res = extract_nocache(evt, m_extracted_values, nullptr) &&
+		           apply_transformers(m_extracted_values);
+		m_extract_cache->update(evt, res, m_extracted_values, false);
+		return res;
+	}
+
+	// cache hit: the values stay where they are. The cache holds shallow copies, so they point at
+	// whatever the extracting check owns either way -- copying the vector out only moved the
+	// pointers, it did not make them any safer to hold.
+	m_values_in_place = &m_extract_cache->values();
+	if(m_cache_metrics != NULL) {
+		m_cache_metrics->m_num_extract_cache++;
+	}
+	return m_extract_cache->result();
+}
+
 bool sinsp_filter_check::extract(sinsp_evt* evt, std::vector<extract_value_t>& values) {
-	return extract_with_offsets(evt, values, nullptr);
+	// The out-parameter form, for the callers that want the values in a vector of their own. With
+	// no cache installed there is nothing to share, so it still extracts straight into that vector
+	// rather than through this check's own.
+	if(!m_extract_cache) {
+		return extract_with_offsets(evt, values, nullptr);
+	}
+	// A cached extraction copied the values out before too, succeeded or not.
+	const bool res = extract_in_place(evt);
+	if(&values != m_values_in_place) {
+		values = *m_values_in_place;
+	}
+	return res;
 }
 
 bool sinsp_filter_check::extract_with_offsets(sinsp_evt* evt,
@@ -1614,10 +1660,12 @@ bool sinsp_filter_check::compare(sinsp_evt* evt) {
 }
 
 bool sinsp_filter_check::compare_nocache(sinsp_evt* evt) {
-	m_extracted_values.clear();
-	if(!extract(evt, m_extracted_values)) {
+	if(!extract_in_place(evt)) {
 		return false;
 	}
+	// Where they are stays put across the right-hand side's extraction below: a cache is written at
+	// most once per event, so a right-hand side sharing this one can only hit it.
+	const auto* values = m_values_in_place;
 
 	auto lhs_type = get_transformed_field_info()->m_type;
 	if(has_filtercheck_value()) {
@@ -1631,7 +1679,7 @@ bool sinsp_filter_check::compare_nocache(sinsp_evt* evt) {
 		populate_filter_values_with_rhs_extracted_values(m_rhs_filter_check->m_extracted_values);
 	}
 
-	return compare_rhs(m_cmp, lhs_type, m_extracted_values);
+	return compare_rhs(m_cmp, lhs_type, *values);
 }
 
 void sinsp_filter_check::add_transformer(filter_transformer_type trtype) {
