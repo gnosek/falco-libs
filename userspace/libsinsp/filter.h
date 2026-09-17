@@ -136,7 +136,12 @@ public:
 	void pop_expression();
 	void add_check(std::unique_ptr<sinsp_filter_check> chk);
 
-	std::unique_ptr<sinsp_filter_expression> m_filter;
+	//
+	// The tree, to look at. As with an expression's children there is no way to reach it for
+	// modification: where evaluation starts is worked out from the tree's shape, so a tree
+	// swapped from outside would leave a filter evaluating a fragment of itself.
+	//
+	const sinsp_filter_expression* get_root() const { return m_filter.get(); }
 
 private:
 	//
@@ -147,6 +152,7 @@ private:
 	//
 	void resolve_entry();
 
+	std::unique_ptr<sinsp_filter_expression> m_filter;
 	sinsp_filter_expression* m_curexpr;
 	sinsp_filter_check* m_entry = nullptr;
 	bool m_entry_negate = false;
