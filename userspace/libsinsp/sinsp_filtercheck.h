@@ -285,6 +285,12 @@ protected:
 		str_startswith,
 		str_contains,
 		str_endswith,
+		// Addresses and networks. An address comparison is a fixed-width compare; a network
+		// comparison is the AND that flt_compare_ipv4net does, with the network's own masking done
+		// here instead of on every event.
+		ip4,
+		ip6,
+		net4,
 	};
 	fast_cmp m_fast_cmp = fast_cmp::unresolved;
 	comparator m_fast_cmp_for = {};
@@ -297,6 +303,10 @@ protected:
 	// For startswith and endswith: the right-hand side's length, which flt_compare_string measures
 	// on every event even though the filter fixed it at compile time.
 	size_t m_fast_rhs_len = 0;
+	// For ip6: the address, as two words. For net4: the mask, with the masked network in
+	// m_fast_rhs_u64.
+	uint64_t m_fast_ip6[2] = {0, 0};
+	uint32_t m_fast_mask4 = 0;
 
 	// Decides which of the above applies to this check, given the type it is comparing.
 	void resolve_fast_cmp(comparator cmp, ppm_param_type type);
