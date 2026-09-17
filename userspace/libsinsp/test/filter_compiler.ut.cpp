@@ -766,6 +766,41 @@ TEST_F(sinsp_with_test_input, filter_nul_byte_value) {
 // A right-hand side that is a FIELD is re-extracted on every event, so a check cannot cache
 // anything about it: `evt.num = val(evt.num)` holds for every event. The filter is compiled ONCE
 // and run twice on purpose -- compiling per event would hide a value cached at the first one.
+// evt.rawarg names a PARAMETER, not a type: `size` is a uint32 on a read and an int32 on an
+// epoll_create, and the check overwrites its type from each event (the type it was compiled with is
+// only a guess, as its own comment says). Same width, opposite signedness, which is the one case a
+// width check cannot catch: the comparison shape has to be re-resolved when the type changes.
+TEST_F(sinsp_with_test_input, filter_rawarg_type_can_change_between_events) {
+	add_default_init_thread();
+	open_inspector();
+
+	sinsp_filter_check_list flist;
+	auto factory = std::make_shared<sinsp_filter_factory>(&m_inspector, flist);
+	// Compiled ONCE: compiling per event would resolve the shape afresh each time and prove
+	// nothing.
+	auto filter = sinsp_filter_compiler(factory, "evt.rawarg.size < 0").compile();
+
+	// The same four bytes both times: 4294967295 unsigned, -1 signed.
+	constexpr uint32_t all_ones = 0xffffffff;
+
+	auto* read_evt = add_event_advance_ts(increasing_ts(),
+	                                      1,
+	                                      PPME_SYSCALL_READ_E,
+	                                      2,
+	                                      static_cast<int64_t>(3),
+	                                      all_ones);
+	ASSERT_NE(read_evt, nullptr);
+	ASSERT_FALSE(filter->run(read_evt));
+
+	auto* epoll_evt = add_event_advance_ts(increasing_ts(),
+	                                       1,
+	                                       PPME_SYSCALL_EPOLL_CREATE_E,
+	                                       1,
+	                                       static_cast<int32_t>(all_ones));
+	ASSERT_NE(epoll_evt, nullptr);
+	ASSERT_TRUE(filter->run(epoll_evt));
+}
+
 TEST_F(sinsp_with_test_input, filter_rhs_field_is_re_extracted_per_event) {
 	add_default_init_thread();
 	open_inspector();
