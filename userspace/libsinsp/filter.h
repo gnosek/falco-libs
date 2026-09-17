@@ -131,7 +131,17 @@ public:
 	std::unique_ptr<sinsp_filter_expression> m_filter;
 
 private:
+	//
+	// Where evaluating this filter starts. The root expression holds one child and nothing
+	// else -- the expression the filter turned out to be, or its single check -- so running the
+	// root would walk a level that only forwards an answer. Resolved on the first event,
+	// because the tree is not final until then. Owned by m_filter.
+	//
+	void resolve_entry();
+
 	sinsp_filter_expression* m_curexpr;
+	sinsp_filter_check* m_entry = nullptr;
+	bool m_entry_negate = false;
 };
 
 class sinsp_filter_factory {

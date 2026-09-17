@@ -187,14 +187,51 @@ void sinsp_filter::pop_expression() {
 		ASSERT(m_curexpr->get_checks().back().get() == expr);
 		m_curexpr->replace_last_check(expr->release_only_child());
 	}
+
+	m_entry = nullptr;
+}
+
+// Runs once per filter, and keeping it out of run()'s frame is the point of the whole change:
+// inlined here, its casts and its loop cost run() six register saves on every event, which is
+// most of the level it removes.
+#if defined(__GNUC__)
+[[gnu::noinline]]
+#endif
+void sinsp_filter::resolve_entry() {
+	sinsp_filter_check* entry = m_filter.get();
+	bool negate = false;
+
+	// A pass-through expression runs one child and forwards its answer, so evaluation can start
+	// at that child and leave the level out. The root is one of those: it holds nothing but the
+	// expression the whole filter turned out to be. A negation on the way down comes along --
+	// and two of them cancel, as they do in the tree itself.
+	for(auto* expr = dynamic_cast<sinsp_filter_expression*>(entry);
+	    expr != nullptr && expr->is_pass_through();
+	    expr = dynamic_cast<sinsp_filter_expression*>(entry)) {
+		entry = expr->get_checks()[0].get();
+		negate = negate != ((entry->m_boolop & BO_NOT) != 0);
+	}
+
+	m_entry = entry;
+	m_entry_negate = negate;
 }
 
 bool sinsp_filter::run(sinsp_evt* evt) {
-	return m_filter->compare(evt);
+	if(m_entry == nullptr) {
+		resolve_entry();
+	}
+
+	// The entry is only stale if the tree grew behind this call's back, which nothing in the
+	// library does: every way in through this class says so. A debug build refuses to evaluate
+	// a fragment of a filter quietly.
+	ASSERT(m_entry == m_filter.get() || m_filter->is_pass_through());
+
+	return m_entry->compare(evt) != m_entry_negate;
 }
 
 void sinsp_filter::add_check(std::unique_ptr<sinsp_filter_check> chk) {
 	m_curexpr->add_check(std::move(chk));
+	m_entry = nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
