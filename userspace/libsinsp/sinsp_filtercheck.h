@@ -256,6 +256,51 @@ protected:
 	                           ppm_print_format print_format,
 	                           uint32_t len);
 
+	// A comparison whose field type and operator were both settled when the filter was compiled
+	// does not have to rediscover them on every event. flt_compare() switches over thirty field
+	// types and then over the operator, and casts both operands through memcpy on the way; for the
+	// common shape -- one right-hand value, a 64-bit integer field, an ordering or equality
+	// operator -- the shape is resolved once here and the comparison is then a load and a compare.
+	// Anything else (lists, IPNET, PMATCH, REGEX, a modifier, a width that is not 64-bit) resolves
+	// to `none` and goes the general way.
+	// `none` is zero so that the general path costs one compare against it: a check that resolved
+	// to `none` tests once per event and falls straight through.
+	enum class fast_cmp : uint8_t {
+		none = 0,
+		unresolved,
+		// Every integer field, by width and signedness. All of them widen to 64 bits and compare
+		// there, which is what flt_compare did too -- only it rediscovered the width, the
+		// signedness and the operator on every event. Keeping the width in the kind is what makes
+		// the load and the sign extension compile-time constants rather than a second dispatch.
+		s8,
+		s16,
+		s32,
+		s64,
+		u8,
+		u16,
+		u32,
+		u64,
+		str_eq,
+		str_ne,
+		str_startswith,
+		str_contains,
+		str_endswith,
+	};
+	fast_cmp m_fast_cmp = fast_cmp::unresolved;
+	comparator m_fast_cmp_for = {};
+	// The type the shape was resolved for. A few checks compare more than one type through the same
+	// object -- sinsp_filter_check_fd hands compare_rhs a v4 address or a v6 one depending on the
+	// fd -- so a resolved shape belongs to its type and is re-resolved if that changes.
+	ppm_param_type m_fast_cmp_type = PT_NONE;
+	int64_t m_fast_rhs_s64 = 0;
+	uint64_t m_fast_rhs_u64 = 0;
+	// For startswith and endswith: the right-hand side's length, which flt_compare_string measures
+	// on every event even though the filter fixed it at compile time.
+	size_t m_fast_rhs_len = 0;
+
+	// Decides which of the above applies to this check, given the type it is comparing.
+	void resolve_fast_cmp(comparator cmp, ppm_param_type type);
+
 	inline uint8_t* filter_value_p(uint16_t i = 0) {
 		ASSERT(i < m_vals.size());
 		return m_vals[i].first;

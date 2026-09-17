@@ -945,6 +945,216 @@ bool sinsp_filter_check::matches_rhs_regex(const filter_value_t& item,
 	return regex->Match(text, 0, item.second, re2::RE2::Anchor::ANCHOR_BOTH, nullptr, 0);
 }
 
+// The operator, applied to values already widened to 64 bits. Both sides of a check's comparison
+// are fixed by the filter, so this is all that is left of flt_compare's two switches.
+static inline bool fast_compare_s64(cmpop op, int64_t lhs, int64_t rhs) {
+	switch(op) {
+	case CO_EQ:
+		return lhs == rhs;
+	case CO_NE:
+		return lhs != rhs;
+	case CO_LT:
+		return lhs < rhs;
+	case CO_LE:
+		return lhs <= rhs;
+	case CO_GT:
+		return lhs > rhs;
+	default:
+		return lhs >= rhs;
+	}
+}
+
+static inline bool fast_compare_u64(cmpop op, uint64_t lhs, uint64_t rhs) {
+	switch(op) {
+	case CO_EQ:
+		return lhs == rhs;
+	case CO_NE:
+		return lhs != rhs;
+	case CO_LT:
+		return lhs < rhs;
+	case CO_LE:
+		return lhs <= rhs;
+	case CO_GT:
+		return lhs > rhs;
+	default:
+		return lhs >= rhs;
+	}
+}
+
+void sinsp_filter_check::resolve_fast_cmp(comparator cmp, ppm_param_type type) {
+	m_fast_cmp_for = cmp;
+	m_fast_cmp_type = type;
+	m_fast_cmp = fast_cmp::none;
+
+	// A right-hand side that is a FIELD is re-extracted into m_vals on every event (see
+	// populate_filter_values_with_rhs_extracted_values), so nothing about it may be cached.
+	if(has_filtercheck_value()) {
+		return;
+	}
+
+	// One right-hand value, no modifier, and an operator that is a plain ordering or equality.
+	if(m_vals.size() != 1 || cmp.mod != CMPOP_MOD_NONE) {
+		return;
+	}
+	switch(cmp.op) {
+	case CO_EQ:
+	case CO_NE:
+	case CO_LT:
+	case CO_LE:
+	case CO_GT:
+	case CO_GE:
+	case CO_STARTSWITH:
+	case CO_CONTAINS:
+	case CO_ENDSWITH:
+		break;
+	default:
+		return;
+	}
+
+	// Strings: the two equality operators and startswith, whose right-hand length is fixed. The
+	// path types are strings to flt_compare too -- all three reach flt_compare_string.
+	if(type == PT_CHARBUF || type == PT_FSPATH || type == PT_FSRELPATH) {
+		if(filter_value_p() == nullptr) {
+			return;
+		}
+		m_fast_rhs_len = strlen((const char*)filter_value_p());
+		switch(cmp.op) {
+		case CO_EQ:
+			m_fast_cmp = fast_cmp::str_eq;
+			return;
+		case CO_NE:
+			m_fast_cmp = fast_cmp::str_ne;
+			return;
+		case CO_STARTSWITH:
+			m_fast_cmp = fast_cmp::str_startswith;
+			return;
+		case CO_CONTAINS:
+			m_fast_cmp = fast_cmp::str_contains;
+			return;
+		case CO_ENDSWITH:
+			m_fast_cmp = fast_cmp::str_endswith;
+			return;
+		default:
+			return;
+		}
+	}
+
+	// A boolean is compared as a widened word, but only for equality: flt_compare_bool refuses an
+	// ordering, and a fast path that answered one would be a different filter language.
+	if(type == PT_BOOL && cmp.op != CO_EQ && cmp.op != CO_NE) {
+		return;
+	}
+
+	// The integer types, by the width flt_compare would have cast them through. The stored
+	// right-hand side is read at that same width here, once.
+	fast_cmp kind = fast_cmp::none;
+	size_t width = 0;
+	bool is_signed = false;
+	switch(type) {
+	case PT_INT8:
+		kind = fast_cmp::s8;
+		width = 1;
+		is_signed = true;
+		break;
+	case PT_INT16:
+		kind = fast_cmp::s16;
+		width = 2;
+		is_signed = true;
+		break;
+	case PT_INT32:
+		kind = fast_cmp::s32;
+		width = 4;
+		is_signed = true;
+		break;
+	case PT_INT64:
+	case PT_FD:
+	case PT_PID:
+	case PT_ERRNO:
+		kind = fast_cmp::s64;
+		width = 8;
+		is_signed = true;
+		break;
+	case PT_FLAGS8:
+	case PT_ENUMFLAGS8:
+	case PT_UINT8:
+	case PT_SIGTYPE:
+		kind = fast_cmp::u8;
+		width = 1;
+		break;
+	case PT_FLAGS16:
+	case PT_ENUMFLAGS16:
+	case PT_UINT16:
+	case PT_PORT:
+	case PT_SYSCALLID:
+		kind = fast_cmp::u16;
+		width = 2;
+		break;
+	case PT_FLAGS32:
+	case PT_ENUMFLAGS32:
+	case PT_UINT32:
+	case PT_MODE:
+	case PT_UID:
+	case PT_GID:
+	case PT_SIGSET:
+	case PT_BOOL:
+		kind = fast_cmp::u32;
+		width = 4;
+		break;
+	case PT_UINT64:
+	case PT_RELTIME:
+	case PT_ABSTIME:
+		kind = fast_cmp::u64;
+		width = 8;
+		break;
+	default:
+		return;
+	}
+	if(filter_value_p() == nullptr || filter_value_len() != width) {
+		return;
+	}
+
+	// Read it at the width it was stored at and let the integer conversion widen it, which
+	// is what flt_cast does. Copying `width` bytes into a uint64_t instead would put them at
+	// the low-addressed end, which is the HIGH half on a big-endian target: an s390x `user.uid
+	// = 1000` would compare against 1000 << 32. Sign extension comes from the conversion too.
+	if(is_signed) {
+		switch(width) {
+		case 1:
+			m_fast_rhs_s64 = rawval_cast<int8_t>(filter_value_p());
+			break;
+		case 2:
+			m_fast_rhs_s64 = rawval_cast<int16_t>(filter_value_p());
+			break;
+		case 4:
+			m_fast_rhs_s64 = rawval_cast<int32_t>(filter_value_p());
+			break;
+		case 8:
+			m_fast_rhs_s64 = rawval_cast<int64_t>(filter_value_p());
+			break;
+		default:
+			return;
+		}
+	} else {
+		switch(width) {
+		case 1:
+			m_fast_rhs_u64 = rawval_cast<uint8_t>(filter_value_p());
+			break;
+		case 2:
+			m_fast_rhs_u64 = rawval_cast<uint16_t>(filter_value_p());
+			break;
+		case 4:
+			m_fast_rhs_u64 = rawval_cast<uint32_t>(filter_value_p());
+			break;
+		case 8:
+			m_fast_rhs_u64 = rawval_cast<uint64_t>(filter_value_p());
+			break;
+		default:
+			return;
+		}
+	}
+	m_fast_cmp = kind;
+}
+
 bool sinsp_filter_check::compare_rhs(comparator cmp,
                                      ppm_param_type type,
                                      const void* operand1,
@@ -1006,6 +1216,102 @@ bool sinsp_filter_check::compare_rhs(comparator cmp,
 			return false;
 		};
 	default:
+		// The shape of this comparison never changes; resolving it once turns flt_compare's two
+		// switches and two casts into a load and a compare. See fast_cmp.
+		// A compiled check's operator and modifier never change, so the shape is resolved on the
+		// first event and trusted afterwards; the assert is what says so out loud. A check that
+		// resolved to `none` -- a string, a list, an address -- pays one compare here and nothing
+		// else.
+		if(m_fast_cmp != fast_cmp::none) {
+			if(m_fast_cmp == fast_cmp::unresolved || type != m_fast_cmp_type) {
+				resolve_fast_cmp(cmp, type);
+			}
+			ASSERT(m_fast_cmp == fast_cmp::none ||
+			       (cmp.op == m_fast_cmp_for.op && cmp.mod == m_fast_cmp_for.mod));
+			switch(m_fast_cmp) {
+			case fast_cmp::str_eq:
+				return strcmp((const char*)operand1, (const char*)filter_value_p()) == 0;
+			case fast_cmp::str_ne:
+				return strcmp((const char*)operand1, (const char*)filter_value_p()) != 0;
+			case fast_cmp::str_startswith:
+				return strncmp((const char*)operand1,
+				               (const char*)filter_value_p(),
+				               m_fast_rhs_len) == 0;
+			case fast_cmp::str_contains:
+				return strstr((const char*)operand1, (const char*)filter_value_p()) != nullptr;
+			case fast_cmp::str_endswith:
+				return sinsp_utils::endswith((const char*)operand1,
+				                             (const char*)filter_value_p(),
+				                             strlen((const char*)operand1),
+				                             m_fast_rhs_len);
+			case fast_cmp::s8:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(int8_t)) {
+					int8_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_s64(cmp.op, v, m_fast_rhs_s64);
+				}
+				break;
+			case fast_cmp::s16:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(int16_t)) {
+					int16_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_s64(cmp.op, v, m_fast_rhs_s64);
+				}
+				break;
+			case fast_cmp::s32:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(int32_t)) {
+					int32_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_s64(cmp.op, v, m_fast_rhs_s64);
+				}
+				break;
+			case fast_cmp::s64:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(int64_t)) {
+					int64_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_s64(cmp.op, v, m_fast_rhs_s64);
+				}
+				break;
+			case fast_cmp::u8:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(uint8_t)) {
+					uint8_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_u64(cmp.op, v, m_fast_rhs_u64);
+				}
+				break;
+			case fast_cmp::u16:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(uint16_t)) {
+					uint16_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_u64(cmp.op, v, m_fast_rhs_u64);
+				}
+				break;
+			case fast_cmp::u32:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(uint32_t)) {
+					uint32_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_u64(cmp.op, v, m_fast_rhs_u64);
+				}
+				break;
+			case fast_cmp::u64:
+				// A value extracted at another width (evt.rawarg.* can do that) is not ours.
+				if(op1_len == sizeof(uint64_t)) {
+					uint64_t v;
+					memcpy(&v, operand1, sizeof(v));
+					return fast_compare_u64(cmp.op, v, m_fast_rhs_u64);
+				}
+				break;
+			default:
+				break;
+			}
+		}
 		return (::flt_compare(cmp, type, operand1, filter_value_p(), op1_len, filter_value_len()));
 	}
 }
