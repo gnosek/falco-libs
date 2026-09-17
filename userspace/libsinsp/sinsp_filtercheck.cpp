@@ -1673,7 +1673,7 @@ bool sinsp_filter_check::compare_nocache(sinsp_evt* evt) {
 	// most once per event, so a right-hand side sharing this one can only hit it.
 	const auto* values = m_values_in_place;
 
-	auto lhs_type = get_transformed_field_info()->m_type;
+	auto lhs_type = lhs_info()->m_type;
 	if(has_filtercheck_value()) {
 		check_rhs_field_type_consistency();
 
@@ -1721,6 +1721,7 @@ void sinsp_filter_check::add_transformer(filter_transformer_type trtype) {
 	// above may have changed its type and its flags, list-ness included.
 	m_rhs_path = rhs_path::unresolved;
 	m_fast_cmp = fast_cmp::unresolved;
+	m_lhs_info = nullptr;
 
 	// add transformer to the back of the list, they will be applied at
 	// runtime from least-recently-added to most-recently-added. This is also
